@@ -36,11 +36,9 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
         }
 
-        /* Fixing visibility of labels and selects in dark mode */
         label { color: var(--label-color) !important; opacity: 1 !important; }
         select, input, textarea { color: var(--text-main) !important; background-color: var(--input-bg) !important; }
         
-        /* Specific fix for select dropdown arrow and text visibility */
         select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; padding-right: 2rem; }
 
         .deploy-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 6px solid #e2e8f0; }
@@ -77,7 +75,10 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .viewer-mode #statsSection, .viewer-mode #historySection, .viewer-mode header { display: none !important; }
+        .viewer-mode #statsSection, .viewer-mode #historySection { display: none !important; }
+        /* Removed header display:none from viewer-mode to allow Dark Mode toggle */
+        .viewer-mode header .admin-only { display: none !important; }
+
         .target-only .plat-btn:not(.active) { display: none !important; }
         
         .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
@@ -370,8 +371,8 @@
                             <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-500/5 px-3 py-0.5 rounded-full">${ipCount} IPS</span>
                         </div>
                         <div class="relative flex items-center">
+                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute left-3 bottom-3 z-10 bg-blue-600 text-white text-[9px] px-5 py-2.5 rounded-xl font-black uppercase shadow-lg shadow-blue-500/40 active:scale-95 transition-all">Copy IPs</button>
                             <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?8:2}">${d.ips || ''}</textarea>
-                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute left-3 bottom-3 bg-blue-600 text-white text-[9px] px-5 py-2.5 rounded-xl font-black uppercase shadow-lg shadow-blue-500/40 active:scale-95 transition-all">Copy IPs</button>
                         </div>
                     </div>
                 </div>`;
@@ -380,7 +381,7 @@
         }
 
         function updateIPCount(textarea) {
-            const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
+            const countSpan = textarea.parentElement.previousElementSibling.querySelector('.ip-count');
             const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
             countSpan.innerText = `${lines} IPS`;
         }
@@ -466,6 +467,7 @@
         function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
         function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
+        
         function copyIPs(index, btn) {
             const textarea = document.getElementById(`ips-${index}`);
             textarea.select();
