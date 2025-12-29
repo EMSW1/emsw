@@ -42,7 +42,10 @@
         display: none !important;
     }
 	
+	.viewer-only-btn { display: none !important; }
 	.viewer-mode .viewer-only-btn { display: block !important; }
+	
+
 	
 	</style>
 </head>
@@ -260,9 +263,13 @@ window.onload = async () => {
                     ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                 </select>
             </div>
-            <div class="relative group">
-                <textarea id="ips-${i}" ${isReadonly} oninput="checkChanges()" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-                <button onclick="copyIPs(${i}, this)" class="hidden viewer-only-btn absolute right-2 top-2 bg-blue-600 text-white text-[8px] px-2 py-1 rounded font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
+            <div class="relative group mt-2">
+        <textarea id="ips-${i}" ${isReadonly} class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
+        
+        <button onclick="copyIPs(${i}, this)" 
+                class="viewer-only-btn hidden absolute right-2 top-2 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">
+            Copy
+        </button>
             </div>
         </div>`;
     }
@@ -399,17 +406,20 @@ if(logChanges.length > 0) {
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
 		
 		
-		function copyIPs(idx, btn) {
-    const txt = document.getElementById(`ips-${idx}`);
-    txt.select();
-    navigator.clipboard.writeText(txt.value);
-    const old = btn.innerText;
-    btn.innerText = "COPIED ✅";
-    btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-    setTimeout(() => { 
-        btn.innerText = old; 
-        btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-    }, 1500);
+		function copyIPs(index, btn) {
+    const textarea = document.getElementById(`ips-${index}`);
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED! ✅";
+        btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+        }, 2000);
+    }).catch(err => {
+        console.error('Mouchkil f Copy:', err);
+    });
 }
 		
 		
