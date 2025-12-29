@@ -139,6 +139,22 @@
         firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
         let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "" };
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
+        
+        // --- JDID: Auto-Detect System Info ---
+        let autoSenderInfo = "Detecting...";
+        (function detectPC() {
+            const platform = navigator.platform;
+            const userAgent = navigator.userAgent;
+            let browser = "Unknown Browser";
+            if(userAgent.includes("Chrome")) browser = "Chrome";
+            else if(userAgent.includes("Firefox")) browser = "Firefox";
+            else if(userAgent.includes("Safari")) browser = "Safari";
+            
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => { autoSenderInfo = `${data.ip} (${platform} | ${browser})`; })
+                .catch(() => { autoSenderInfo = `LOCAL (${platform} | ${browser})`; });
+        })();
 
 
 window.onload = async () => {
@@ -349,7 +365,9 @@ if(logChanges.length > 0) {
                 let changesText = ""; 
                 logChanges.forEach(l => { changesText += "• " + l + "\n"; });
 
+                // --- UPDATE JDID: Zid autoSenderInfo l-bot ---
                 const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
+                                    `🖥️ <b>SENDER:</b> <code>${autoSenderInfo}</code>\n` +
                                     `━━━━━━━━━━━━━━━\n` +
                                     `📝 <b>CHANGES:</b>\n` +
                                     `${changesText}` +
