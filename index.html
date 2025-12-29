@@ -17,27 +17,25 @@
     #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
     #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
 
-    /* --- Jdid: Khbi l-history w l-stats f mode Viewer dyal Telegram --- */
+    /* --- Style Viewer Mode --- */
     .viewer-mode #statsSection, 
     .viewer-mode #historySection,
     .viewer-mode header { display: none !important; }
     
     .target-only .plat-btn:not(.active) { display: none !important; }
 	
-	/* Style Viewer: Rejja3 l-inputs y-banou bhala ghir Text */
     .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
         border: none !important;
         background: transparent !important;
-        pointer-events: none !important; /* Block click */
-        color: #1e293b !important; /* Slate 800 */
+        pointer-events: none !important;
+        color: #1e293b !important;
         padding-left: 0 !important;
     }
 
     .viewer-mode .inp-id {
-        color: #2563eb !important; /* Khalli l-ID bl-azraq */
+        color: #2563eb !important;
     }
 
-    /* Khbi l-buttons dyal l-platformes bach tban interface n9iya */
     .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 {
         display: none !important;
     }
@@ -139,23 +137,6 @@
         firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
         let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "" };
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
-        
-        // --- JDID: Auto-Detect System Info ---
-        let autoSenderInfo = "Detecting...";
-        (function detectPC() {
-            const platform = navigator.platform;
-            const userAgent = navigator.userAgent;
-            let browser = "Unknown Browser";
-            if(userAgent.includes("Chrome")) browser = "Chrome";
-            else if(userAgent.includes("Firefox")) browser = "Firefox";
-            else if(userAgent.includes("Safari")) browser = "Safari";
-            
-            fetch('https://api.ipify.org?format=json')
-                .then(res => res.json())
-                .then(data => { autoSenderInfo = `${data.ip} (${platform} | ${browser})`; })
-                .catch(() => { autoSenderInfo = `LOCAL (${platform} | ${browser})`; });
-        })();
-
 
 window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
@@ -252,8 +233,6 @@ window.onload = async () => {
     for (let i = 0; i < num; i++) {
         const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
         const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
-        
-        // Count IPs logic
         const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
 
         container.innerHTML += `
@@ -278,18 +257,13 @@ window.onload = async () => {
                     <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">${ipCount} IPS</span>
                 </div>
                 <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-                
-                <button onclick="copyIPs(${i}, this)" 
-                        class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">
-                    Copy
-                </button>
+                <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
             </div>
         </div>`;
     }
     document.getElementById('distDisplay').innerText = dist.join(' | ');
 }
 
-        // New function to update count in real-time
         function updateIPCount(textarea) {
             const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
             const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
@@ -358,16 +332,15 @@ window.onload = async () => {
 
             await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter, stats, updatedAt: new Date().toLocaleString() });
 
-if(logChanges.length > 0) {
+            if(logChanges.length > 0) {
                 const publicUrl = "https://emsw1.github.io/emsw/";
                 const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                
                 let changesText = ""; 
                 logChanges.forEach(l => { changesText += "• " + l + "\n"; });
 
-                // --- UPDATE JDID: Zid autoSenderInfo l-bot ---
+                // --- MODIF SALAH: EDIT BY SALAH (NO IP) ---
                 const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                                    `🖥️ <b>SENDER:</b> <code>${autoSenderInfo}</code>\n` +
+                                    `🖥️ <b>EDIT BY : SALAH</b>\n` +
                                     `━━━━━━━━━━━━━━━\n` +
                                     `📝 <b>CHANGES:</b>\n` +
                                     `${changesText}` +
@@ -378,16 +351,10 @@ if(logChanges.length > 0) {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
                         method: 'POST', 
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            chat_id: CONFIG.telegram.chatId, 
-                            text: telegramMsg, 
-                            parse_mode: 'HTML', 
-                            disable_web_page_preview: false 
-                        })
+                        body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
                     });
                 } catch (e) { console.error("Telegram Error:", e); }
             }
-
             setTimeout(() => { location.reload(); }, 500);
         }
 
@@ -424,27 +391,23 @@ if(logChanges.length > 0) {
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
 		
 		function copyIPs(index, btn) {
-    const textarea = document.getElementById(`ips-${index}`);
-    textarea.select();
-    navigator.clipboard.writeText(textarea.value).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = "COPIED! ✅";
-        btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-        }, 2000);
-    }).catch(err => {
-        console.error('Mouchkil f Copy:', err);
-    });
-}
+            const textarea = document.getElementById(`ips-${index}`);
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "COPIED! ✅";
+                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+                }, 2000);
+            });
+        }
 
         function copyAllIDs(btn) {
             const idInputs = document.querySelectorAll('.inp-id');
             const ids = Array.from(idInputs).map(inp => inp.value.trim()).filter(val => val !== "");
-            const textToCopy = ids.join('\n');
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
+            navigator.clipboard.writeText(ids.join('\n')).then(() => {
                 const originalText = btn.innerText;
                 btn.innerText = "DONE! ✅";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-500');
@@ -454,7 +417,6 @@ if(logChanges.length > 0) {
                 }, 2000);
             });
         }
-		
     </script>
 </body>
 </html>
