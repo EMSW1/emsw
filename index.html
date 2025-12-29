@@ -9,36 +9,56 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f4f8; }
+        :root {
+            --bg-body: #f0f4f8;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #1e293b;
+            --border-color: rgba(255, 255, 255, 0.4);
+            --input-bg: #f8fafc;
+            --label-color: #64748b;
+        }
+
+        .dark {
+            --bg-body: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.9);
+            --text-main: #f1f5f9;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --input-bg: #1e293b;
+            --label-color: #94a3b8;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); transition: all 0.3s ease; }
         
-        /* Glassmorphism Effect */
         .glass-card { 
-            background: rgba(255, 255, 255, 0.8); 
+            background: var(--card-bg); 
             backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
         }
 
-        .deploy-card { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            border-left: 6px solid #e2e8f0; 
-        }
-        .deploy-card:hover { 
-            transform: translateY(-2px);
-            border-left-color: #2563eb;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
+        /* Fixing visibility of labels and selects in dark mode */
+        label { color: var(--label-color) !important; opacity: 1 !important; }
+        select, input, textarea { color: var(--text-main) !important; background-color: var(--input-bg) !important; }
+        
+        /* Specific fix for select dropdown arrow and text visibility */
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; padding-right: 2rem; }
 
-        .plat-btn { transition: all 0.2s; border: 2px solid transparent; }
+        .deploy-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 6px solid #e2e8f0; }
+        .deploy-card:hover { transform: translateY(-2px); border-left-color: #2563eb; }
+
+        .dark .deploy-card { border-left-color: #334155; }
+        .dark .deploy-card:hover { border-left-color: #3b82f6; }
+
+        .plat-btn { transition: all 0.2s; border: 2px solid transparent; background: var(--card-bg); color: var(--text-main); }
         .plat-btn.active { 
             border-color: #2563eb; 
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            color: #1e40af;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
         #loadingOverlay, #loginOverlay { 
-            background: rgba(255,255,255,0.9); 
+            background: var(--bg-body); 
             backdrop-filter: blur(8px);
             position: fixed; inset: 0; z-index: 200; 
             align-items: center; justify-content: center; display: flex; flex-direction: column; 
@@ -46,19 +66,15 @@
 
         .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
         .admin-mode .super-only { display: none !important; }
-        .admin-locked { pointer-events: none; background: #f1f5f9 !important; }
+        .admin-locked { pointer-events: none; opacity: 0.8; }
 
-        #saveBtn {
-            transition: all 0.3s;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        }
-        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; transform: scale(1) !important; }
-        #saveBtn:active { transform: scale(0.98); }
+        #saveBtn { transition: all 0.3s; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; transform: scale(1) !important; }
 
         #rotDetailPanel { 
             display: none; position: fixed; top: 50%; left: 50%; 
             transform: translate(-50%, -50%); z-index: 300; width: 95%; max-width: 500px; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .viewer-mode #statsSection, .viewer-mode #historySection, .viewer-mode header { display: none !important; }
@@ -66,129 +82,115 @@
         
         .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
             border: none !important; background: transparent !important;
-            pointer-events: none !important; color: #1e293b !important; padding-left: 0 !important;
-            box-shadow: none !important;
+            pointer-events: none !important; color: var(--text-main) !important; padding-left: 0 !important;
         }
-        .viewer-mode .inp-id { color: #2563eb !important; font-weight: 900; }
-        .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 { display: none !important; }
+        .viewer-mode .inp-id { color: #3b82f6 !important; font-weight: 900; }
         .viewer-only-btn { display: none !important; }
         .viewer-mode .viewer-only-btn { display: block !important; }
 
-        /* Custom scrollbar */
+        #darkToggle { transition: all 0.3s; }
+        #darkToggle:active { transform: scale(0.9); }
+
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="p-4 md:p-8 text-slate-900">
+<body class="p-4 md:p-8">
 
     <div id="loginOverlay">
-        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center border border-slate-100">
-            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl shadow-blue-200">
+        <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm text-center border">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl">
                 <span class="text-white text-3xl font-black italic">W</span>
             </div>
-            <h2 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">EMSW ACCESS</h2>
-            <p class="text-slate-400 text-xs font-bold mb-8 uppercase tracking-widest">Secure Control Panel</p>
-            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl mb-4 text-center font-bold outline-none focus:border-blue-500 transition-all">
-            <button onclick="checkAccess()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all">Unlock Engine</button>
+            <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter">EMSW ACCESS</h2>
+            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 border-none rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <button onclick="checkAccess()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black uppercase shadow-lg">Unlock</button>
         </div>
     </div>
 
-    <div id="rotDetailPanel" class="bg-white p-8 rounded-[2rem] border-t-8 border-blue-600">
+    <div id="rotDetailPanel" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-black uppercase italic text-slate-800">Rotation Details</h3>
-            <button onclick="closeRot()" class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">✕</button>
+            <h3 class="text-xl font-black uppercase italic">Rotation Details</h3>
+            <button onclick="closeRot()" class="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-full">✕</button>
         </div>
-        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-72 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-xs uppercase outline-none focus:border-blue-400 transition-all" placeholder="Paste rotation logs here..."></textarea>
-        <button onclick="closeRot()" class="w-full mt-6 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all">Confirm & Close</button>
+        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-72 p-4 border-none rounded-2xl font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-blue-400 transition-all"></textarea>
+        <button onclick="closeRot()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Confirm</button>
     </div>
 
-    <div id="loadingOverlay" style="display:none;">
-        <div class="relative">
-            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <div class="h-8 w-8 bg-blue-100 rounded-full animate-pulse"></div>
-            </div>
-        </div>
-        <p class="mt-4 text-xs font-black text-blue-600 uppercase tracking-widest">Syncing Cloud...</p>
-    </div>
+    <div id="loadingOverlay" style="display:none;"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600"></div></div>
 
     <div id="appContent" class="hidden max-w-6xl mx-auto space-y-6">
         <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter text-slate-800">EMSW <span class="text-blue-600">TEST</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Automated Deployment System</p>
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter">EMSW <span class="text-blue-600">TEST</span></h1>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Control Panel</p>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="flex flex-col items-end">
-                    <span id="roleBadge" class="text-[9px] font-black px-4 py-1.5 rounded-full uppercase text-white shadow-sm">---</span>
-                </div>
-                <button onclick="logout()" class="admin-only p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+            <div class="flex items-center gap-3">
+                <button id="darkToggle" onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:scale-110 transition-all">
+                    <span class="dark:hidden text-lg">🌙</span><span class="hidden dark:inline text-lg">☀️</span>
+                </button>
+                <span id="roleBadge" class="text-[9px] font-black px-4 py-1.5 rounded-full uppercase text-white">---</span>
+                <button onclick="logout()" class="admin-only p-2.5 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                 </button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
-                <span class="text-lg">WEB</span>
-                <input type="number" id="conf-WEB" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
+                <span class="text-lg italic">WEB</span>
+                <input type="number" id="conf-WEB" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
-            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
-                <span class="text-lg">SELENIUM</span>
-                <input type="number" id="conf-SELENIUM" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('SELENIUM', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
+                <span class="text-lg italic">SELENIUM</span>
+                <input type="number" id="conf-SELENIUM" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('SELENIUM', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
-            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
-                <span class="text-lg">AUTOMAT</span>
-                <input type="number" id="conf-AUTOMAT" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
+                <span class="text-lg italic">AUTOMAT</span>
+                <input type="number" id="conf-AUTOMAT" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
         </div>
 
         <div id="statsSection" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
-                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">Seeds</label>
-                <input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                <label class="block text-[8px] font-black uppercase text-center mb-1">Seeds</label>
+                <input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
             </div>
-            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
-                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">RDPs</label>
-                <input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                <label class="block text-[8px] font-black uppercase text-center mb-1">RDPs</label>
+                <input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
             </div>
-            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
-                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">Sessions</label>
-                <input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
-            </div>
-            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 text-center">
-                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1">Rotation</label>
-                <div class="flex justify-center items-center gap-0.5 font-black text-blue-700 text-xs mb-1">
-                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none">
-                    <span class="text-blue-300">/</span>
-                    <input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none">
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-center">
+                <label class="block text-[8px] font-black uppercase mb-1">Rotation</label>
+                <div class="flex justify-center items-center gap-0.5 font-black text-blue-500 text-xs mb-1">
+                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic"> / <input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic">
                 </div>
-                <button onclick="openRot()" class="bg-blue-600 text-white text-[7px] px-3 py-1 rounded-full font-black uppercase hover:bg-blue-700 transition-all">Details</button>
+                <button onclick="openRot()" class="bg-blue-600 text-white text-[7px] px-3 py-1 rounded-full font-black uppercase">Details</button>
             </div>
-            <div class="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-center">
-                <label class="block text-[8px] font-black text-emerald-400 uppercase tracking-tighter mb-1">Quality</label>
-                <input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-700 text-center outline-none text-sm uppercase">
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                <label class="block text-[8px] font-black uppercase text-center mb-1">Sessions</label>
+                <input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
             </div>
-            <div class="p-3 bg-rose-50/50 rounded-2xl border border-rose-100 text-center">
-                <label class="block text-[8px] font-black text-rose-400 uppercase tracking-tighter mb-1">Paused</label>
-                <input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-700 text-center outline-none text-sm uppercase">
+            <div class="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center">
+                <label class="block text-[8px] font-black uppercase mb-1">Quality</label>
+                <input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-500 text-center outline-none text-sm uppercase">
             </div>
-            <div class="p-3 bg-orange-50/50 rounded-2xl border border-orange-100">
-                <label class="block text-[8px] font-black text-orange-400 uppercase tracking-tighter mb-1 text-center">Period</label>
-                <div class="flex gap-1">
-                    <input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="START">
-                    <input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="END">
-                </div>
+            <div class="p-3 bg-rose-500/5 rounded-2xl border border-rose-500/10 text-center">
+                <label class="block text-[8px] font-black uppercase mb-1">Paused</label>
+                <input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-500 text-center outline-none text-sm uppercase">
+            </div>
+            <div class="p-3 bg-orange-500/5 rounded-2xl border border-orange-500/10 text-center">
+                <label class="block text-[8px] font-black uppercase mb-1">Period</label>
+                <div class="flex gap-1"><input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="S"><input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="E"></div>
             </div>
         </div>
 
         <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div class="flex gap-4 items-center">
                 <div class="admin-only w-1/3">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1 italic">Reporting Editor</label>
-                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-700 text-[10px] outline-none focus:border-blue-500 transition-all">
+                    <label class="block text-[9px] font-black uppercase mb-2 italic">Reporter</label>
+                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-3 border-none rounded-2xl font-black text-[10px] outline-none">
                         <option value="MOHAMED IAROCHENE">MOHAMED IAROCHENE</option>
                         <option value="MEHDI AOURACHE">MEHDI AOURACHE</option>
                         <option value="ALLAL GASMI">ALLAL GASMI</option>
@@ -197,33 +199,28 @@
                     </select>
                 </div>
                 <div class="admin-only w-1/4">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Deploys</label>
-                    <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-blue-600 text-center focus:border-blue-500">
+                    <label class="block text-[9px] font-black uppercase mb-2">Count</label>
+                    <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-3 rounded-2xl font-black text-blue-600 text-center border-none">
                 </div>
                 <div class="flex-1">
-                    <label class="block text-[9px] font-black text-blue-500 uppercase mb-2 ml-1 italic">Deployment Keyword</label>
+                    <label class="block text-[9px] font-black text-blue-500 uppercase mb-2 italic">Deployment Keyword</label>
                     <div class="flex gap-2">
-                        <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-3 border-2 border-blue-500 rounded-2xl font-black text-blue-700 bg-blue-50/50 text-center uppercase focus:bg-blue-100 transition-all shadow-inner">
-                        <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-200 active:scale-95 transition-all">Copy IDs</button>
+                        <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-3 border-2 border-blue-500/30 rounded-2xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none">
+                        <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Copy IDs</button>
                     </div>
                 </div>
             </div>
-            <div class="text-center bg-slate-900/5 p-4 rounded-[1.5rem] border border-dashed border-slate-300">
-                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Distribution Map</p>
-                <div id="distDisplay" class="font-black text-slate-700 text-xs italic tracking-tighter">---</div>
+            <div class="text-center bg-slate-500/5 p-4 rounded-[1.5rem] border border-dashed border-slate-300">
+                <p class="text-[8px] font-black uppercase mb-1">Distribution</p>
+                <div id="distDisplay" class="font-black text-xs italic tracking-tighter">---</div>
             </div>
         </div>
 
         <div id="deploysGrid" class="space-y-4 pb-20"></div>
 
         <div class="admin-only fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
-            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic tracking-tighter border-b-4 border-blue-900 flex items-center justify-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                Save & Broadcast
-            </button>
-            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-10 py-6 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic whitespace-nowrap active:scale-95 transition-all">
-                ⚡ Silent Edit
-            </button>
+            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95">Save Changes</button>
+            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-10 py-6 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic active:scale-95">⚡ Edit</button>
         </div>
     </div>
 
@@ -238,7 +235,16 @@
         let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: ""};
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
 
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('emsw_darkmode', isDark);
+        }
+
         window.onload = async () => {
+            if(localStorage.getItem('emsw_darkmode') === 'true' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
             const params = new URLSearchParams(window.location.search);
             const key = localStorage.getItem('emsw_key');
             const isViewMode = params.get('mode') === 'view';
@@ -332,42 +338,41 @@
 
                 container.innerHTML += `
                 <div class="deploy-card glass-card p-5 rounded-[2rem] relative">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic tracking-tighter">Deploy ${i+1}</span>
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Instance</span>
-                        </div>
-                        <span class="text-blue-600 font-black text-[11px] bg-blue-50 px-3 py-1 rounded-full">${bCount} BOITES</span>
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-500/10 pb-3">
+                        <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic">Deploy ${i+1}</span>
+                        <span class="text-blue-600 font-black text-[11px] bg-blue-500/10 px-3 py-1 rounded-full">${bCount} BOITES</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         <div class="space-y-1">
-                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">From Name</label>
-                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[10px] font-bold uppercase focus:border-blue-400 outline-none" value="${d.from || ''}">
+                            <label class="block text-[8px] font-black uppercase">From</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from w-full p-3 border-none rounded-2xl text-[10px] font-bold uppercase focus:ring-1 focus:ring-blue-400 outline-none" value="${d.from || ''}">
                         </div>
                         <div class="space-y-1">
-                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Offer ID</label>
-                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id w-full p-3 border-2 border-blue-100 rounded-2xl text-[10px] font-black text-blue-600 bg-blue-50/50 uppercase focus:border-blue-500 outline-none" value="${d.id || ''}">
+                            <label class="block text-[8px] font-black uppercase">Offer ID</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id w-full p-3 border-none rounded-2xl text-[10px] font-black text-blue-500 bg-blue-500/10 uppercase outline-none" value="${d.id || ''}">
                         </div>
                         <div class="space-y-1">
-                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Batch / Speed</label>
-                            <select ${isReadonly} onchange="checkChanges()" class="inp-batch w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[9px] font-bold uppercase focus:border-blue-400 outline-none">
+                            <label class="block text-[8px] font-black uppercase">Batch</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-batch w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none">
                                 ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div class="space-y-1">
-                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Filter Rules</label>
-                            <select ${isReadonly} onchange="checkChanges()" class="inp-rules w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[9px] font-bold uppercase focus:border-blue-400 outline-none">
+                            <label class="block text-[8px] font-black uppercase">Rules</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-rules w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none">
                                 ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div class="relative mt-2">
                         <div class="flex justify-between items-center mb-1.5 px-1">
-                            <label class="text-[9px] font-black text-slate-500 uppercase italic tracking-tighter">Target IP List</label>
-                            <span class="ip-count text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-3 py-0.5 rounded-full shadow-sm">${ipCount} NODES</span>
+                            <label class="text-[9px] font-black uppercase italic">Target Nodes</label>
+                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-500/5 px-3 py-0.5 rounded-full">${ipCount} IPS</span>
                         </div>
-                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase shadow-inner outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?6:2}">${d.ips || ''}</textarea>
-                        <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-3 bottom-3 bg-blue-600 text-white text-[9px] px-4 py-2 rounded-xl font-black uppercase shadow-lg shadow-blue-500/30 active:scale-95 transition-all">Copy IPs</button>
+                        <div class="relative flex items-center">
+                            <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?8:2}">${d.ips || ''}</textarea>
+                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute left-3 bottom-3 bg-blue-600 text-white text-[9px] px-5 py-2.5 rounded-xl font-black uppercase shadow-lg shadow-blue-500/40 active:scale-95 transition-all">Copy IPs</button>
+                        </div>
                     </div>
                 </div>`;
             }
@@ -377,7 +382,7 @@
         function updateIPCount(textarea) {
             const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
             const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
-            countSpan.innerText = `${lines} NODES`;
+            countSpan.innerText = `${lines} IPS`;
         }
 
         function checkChanges() {
@@ -398,11 +403,7 @@
                 const cards = document.querySelectorAll('.deploy-card');
                 for(let i=0; i<cards.length; i++) {
                     const o = stateData.deploys[i] || {};
-                    const cur = { 
-                        from: cards[i].querySelector('.inp-from').value, id: cards[i].querySelector('.inp-id').value, 
-                        batch: cards[i].querySelector('.inp-batch').value, rules: cards[i].querySelector('.inp-rules').value, 
-                        ips: cards[i].querySelector('.inp-ips').value 
-                    };
+                    const cur = { from: cards[i].querySelector('.inp-from').value, id: cards[i].querySelector('.inp-id').value, batch: cards[i].querySelector('.inp-batch').value, rules: cards[i].querySelector('.inp-rules').value, ips: cards[i].querySelector('.inp-ips').value };
                     if(cur.id !== (o.id || "") || cur.from !== (o.from || "") || cur.batch !== (o.batch || "") || cur.rules !== (o.rules || "") || cur.ips !== (o.ips || "")) { changed = true; break; }
                 }
             }
@@ -413,22 +414,12 @@
             document.getElementById('loadingOverlay').style.display = 'flex';
             const editorName = document.getElementById('editorSelect').value;
             const cards = document.querySelectorAll('.deploy-card');
-            const deploys = Array.from(cards).map(c => ({
-                from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
-                batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim()
-            }));
+            const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
             const filter = document.getElementById('filterInput').value.trim();
-            const stats = {
-                seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
-                sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value,
-                rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value,
-                paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value,
-                end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value
-            };
+            const stats = { seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value, sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value, rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value, paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value, end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value };
 
             let logChanges = [];
             if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
-
             deploys.forEach((d, i) => {
                 const o = stateData.deploys[i] || {};
                 let diffs = [];
@@ -437,7 +428,6 @@
                 if(d.ips !== (o.ips || "")) diffs.push("IPs");
                 if(d.batch !== (o.batch || "")) diffs.push("Batch");
                 if(d.rules !== (o.rules || "")) diffs.push("Rules");
-                
                 if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
             });
 
@@ -446,23 +436,9 @@
             if(logChanges.length > 0) {
                 const publicUrl = "https://emsw1.github.io/emsw/";
                 const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                let changesText = ""; 
-                logChanges.forEach(l => { changesText += "• " + l + "\n"; });
-
-                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                                    `🖥️ <b>EDIT BY : ${editorName}</b>\n` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `📝 <b>CHANGES:</b>\n` +
-                                    `${changesText}` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
-
-                try {
-                    await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
-                    });
-                } catch (e) { console.error("Telegram Error:", e); }
+                let changesText = ""; logChanges.forEach(l => { changesText += "• " + l + "\n"; });
+                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` + `🖥️ <b>EDIT BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+                try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
             }
             setTimeout(() => { location.reload(); }, 500);
         }
@@ -472,17 +448,8 @@
             document.getElementById('loadingOverlay').style.display = 'flex';
             const editorName = document.getElementById('editorSelect').value;
             const cards = document.querySelectorAll('.deploy-card');
-            const deploys = Array.from(cards).map(c => ({
-                from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
-                batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim()
-            }));
-            const stats = {
-                seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
-                sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value,
-                rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value,
-                paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value,
-                end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value
-            };
+            const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
+            const stats = { seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value, sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value, rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value, paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value, end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value };
             await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, editor: editorName, updatedAt: new Date().toLocaleString() });
             location.reload();
         }
@@ -506,10 +473,7 @@
                 const originalText = btn.innerText;
                 btn.innerText = "COPIED! ✅";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-                }, 2000);
+                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
             });
         }
         function copyAllIDs(btn) {
@@ -519,10 +483,7 @@
                 const originalText = btn.innerText;
                 btn.innerText = "DONE! ✅";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-                }, 2000);
+                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
             });
         }
     </script>
