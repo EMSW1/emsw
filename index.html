@@ -9,41 +9,30 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         .deploy-card { transition: all 0.2s ease; border-left: 5px solid #cbd5e1; }
-    .plat-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
-    #loadingOverlay, #loginOverlay { background: rgba(255,255,255,0.98); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
-    .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
-    .admin-mode .super-only { display: none !important; }
-    .admin-locked { pointer-events: none; background: #f8fafc !important; }
-    #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
-    #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
+        .plat-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
+        #loadingOverlay, #loginOverlay { background: rgba(255,255,255,0.98); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
+        .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
+        .admin-mode .super-only { display: none !important; }
+        .admin-locked { pointer-events: none; background: #f8fafc !important; }
+        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
+        #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
 
-    /* --- Style Viewer Mode --- */
-    .viewer-mode #statsSection, 
-    .viewer-mode #historySection,
-    .viewer-mode header { display: none !important; }
-    
-    .target-only .plat-btn:not(.active) { display: none !important; }
-	
-    .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
-        border: none !important;
-        background: transparent !important;
-        pointer-events: none !important;
-        color: #1e293b !important;
-        padding-left: 0 !important;
-    }
-
-    .viewer-mode .inp-id {
-        color: #2563eb !important;
-    }
-
-    .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 {
-        display: none !important;
-    }
-	
-	.viewer-only-btn { display: none !important; }
-	.viewer-mode .viewer-only-btn { display: block !important; }
-	
-	</style>
+        .viewer-mode #statsSection, 
+        .viewer-mode #historySection,
+        .viewer-mode header { display: none !important; }
+        .target-only .plat-btn:not(.active) { display: none !important; }
+        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
+            border: none !important;
+            background: transparent !important;
+            pointer-events: none !important;
+            color: #1e293b !important;
+            padding-left: 0 !important;
+        }
+        .viewer-mode .inp-id { color: #2563eb !important; }
+        .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 { display: none !important; }
+        .viewer-only-btn { display: none !important; }
+        .viewer-mode .viewer-only-btn { display: block !important; }
+    </style>
 </head>
 <body class="bg-slate-50 p-4 md:p-8 text-slate-900">
 
@@ -102,11 +91,19 @@
 
         <div class="bg-white p-5 rounded-2xl shadow-sm border grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <div class="flex gap-4 items-center">
-                <div class="admin-only w-1/3">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Count</label>
+                <div class="admin-only w-1/4">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-center italic">Editor</label>
+                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-2 border-2 border-slate-200 rounded-lg font-black text-slate-700 text-xs outline-none focus:border-blue-500">
+                        <option value="SALAH">SALAH</option>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="GHOST">GHOST</option>
+                    </select>
+                </div>
+                <div class="admin-only w-1/4">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-center">Count</label>
                     <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-2 border-2 rounded-lg font-black text-blue-600 text-center">
                 </div>
-                <div class="w-2/3">
+                <div class="w-2/4">
                     <label class="block text-[10px] font-black text-blue-500 uppercase mb-1 italic text-center">KEYWORD (MOT)</label>
                     <div class="flex gap-2">
                         <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500 rounded-lg font-black text-blue-700 bg-blue-50 text-center uppercase">
@@ -135,36 +132,34 @@
         };
 
         firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
-        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "" };
+        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: "SALAH" };
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
 
-window.onload = async () => {
-    const params = new URLSearchParams(window.location.search);
-    const key = localStorage.getItem('emsw_key');
-    const isViewMode = params.get('mode') === 'view';
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const key = localStorage.getItem('emsw_key');
+            const isViewMode = params.get('mode') === 'view';
 
-    if (isViewMode) {
-        userRole = "viewer";
-        document.body.classList.add('viewer-mode');
-        if(params.get('target') === 'true') {
-            document.body.classList.add('target-only');
-        }
-        await initApp();
-        const urlPlat = params.get('plat') || 'WEB';
-        selectPlatform(urlPlat);
-        return; 
-    }
+            if (isViewMode) {
+                userRole = "viewer";
+                document.body.classList.add('viewer-mode');
+                if(params.get('target') === 'true') { document.body.classList.add('target-only'); }
+                await initApp();
+                const urlPlat = params.get('plat') || 'WEB';
+                selectPlatform(urlPlat);
+                return; 
+            }
 
-    if(key === CONFIG.adminKey || key === CONFIG.superKey) {
-        userRole = (key === CONFIG.superKey) ? "super" : "admin";
-        document.body.classList.add(userRole + '-mode');
-        await initApp();
-        selectPlatform('WEB');
-    } else {
-        document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('appContent').classList.add('hidden');
-    }
-};
+            if(key === CONFIG.adminKey || key === CONFIG.superKey) {
+                userRole = (key === CONFIG.superKey) ? "super" : "admin";
+                document.body.classList.add(userRole + '-mode');
+                await initApp();
+                selectPlatform('WEB');
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('appContent').classList.add('hidden');
+            }
+        };
 
         async function initApp() {
             document.getElementById('loginOverlay').style.display = 'none';
@@ -188,7 +183,6 @@ window.onload = async () => {
             const confSnap = await db.ref('emsw/config/boites').once('value');
             if(confSnap.exists()) boitesConfig = confSnap.val();
             ['WEB','SELENIUM','AUTOMAT'].forEach(p => document.getElementById('conf-'+p).value = boitesConfig[p]);
-            if(userRole !== 'viewer') selectPlatform('WEB');
         }
 
         async function selectPlatform(p) {
@@ -198,7 +192,7 @@ window.onload = async () => {
             document.getElementById('btn-'+p).classList.add('active');
 
             const snap = await db.ref(`emsw/plans/${p}/current`).once('value');
-            stateData = snap.val() || { deploys: [], stats: {}, filter: "" };
+            stateData = snap.val() || { deploys: [], stats: {}, filter: "", editor: "SALAH" };
             if(!stateData.deploys) stateData.deploys = [];
             if(!stateData.stats) stateData.stats = {};
             
@@ -216,53 +210,55 @@ window.onload = async () => {
             document.getElementById('filterInput').value = stateData.filter || "";
             document.getElementById('deployCount').value = (stateData.deploys.length > 0) ? stateData.deploys.length : 8;
             
+            // FIX: Set editor from database
+            if(stateData.editor) { document.getElementById('editorSelect').value = stateData.editor; }
+            
             renderDeploys(stateData.deploys);
             checkChanges();
             document.getElementById('loadingOverlay').style.display = 'none';
         }
-		
-		function renderDeploys(savedDeploys = null) {
-    const num = parseInt(document.getElementById('deployCount').value) || 0;
-    const container = document.getElementById('deploysGrid'); container.innerHTML = "";
-    const total = boitesConfig[currentPlatform] || 100;
-    const base = Math.floor(total / num); const rem = total % num;
-    let dist = [];
+        
+        function renderDeploys(savedDeploys = null) {
+            const num = parseInt(document.getElementById('deployCount').value) || 0;
+            const container = document.getElementById('deploysGrid'); container.innerHTML = "";
+            const total = boitesConfig[currentPlatform] || 100;
+            const base = Math.floor(total / num); const rem = total % num;
+            let dist = [];
+            const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
 
-    const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+            for (let i = 0; i < num; i++) {
+                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
+                const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
+                const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
 
-    for (let i = 0; i < num; i++) {
-        const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
-        const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
-        const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
-
-        container.innerHTML += `
-        <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
-            <div class="flex justify-between items-center mb-3 border-b pb-2">
-                <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
-                <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
-                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
-                <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
-                    ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                </select>
-                <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
-                    ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                </select>
-            </div>
-            <div class="relative group mt-2">
-                <div class="flex justify-between items-center mb-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase italic">IP List</label>
-                    <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">${ipCount} IPS</span>
-                </div>
-                <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-                <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
-            </div>
-        </div>`;
-    }
-    document.getElementById('distDisplay').innerText = dist.join(' | ');
-}
+                container.innerHTML += `
+                <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
+                        <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
+                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
+                        <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
+                            ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                        <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
+                            ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="relative group mt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase italic">IP List</label>
+                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">${ipCount} IPS</span>
+                        </div>
+                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
+                        <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('distDisplay').innerText = dist.join(' | ');
+        }
 
         function updateIPCount(textarea) {
             const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
@@ -274,6 +270,7 @@ window.onload = async () => {
             if(userRole === 'viewer') return;
             let changed = false;
             if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
+            if(document.getElementById('editorSelect').value !== (stateData.editor || "SALAH")) changed = true;
             if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
 
             const s = stateData.stats || {};
@@ -300,6 +297,7 @@ window.onload = async () => {
 
         async function saveAll() {
             document.getElementById('loadingOverlay').style.display = 'flex';
+            const editorName = document.getElementById('editorSelect').value;
             const cards = document.querySelectorAll('.deploy-card');
             const deploys = Array.from(cards).map(c => ({
                 from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
@@ -317,20 +315,18 @@ window.onload = async () => {
 
             let logChanges = [];
             if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
-            if(stats.paused !== (stateData.stats?.paused || "")) logChanges.push(`⏸ Paused: ${stats.paused}`);
+            if(editorName !== (stateData.editor || "")) logChanges.push(`👤 Editor: ${editorName}`);
 
             deploys.forEach((d, i) => {
                 const o = stateData.deploys[i] || {};
                 let diffs = [];
                 if(d.id !== (o.id || "")) diffs.push("ID");
                 if(d.from !== (o.from || "")) diffs.push("FROM");
-                if(d.batch !== (o.batch || "")) diffs.push("BATCH");
-                if(d.rules !== (o.rules || "")) diffs.push("RULES");
                 if(d.ips !== (o.ips || "")) diffs.push("IPs");
                 if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
             });
 
-            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter, stats, updatedAt: new Date().toLocaleString() });
+            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter, stats, editor: editorName, updatedAt: new Date().toLocaleString() });
 
             if(logChanges.length > 0) {
                 const publicUrl = "https://emsw1.github.io/emsw/";
@@ -338,9 +334,8 @@ window.onload = async () => {
                 let changesText = ""; 
                 logChanges.forEach(l => { changesText += "• " + l + "\n"; });
 
-                // --- MODIF SALAH: EDIT BY SALAH (NO IP) ---
                 const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                                    `🖥️ <b>EDIT BY : SALAH</b>\n` +
+                                    `🖥️ <b>EDIT BY : ${editorName}</b>\n` +
                                     `━━━━━━━━━━━━━━━\n` +
                                     `📝 <b>CHANGES:</b>\n` +
                                     `${changesText}` +
@@ -349,8 +344,7 @@ window.onload = async () => {
 
                 try {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
                     });
                 } catch (e) { console.error("Telegram Error:", e); }
@@ -361,6 +355,7 @@ window.onload = async () => {
         async function superQuickSave() {
             if(userRole !== 'super') return;
             document.getElementById('loadingOverlay').style.display = 'flex';
+            const editorName = document.getElementById('editorSelect').value;
             const cards = document.querySelectorAll('.deploy-card');
             const deploys = Array.from(cards).map(c => ({
                 from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
@@ -373,7 +368,7 @@ window.onload = async () => {
                 paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value,
                 end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value
             };
-            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, updatedAt: new Date().toLocaleString() });
+            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, editor: editorName, updatedAt: new Date().toLocaleString() });
             location.reload();
         }
 
@@ -389,8 +384,8 @@ window.onload = async () => {
         function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
         function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
-		
-		function copyIPs(index, btn) {
+        
+        function copyIPs(index, btn) {
             const textarea = document.getElementById(`ips-${index}`);
             textarea.select();
             navigator.clipboard.writeText(textarea.value).then(() => {
