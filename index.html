@@ -42,7 +42,7 @@
         display: none !important;
     }
 	
-	
+	.viewer-mode .viewer-only-btn { display: block !important; }
 	
 	</style>
 </head>
@@ -232,40 +232,42 @@ window.onload = async () => {
 		
 		
 		function renderDeploys(savedDeploys = null) {
-            const num = parseInt(document.getElementById('deployCount').value) || 0;
-            const container = document.getElementById('deploysGrid'); container.innerHTML = "";
-            const total = boitesConfig[currentPlatform] || 100;
-            const base = Math.floor(total / num); const rem = total % num;
-            let dist = [];
+    const num = parseInt(document.getElementById('deployCount').value) || 0;
+    const container = document.getElementById('deploysGrid'); container.innerHTML = "";
+    const total = boitesConfig[currentPlatform] || 100;
+    const base = Math.floor(total / num); const rem = total % num;
+    let dist = [];
 
-            // Check wach l-user ghadi i-koun ghir viewer
-            const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+    const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
 
-            for (let i = 0; i < num; i++) {
-                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
-                const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
-                
-                container.innerHTML += `
-                <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
-                    <div class="flex justify-between items-center mb-3 border-b pb-2">
-                        <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
-                        <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
-                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
-                        <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
-                            ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                        </select>
-                        <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
-                            ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                        </select>
-                    </div>
-                    <textarea ${isReadonly} oninput="checkChanges()" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-                </div>`;
-            }
-            document.getElementById('distDisplay').innerText = dist.join(' | ');
-        }
+    for (let i = 0; i < num; i++) {
+        const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
+        const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
+        
+        container.innerHTML += `
+        <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
+            <div class="flex justify-between items-center mb-3 border-b pb-2">
+                <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
+                <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
+                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
+                <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
+                    ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                </select>
+                <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
+                    ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                </select>
+            </div>
+            <div class="relative group">
+                <textarea id="ips-${i}" ${isReadonly} oninput="checkChanges()" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
+                <button onclick="copyIPs(${i}, this)" class="hidden viewer-only-btn absolute right-2 top-2 bg-blue-600 text-white text-[8px] px-2 py-1 rounded font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
+            </div>
+        </div>`;
+    }
+    document.getElementById('distDisplay').innerText = dist.join(' | ');
+}
 
         function checkChanges() {
             if(userRole === 'viewer') return;
@@ -332,22 +334,20 @@ window.onload = async () => {
 
 
 
-// ... (mchi l-ligne 214 f saveAll function)
 if(logChanges.length > 0) {
-    // HAD L-LINK KHASSO IKON EXACT
-    const publicUrl = "https://emsw1.github.io/emsw/"; 
-    const viewLink = `${publicUrl}index.html?mode=view&plat=${currentPlatform}&target=true`;
-    
-    let changesText = ""; 
-    logChanges.forEach(l => { changesText += "• " + l + "\n"; });
+                const publicUrl = "https://emsw1.github.io/emsw/";
+                // Zdna &target=true bach n-fahmou l-page t-7iyyad l-History
+                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
+                
+                let changesText = ""; 
+                logChanges.forEach(l => { changesText += "• " + l + "\n"; });
 
-    const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                        `━━━━━━━━━━━━━━━\n` +
-                        `📝 <b>CHANGES:</b>\n` +
-                        `${changesText}` +
-                        `━━━━━━━━━━━━━━━\n` +
-                        `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
-// ...
+                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
+                                    `━━━━━━━━━━━━━━━\n` +
+                                    `📝 <b>CHANGES:</b>\n` +
+                                    `${changesText}` +
+                                    `━━━━━━━━━━━━━━━\n` +
+                                    `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
 
                 try {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
@@ -397,8 +397,22 @@ if(logChanges.length > 0) {
         function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
         function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
+		
+		
+		function copyIPs(idx, btn) {
+    const txt = document.getElementById(`ips-${idx}`);
+    txt.select();
+    navigator.clipboard.writeText(txt.value);
+    const old = btn.innerText;
+    btn.innerText = "COPIED ✅";
+    btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+    setTimeout(() => { 
+        btn.innerText = old; 
+        btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+    }, 1500);
+}
+		
+		
     </script>
 </body>
 </html>
-
-
