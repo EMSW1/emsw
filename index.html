@@ -9,45 +9,33 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         .deploy-card { transition: all 0.2s ease; border-left: 5px solid #cbd5e1; }
-    .plat-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
-    #loadingOverlay, #loginOverlay { background: rgba(255,255,255,0.98); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
-    .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
-    .admin-mode .super-only { display: none !important; }
-    .admin-locked { pointer-events: none; background: #f8fafc !important; }
-    #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
-    #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
+        .plat-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
+        #loadingOverlay, #loginOverlay { background: rgba(255,255,255,0.98); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
+        .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
+        .admin-mode .super-only { display: none !important; }
+        .admin-locked { pointer-events: none; background: #f8fafc !important; }
+        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
+        #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
 
-    /* --- Jdid: Khbi l-history w l-stats f mode Viewer dyal Telegram --- */
-    .viewer-mode #statsSection, 
-    .viewer-mode #historySection,
-    .viewer-mode header { display: none !important; }
-    
-    .target-only .plat-btn:not(.active) { display: none !important; }
-	
-	/* Style Viewer: Rejja3 l-inputs y-banou bhala ghir Text */
-    .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
-        border: none !important;
-        background: transparent !important;
-        pointer-events: none !important; /* Block click */
-        color: #1e293b !important; /* Slate 800 */
-        padding-left: 0 !important;
-    }
+        .viewer-mode #statsSection, .viewer-mode header { display: none !important; }
+        .target-only .plat-btn:not(.active) { display: none !important; }
+        
+        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
+            border: none !important;
+            background: transparent !important;
+            pointer-events: none !important;
+            color: #1e293b !important;
+            padding-left: 0 !important;
+        }
 
-    .viewer-mode .inp-id {
-        color: #2563eb !important; /* Khalli l-ID bl-azraq */
-    }
-
-    /* Khbi l-buttons dyal l-platformes bach tban interface n9iya */
-    .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 {
-        display: none !important;
-    }
-	
-	.viewer-only-btn { display: none !important; }
-	.viewer-mode .viewer-only-btn { display: block !important; }
-	
-
-	
-	</style>
+        .viewer-mode .inp-id { color: #2563eb !important; }
+        .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 { display: none !important; }
+        
+        /* FIX: Biyyen bouton Copy ghir f viewer mode */
+        .viewer-only-btn { display: none !important; }
+        .viewer-mode .viewer-only-btn { display: block !important; pointer-events: auto !important; }
+        .viewer-mode .relative { pointer-events: auto !important; }
+    </style>
 </head>
 <body class="bg-slate-50 p-4 md:p-8 text-slate-900">
 
@@ -139,44 +127,31 @@
         let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "" };
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
 
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const key = localStorage.getItem('emsw_key');
+            const isViewMode = params.get('mode') === 'view';
 
-window.onload = async () => {
-    const params = new URLSearchParams(window.location.search);
-    const key = localStorage.getItem('emsw_key');
-    const isViewMode = params.get('mode') === 'view';
+            if (isViewMode) {
+                userRole = "viewer";
+                document.body.classList.add('viewer-mode');
+                if(params.get('target') === 'true') document.body.classList.add('target-only');
+                await initApp();
+                const urlPlat = params.get('plat') || 'WEB';
+                selectPlatform(urlPlat);
+                return; 
+            }
 
-    // 1. ILA KAN L-LINK FIH mode=view (SABEQ HAD L-CONDITION HIA L-LOWLA)
-    if (isViewMode) {
-        userRole = "viewer";
-        document.body.classList.add('viewer-mode');
-        
-        // Ila kant target=true, khbi l-platforms l-khrin
-        if(params.get('target') === 'true') {
-            document.body.classList.add('target-only');
-        }
-        
-        await initApp();
-        
-        // Khoud l-platforme mn l-URL, ila makantch dir WEB
-        const urlPlat = params.get('plat') || 'WEB';
-        selectPlatform(urlPlat);
-        
-        // STOP: Mat-douzch l-login logic ga3
-        return; 
-    }
-
-    // 2. ILA MAKANCH mode=view, CHOF WACH KAYN LOGIN DEJA
-    if(key === CONFIG.adminKey || key === CONFIG.superKey) {
-        userRole = (key === CONFIG.superKey) ? "super" : "admin";
-        document.body.classList.add(userRole + '-mode');
-        await initApp();
-        selectPlatform('WEB');
-    } else {
-        // 3. ILA MAKAYN LA mode=view LA login, TLEB L-PASSWORD
-        document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('appContent').classList.add('hidden');
-    }
-};
+            if(key === CONFIG.adminKey || key === CONFIG.superKey) {
+                userRole = (key === CONFIG.superKey) ? "super" : "admin";
+                document.body.classList.add(userRole + '-mode');
+                await initApp();
+                selectPlatform('WEB');
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('appContent').classList.add('hidden');
+            }
+        };
 
         async function initApp() {
             document.getElementById('loginOverlay').style.display = 'none';
@@ -199,22 +174,19 @@ window.onload = async () => {
 
             const confSnap = await db.ref('emsw/config/boites').once('value');
             if(confSnap.exists()) boitesConfig = confSnap.val();
-            ['WEB','SELENIUM','AUTOMAT'].forEach(p => document.getElementById('conf-'+p).value = boitesConfig[p]);
-            if(userRole !== 'viewer') selectPlatform('WEB');
+            ['WEB','SELENIUM','AUTOMAT'].forEach(p => { if(document.getElementById('conf-'+p)) document.getElementById('conf-'+p).value = boitesConfig[p] });
         }
 
         async function selectPlatform(p) {
             currentPlatform = p;
             document.getElementById('loadingOverlay').style.display = 'flex';
             document.querySelectorAll('.plat-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+p).classList.add('active');
+            if(document.getElementById('btn-'+p)) document.getElementById('btn-'+p).classList.add('active');
 
             const snap = await db.ref(`emsw/plans/${p}/current`).once('value');
             stateData = snap.val() || { deploys: [], stats: {}, filter: "" };
-            if(!stateData.deploys) stateData.deploys = [];
-            if(!stateData.stats) stateData.stats = {};
             
-            const s = stateData.stats;
+            const s = stateData.stats || {};
             document.getElementById('statSeeds').value = s.seeds || '';
             document.getElementById('statRDPs').value = s.rdps || '';
             document.getElementById('statSessions').value = s.sessions || '';
@@ -226,82 +198,67 @@ window.onload = async () => {
             document.getElementById('statEnd').value = s.end || '';
             document.getElementById('rotDetailText').value = s.rotDetails || '';
             document.getElementById('filterInput').value = stateData.filter || "";
-            document.getElementById('deployCount').value = (stateData.deploys.length > 0) ? stateData.deploys.length : 8;
+            document.getElementById('deployCount').value = (stateData.deploys?.length > 0) ? stateData.deploys.length : 8;
             
             renderDeploys(stateData.deploys);
             checkChanges();
             document.getElementById('loadingOverlay').style.display = 'none';
         }
-		
-		
-		function renderDeploys(savedDeploys = null) {
-    const num = parseInt(document.getElementById('deployCount').value) || 0;
-    const container = document.getElementById('deploysGrid'); container.innerHTML = "";
-    const total = boitesConfig[currentPlatform] || 100;
-    const base = Math.floor(total / num); const rem = total % num;
-    let dist = [];
 
-    const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+        function renderDeploys(savedDeploys = null) {
+            const num = parseInt(document.getElementById('deployCount').value) || 0;
+            const container = document.getElementById('deploysGrid'); container.innerHTML = "";
+            const total = boitesConfig[currentPlatform] || 100;
+            const base = Math.floor(total / num); const rem = total % num;
+            let dist = [];
+            const isReadonly = (userRole === 'viewer') ? 'readonly' : '';
 
-    for (let i = 0; i < num; i++) {
-        const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
-        const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
-        
-        container.innerHTML += `
-        <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
-            <div class="flex justify-between items-center mb-3 border-b pb-2">
-                <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
-                <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
-                <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
-                <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
-                    ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                </select>
-                <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
-                    ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                </select>
-            </div>
-            <div class="relative group mt-2">
-        <textarea id="ips-${i}" ${isReadonly} class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-        
-        <button onclick="copyIPs(${i}, this)" 
-                class="viewer-only-btn hidden absolute right-2 top-2 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">
-            Copy
-        </button>
-            </div>
-        </div>`;
-    }
-    document.getElementById('distDisplay').innerText = dist.join(' | ');
-}
+            for (let i = 0; i < num; i++) {
+                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
+                const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
+                
+                container.innerHTML += `
+                <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
+                        <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
+                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
+                        <select ${userRole==='viewer'?'disabled':''} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
+                            ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                        <select ${userRole==='viewer'?'disabled':''} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
+                            ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="relative mt-2">
+                        <textarea id="ips-${i}" ${isReadonly} class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
+                        <button onclick="copyIPs(${i}, this)" class="viewer-only-btn absolute right-2 top-2 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('distDisplay').innerText = dist.join(' | ');
+        }
+
+        function copyIPs(idx, btn) {
+            const txt = document.getElementById(`ips-${idx}`);
+            navigator.clipboard.writeText(txt.value).then(() => {
+                const old = btn.innerText;
+                btn.innerText = "COPIED! ✅";
+                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+                setTimeout(() => { 
+                    btn.innerText = old; 
+                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+                }, 2000);
+            });
+        }
 
         function checkChanges() {
             if(userRole === 'viewer') return;
             let changed = false;
-            if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
-            if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
-
-            const s = stateData.stats || {};
-            const currentStats = {
-                seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
-                paused: document.getElementById('statPaused').value, rotDetails: document.getElementById('rotDetailText').value
-            };
-            if(currentStats.seeds !== (s.seeds || "") || currentStats.rdps !== (s.rdps || "") || currentStats.paused !== (s.paused || "") || currentStats.rotDetails !== (s.rotDetails || "")) changed = true;
-
-            if(!changed) {
-                const cards = document.querySelectorAll('.deploy-card');
-                for(let i=0; i<cards.length; i++) {
-                    const o = stateData.deploys[i] || {};
-                    const cur = { 
-                        from: cards[i].querySelector('.inp-from').value, id: cards[i].querySelector('.inp-id').value, 
-                        batch: cards[i].querySelector('.inp-batch').value, rules: cards[i].querySelector('.inp-rules').value, 
-                        ips: cards[i].querySelector('.inp-ips').value 
-                    };
-                    if(cur.id !== (o.id || "") || cur.from !== (o.from || "") || cur.batch !== (o.batch || "") || cur.rules !== (o.rules || "") || cur.ips !== (o.ips || "")) { changed = true; break; }
-                }
-            }
-            document.getElementById('saveBtn').disabled = !changed;
+            document.getElementById('saveBtn').disabled = false; // Simple logic for testing
         }
 
         async function saveAll() {
@@ -311,7 +268,6 @@ window.onload = async () => {
                 from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
                 batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim()
             }));
-
             const filter = document.getElementById('filterInput').value.trim();
             const stats = {
                 seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
@@ -320,76 +276,21 @@ window.onload = async () => {
                 paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value,
                 end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value
             };
-
-            let logChanges = [];
-            if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
-            if(stats.paused !== (stateData.stats?.paused || "")) logChanges.push(`⏸ Paused: ${stats.paused}`);
-
-            deploys.forEach((d, i) => {
-                const o = stateData.deploys[i] || {};
-                let diffs = [];
-                if(d.id !== (o.id || "")) diffs.push("ID");
-                if(d.from !== (o.from || "")) diffs.push("FROM");
-                if(d.batch !== (o.batch || "")) diffs.push("BATCH");
-                if(d.rules !== (o.rules || "")) diffs.push("RULES");
-                if(d.ips !== (o.ips || "")) diffs.push("IPs");
-                if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
-            });
-
             await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter, stats, updatedAt: new Date().toLocaleString() });
-
-
-
-
-if(logChanges.length > 0) {
-                const publicUrl = "https://emsw1.github.io/emsw/";
-                // Zdna &target=true bach n-fahmou l-page t-7iyyad l-History
-                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                
-                let changesText = ""; 
-                logChanges.forEach(l => { changesText += "• " + l + "\n"; });
-
-                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `📝 <b>CHANGES:</b>\n` +
-                                    `${changesText}` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
-
-                try {
-                    await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            chat_id: CONFIG.telegram.chatId, 
-                            text: telegramMsg, 
-                            parse_mode: 'HTML', 
-                            disable_web_page_preview: false 
-                        })
-                    });
-                } catch (e) { console.error("Telegram Error:", e); }
-            }
-
-            setTimeout(() => { location.reload(); }, 500);
+            
+            const viewLink = `https://emsw1.github.io/emsw/?mode=view&plat=${currentPlatform}&target=true`;
+            const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n━━━━━━━━━━━━━━━\n📝 <b>IPs Updated</b>\n━━━━━━━━━━━━━━━\n🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+            
+            await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
+            });
+            location.reload();
         }
 
         async function superQuickSave() {
             if(userRole !== 'super') return;
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            const cards = document.querySelectorAll('.deploy-card');
-            const deploys = Array.from(cards).map(c => ({
-                from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
-                batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim()
-            }));
-            const stats = {
-                seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
-                sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value,
-                rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value,
-                paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value,
-                end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value
-            };
-            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, updatedAt: new Date().toLocaleString() });
-            location.reload();
+            saveAll();
         }
 
         async function updateGlobalConfig(plat, val) {
@@ -397,32 +298,12 @@ if(logChanges.length > 0) {
             boitesConfig[plat] = parseInt(val) || 0;
             await db.ref('emsw/config/boites').set(boitesConfig);
             renderDeploys(stateData.deploys);
-            checkChanges();
         }
 
         function openRot() { document.getElementById('rotDetailPanel').style.display = 'block'; }
         function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
         function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
-		
-		
-		function copyIPs(index, btn) {
-    const textarea = document.getElementById(`ips-${index}`);
-    textarea.select();
-    navigator.clipboard.writeText(textarea.value).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = "COPIED! ✅";
-        btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-        }, 2000);
-    }).catch(err => {
-        console.error('Mouchkil f Copy:', err);
-    });
-}
-		
-		
     </script>
 </body>
 </html>
