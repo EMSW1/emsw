@@ -332,20 +332,22 @@ window.onload = async () => {
 
 
 
+// ... (mchi l-ligne 214 f saveAll function)
 if(logChanges.length > 0) {
-                const publicUrl = "https://emsw1.github.io/emsw/";
-                // Zdna &target=true bach n-fahmou l-page t-7iyyad l-History
-                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                
-                let changesText = ""; 
-                logChanges.forEach(l => { changesText += "• " + l + "\n"; });
+    // HAD L-LINK KHASSO IKON EXACT
+    const publicUrl = "https://emsw1.github.io/emsw/"; 
+    const viewLink = `${publicUrl}index.html?mode=view&plat=${currentPlatform}&target=true`;
+    
+    let changesText = ""; 
+    logChanges.forEach(l => { changesText += "• " + l + "\n"; });
 
-                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `📝 <b>CHANGES:</b>\n` +
-                                    `${changesText}` +
-                                    `━━━━━━━━━━━━━━━\n` +
-                                    `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+    const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` +
+                        `━━━━━━━━━━━━━━━\n` +
+                        `📝 <b>CHANGES:</b>\n` +
+                        `${changesText}` +
+                        `━━━━━━━━━━━━━━━\n` +
+                        `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+// ...
 
                 try {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
