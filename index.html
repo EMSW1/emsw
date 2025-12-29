@@ -94,9 +94,11 @@
                 <div class="admin-only w-1/4">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-center italic">Editor</label>
                     <select id="editorSelect" onchange="checkChanges()" class="w-full p-2 border-2 border-slate-200 rounded-lg font-black text-slate-700 text-xs outline-none focus:border-blue-500">
-                        <option value="SALAH">SALAH</option>
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="GHOST">GHOST</option>
+                        <option value="MOHAMED IAROCHENE">MOHAMED IAROCHENE</option>
+                        <option value="MEHDI AOURACHE">MEHDI AOURACHE</option>
+                        <option value="ALLAL GASMI">ALLAL GASMI</option>
+                        <option value="ISMAIL BENKIRANE">ISMAIL BENKIRANE</option>
+                        <option value="ANOUAR MOUATASSIM">ANOUAR MOUATASSIM</option>
                     </select>
                 </div>
                 <div class="admin-only w-1/4">
@@ -132,7 +134,7 @@
         };
 
         firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
-        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: "SALAH" };
+        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: ""};
         let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
 
         window.onload = async () => {
@@ -171,9 +173,7 @@
                 badge.classList.add('bg-purple-600');
                 document.querySelectorAll('.super-only').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('input[type=number]').forEach(i => i.disabled = false);
-            } else {
-                badge.classList.add(userRole==='admin'?'bg-blue-600':'bg-slate-400');
-            }
+            } else { badge.classList.add(userRole==='admin'?'bg-blue-600':'bg-slate-400'); }
 
             if(userRole !== 'super') {
                 document.querySelectorAll('.stat-field').forEach(i => i.classList.add('admin-locked'));
@@ -192,7 +192,7 @@
             document.getElementById('btn-'+p).classList.add('active');
 
             const snap = await db.ref(`emsw/plans/${p}/current`).once('value');
-            stateData = snap.val() || { deploys: [], stats: {}, filter: "", editor: "SALAH" };
+            stateData = snap.val() || { deploys: [], stats: {}, filter: "", editor: ""};
             if(!stateData.deploys) stateData.deploys = [];
             if(!stateData.stats) stateData.stats = {};
             
@@ -209,8 +209,6 @@
             document.getElementById('rotDetailText').value = s.rotDetails || '';
             document.getElementById('filterInput').value = stateData.filter || "";
             document.getElementById('deployCount').value = (stateData.deploys.length > 0) ? stateData.deploys.length : 8;
-            
-            // FIX: Set editor from database
             if(stateData.editor) { document.getElementById('editorSelect').value = stateData.editor; }
             
             renderDeploys(stateData.deploys);
@@ -270,8 +268,10 @@
             if(userRole === 'viewer') return;
             let changed = false;
             if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
-            if(document.getElementById('editorSelect').value !== (stateData.editor || "SALAH")) changed = true;
             if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
+            
+            // FIX 1: Editor change now triggers Save button activity
+            if(document.getElementById('editorSelect').value !== (stateData.editor || "")) changed = true;
 
             const s = stateData.stats || {};
             const currentStats = {
@@ -303,7 +303,6 @@
                 from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(),
                 batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim()
             }));
-
             const filter = document.getElementById('filterInput').value.trim();
             const stats = {
                 seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
@@ -315,14 +314,17 @@
 
             let logChanges = [];
             if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
-            if(editorName !== (stateData.editor || "")) logChanges.push(`👤 Editor: ${editorName}`);
 
+            // FIX 2: Added Batch and Rules detection for Telegram Notifications
             deploys.forEach((d, i) => {
                 const o = stateData.deploys[i] || {};
                 let diffs = [];
                 if(d.id !== (o.id || "")) diffs.push("ID");
                 if(d.from !== (o.from || "")) diffs.push("FROM");
                 if(d.ips !== (o.ips || "")) diffs.push("IPs");
+                if(d.batch !== (o.batch || "")) diffs.push("Batch");
+                if(d.rules !== (o.rules || "")) diffs.push("Rules");
+                
                 if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
             });
 
@@ -384,7 +386,6 @@
         function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
         function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
         function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
-        
         function copyIPs(index, btn) {
             const textarea = document.getElementById(`ips-${index}`);
             textarea.select();
@@ -398,7 +399,6 @@
                 }, 2000);
             });
         }
-
         function copyAllIDs(btn) {
             const idInputs = document.querySelectorAll('.inp-id');
             const ids = Array.from(idInputs).map(inp => inp.value.trim()).filter(val => val !== "");
