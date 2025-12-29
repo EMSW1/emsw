@@ -237,6 +237,9 @@ window.onload = async () => {
         const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
         const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
         
+        // Count IPs logic
+        const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
+
         container.innerHTML += `
         <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
             <div class="flex justify-between items-center mb-3 border-b pb-2">
@@ -254,17 +257,28 @@ window.onload = async () => {
                 </select>
             </div>
             <div class="relative group mt-2">
-        <textarea id="ips-${i}" ${isReadonly} class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-        
-        <button onclick="copyIPs(${i}, this)" 
-                class="viewer-only-btn hidden absolute right-2 top-2 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">
-            Copy
-        </button>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-[9px] font-black text-slate-400 uppercase italic">IP List</label>
+                    <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">${ipCount} IPS</span>
+                </div>
+                <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
+                
+                <button onclick="copyIPs(${i}, this)" 
+                        class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">
+                    Copy
+                </button>
             </div>
         </div>`;
     }
     document.getElementById('distDisplay').innerText = dist.join(' | ');
 }
+
+        // New function to update count in real-time
+        function updateIPCount(textarea) {
+            const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
+            const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
+            countSpan.innerText = `${lines} IPS`;
+        }
 
         function checkChanges() {
             if(userRole === 'viewer') return;
