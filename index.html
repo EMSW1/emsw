@@ -7,93 +7,188 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        .deploy-card { transition: all 0.2s ease; border-left: 5px solid #cbd5e1; }
-        .plat-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
-        #loadingOverlay, #loginOverlay { background: rgba(255,255,255,0.98); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; }
+        
+        /* Glassmorphism Effect */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .deploy-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-left: 6px solid #e2e8f0; 
+        }
+        .deploy-card:hover { 
+            transform: translateY(-2px);
+            border-left-color: #2563eb;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .plat-btn { transition: all 0.2s; border: 2px solid transparent; }
+        .plat-btn.active { 
+            border-color: #2563eb; 
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #1e40af;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        #loadingOverlay, #loginOverlay { 
+            background: rgba(255,255,255,0.9); 
+            backdrop-filter: blur(8px);
+            position: fixed; inset: 0; z-index: 200; 
+            align-items: center; justify-content: center; display: flex; flex-direction: column; 
+        }
+
         .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
         .admin-mode .super-only { display: none !important; }
-        .admin-locked { pointer-events: none; background: #f8fafc !important; }
-        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; }
-        #rotDetailPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 90%; max-width: 450px; }
+        .admin-locked { pointer-events: none; background: #f1f5f9 !important; }
 
-        .viewer-mode #statsSection, 
-        .viewer-mode #historySection,
-        .viewer-mode header { display: none !important; }
-        .target-only .plat-btn:not(.active) { display: none !important; }
-        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
-            border: none !important;
-            background: transparent !important;
-            pointer-events: none !important;
-            color: #1e293b !important;
-            padding-left: 0 !important;
+        #saveBtn {
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
-        .viewer-mode .inp-id { color: #2563eb !important; }
+        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; border-color: #64748b; transform: scale(1) !important; }
+        #saveBtn:active { transform: scale(0.98); }
+
+        #rotDetailPanel { 
+            display: none; position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 300; width: 95%; max-width: 500px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .viewer-mode #statsSection, .viewer-mode #historySection, .viewer-mode header { display: none !important; }
+        .target-only .plat-btn:not(.active) { display: none !important; }
+        
+        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
+            border: none !important; background: transparent !important;
+            pointer-events: none !important; color: #1e293b !important; padding-left: 0 !important;
+            box-shadow: none !important;
+        }
+        .viewer-mode .inp-id { color: #2563eb !important; font-weight: 900; }
         .viewer-mode .grid.grid-cols-1.md\:grid-cols-3 { display: none !important; }
         .viewer-only-btn { display: none !important; }
         .viewer-mode .viewer-only-btn { display: block !important; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-50 p-4 md:p-8 text-slate-900">
+<body class="p-4 md:p-8 text-slate-900">
 
     <div id="loginOverlay">
-        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center border">
-            <h2 class="text-3xl font-black italic text-blue-600 mb-6 uppercase tracking-tighter">EMSW TEST ACCESS</h2>
-            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="PASSWORD" class="w-full p-4 border-2 rounded-2xl mb-4 text-center font-bold outline-none focus:border-blue-500">
-            <button onclick="checkAccess()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black uppercase shadow-lg">Login</button>
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center border border-slate-100">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl shadow-blue-200">
+                <span class="text-white text-3xl font-black italic">W</span>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">EMSW ACCESS</h2>
+            <p class="text-slate-400 text-xs font-bold mb-8 uppercase tracking-widest">Secure Control Panel</p>
+            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl mb-4 text-center font-bold outline-none focus:border-blue-500 transition-all">
+            <button onclick="checkAccess()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all">Unlock Engine</button>
         </div>
     </div>
 
-    <div id="rotDetailPanel" class="bg-white p-6 rounded-3xl shadow-2xl border-2 border-blue-600">
-        <h3 class="text-lg font-black mb-4 uppercase italic text-blue-600 flex justify-between">Rotation Details <button onclick="closeRot()" class="text-slate-400">✕</button></h3>
-        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-64 p-3 bg-slate-50 border rounded-xl font-mono text-xs uppercase outline-none"></textarea>
-        <button onclick="closeRot()" class="w-full mt-4 bg-slate-800 text-white py-3 rounded-xl font-black uppercase">Close</button>
+    <div id="rotDetailPanel" class="bg-white p-8 rounded-[2rem] border-t-8 border-blue-600">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black uppercase italic text-slate-800">Rotation Details</h3>
+            <button onclick="closeRot()" class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">✕</button>
+        </div>
+        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-72 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-xs uppercase outline-none focus:border-blue-400 transition-all" placeholder="Paste rotation logs here..."></textarea>
+        <button onclick="closeRot()" class="w-full mt-6 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all">Confirm & Close</button>
     </div>
 
-    <div id="loadingOverlay" style="display:none;"><div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div></div>
+    <div id="loadingOverlay" style="display:none;">
+        <div class="relative">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="h-8 w-8 bg-blue-100 rounded-full animate-pulse"></div>
+            </div>
+        </div>
+        <p class="mt-4 text-xs font-black text-blue-600 uppercase tracking-widest">Syncing Cloud...</p>
+    </div>
 
     <div id="appContent" class="hidden max-w-6xl mx-auto space-y-6">
-        <header class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-blue-600 flex justify-between items-center">
-            <h1 class="text-2xl font-black italic uppercase">EMSW <span class="text-blue-600">TEST</span></h1>
+        <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter text-slate-800">EMSW <span class="text-blue-600">TEST</span></h1>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Automated Deployment System</p>
+            </div>
             <div class="flex items-center gap-4">
-                <span id="roleBadge" class="text-[10px] font-black px-3 py-1 rounded-full uppercase text-white bg-slate-400">---</span>
-                <button onclick="logout()" class="admin-only text-xs text-red-500 font-bold underline">Logout</button>
+                <div class="flex flex-col items-end">
+                    <span id="roleBadge" class="text-[9px] font-black px-4 py-1.5 rounded-full uppercase text-white shadow-sm">---</span>
+                </div>
+                <button onclick="logout()" class="admin-only p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn bg-white p-5 rounded-2xl shadow-sm border-2 font-black uppercase italic flex justify-center items-center">
-                WEB <input type="number" id="conf-WEB" class="w-10 ml-2 text-center bg-slate-100 rounded text-xs" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
+                <span class="text-lg">WEB</span>
+                <input type="number" id="conf-WEB" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
-            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn bg-white p-5 rounded-2xl shadow-sm border-2 font-black uppercase italic flex justify-center items-center">
-                SELENIUM <input type="number" id="conf-SELENIUM" class="w-10 ml-2 text-center bg-slate-100 rounded text-xs" onchange="updateGlobalConfig('SELENIUM', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
+                <span class="text-lg">SELENIUM</span>
+                <input type="number" id="conf-SELENIUM" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('SELENIUM', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
-            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn bg-white p-5 rounded-2xl shadow-sm border-2 font-black uppercase italic flex justify-center items-center">
-                AUTOMAT <input type="number" id="conf-AUTOMAT" class="w-10 ml-2 text-center bg-slate-100 rounded text-xs" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
+            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase italic flex justify-between items-center group">
+                <span class="text-lg">AUTOMAT</span>
+                <input type="number" id="conf-AUTOMAT" class="w-12 h-8 text-center bg-white/50 border border-slate-200 rounded-lg text-xs group-hover:bg-white" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
             </button>
         </div>
 
-        <div id="statsSection" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <div class="p-2 bg-blue-50 rounded border"><label class="block text-[9px] font-black text-blue-400 uppercase">Seeds</label><input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-sm uppercase"></div>
-            <div class="p-2 bg-blue-50 rounded border"><label class="block text-[9px] font-black text-blue-400 uppercase">RDPs</label><input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-sm uppercase"></div>
-            <div class="p-2 bg-blue-50 rounded border"><label class="block text-[9px] font-black text-blue-400 uppercase">Sessions</label><input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-sm uppercase"></div>
-            <div class="p-2 bg-blue-50 rounded border text-center">
-                <label class="block text-[9px] font-black text-blue-400 uppercase">Rotation</label>
-                <div class="flex justify-center gap-1 font-bold text-blue-700 text-sm mb-1">
-                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-10 bg-transparent text-center">-<input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-10 bg-transparent text-center">
-                </div>
-                <button onclick="openRot()" class="bg-blue-600 text-white text-[8px] px-2 py-0.5 rounded font-black uppercase">Détail</button>
+        <div id="statsSection" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">Seeds</label>
+                <input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
             </div>
-            <div class="p-2 bg-emerald-50 rounded border"><label class="block text-[9px] font-black text-emerald-400 uppercase">Quality</label><input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-700 text-center outline-none text-sm uppercase"></div>
-            <div class="p-2 bg-rose-50 rounded border"><label class="block text-[9px] font-black text-rose-400 uppercase">Paused</label><input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-700 text-center outline-none text-sm uppercase"></div>
-            <div class="p-2 bg-orange-50 rounded border"><label class="block text-[9px] font-black text-orange-400 uppercase">Period</label><div class="flex gap-1"><input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-bold text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="S"><input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-bold text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="E"></div></div>
+            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">RDPs</label>
+                <input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
+            </div>
+            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1 text-center">Sessions</label>
+                <input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 outline-none text-center text-sm uppercase">
+            </div>
+            <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 text-center">
+                <label class="block text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1">Rotation</label>
+                <div class="flex justify-center items-center gap-0.5 font-black text-blue-700 text-xs mb-1">
+                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none">
+                    <span class="text-blue-300">/</span>
+                    <input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none">
+                </div>
+                <button onclick="openRot()" class="bg-blue-600 text-white text-[7px] px-3 py-1 rounded-full font-black uppercase hover:bg-blue-700 transition-all">Details</button>
+            </div>
+            <div class="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-center">
+                <label class="block text-[8px] font-black text-emerald-400 uppercase tracking-tighter mb-1">Quality</label>
+                <input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-700 text-center outline-none text-sm uppercase">
+            </div>
+            <div class="p-3 bg-rose-50/50 rounded-2xl border border-rose-100 text-center">
+                <label class="block text-[8px] font-black text-rose-400 uppercase tracking-tighter mb-1">Paused</label>
+                <input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-700 text-center outline-none text-sm uppercase">
+            </div>
+            <div class="p-3 bg-orange-50/50 rounded-2xl border border-orange-100">
+                <label class="block text-[8px] font-black text-orange-400 uppercase tracking-tighter mb-1 text-center">Period</label>
+                <div class="flex gap-1">
+                    <input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="START">
+                    <input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 text-[10px] text-center outline-none uppercase" placeholder="END">
+                </div>
+            </div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div class="flex gap-4 items-center">
-                <div class="admin-only w-1/4">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-center italic">Editor</label>
-                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-2 border-2 border-slate-200 rounded-lg font-black text-slate-700 text-xs outline-none focus:border-blue-500">
+                <div class="admin-only w-1/3">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1 italic">Reporting Editor</label>
+                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-700 text-[10px] outline-none focus:border-blue-500 transition-all">
                         <option value="MOHAMED IAROCHENE">MOHAMED IAROCHENE</option>
                         <option value="MEHDI AOURACHE">MEHDI AOURACHE</option>
                         <option value="ALLAL GASMI">ALLAL GASMI</option>
@@ -102,27 +197,33 @@
                     </select>
                 </div>
                 <div class="admin-only w-1/4">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-center">Count</label>
-                    <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-2 border-2 rounded-lg font-black text-blue-600 text-center">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Deploys</label>
+                    <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-blue-600 text-center focus:border-blue-500">
                 </div>
-                <div class="w-2/4">
-                    <label class="block text-[10px] font-black text-blue-500 uppercase mb-1 italic text-center">KEYWORD (MOT)</label>
+                <div class="flex-1">
+                    <label class="block text-[9px] font-black text-blue-500 uppercase mb-2 ml-1 italic">Deployment Keyword</label>
                     <div class="flex gap-2">
-                        <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500 rounded-lg font-black text-blue-700 bg-blue-50 text-center uppercase">
-                        <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-4 rounded-lg font-black text-[10px] uppercase shadow-md active:scale-95">Copy IDs</button>
+                        <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-3 border-2 border-blue-500 rounded-2xl font-black text-blue-700 bg-blue-50/50 text-center uppercase focus:bg-blue-100 transition-all shadow-inner">
+                        <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-200 active:scale-95 transition-all">Copy IDs</button>
                     </div>
                 </div>
             </div>
-            <div class="text-center bg-slate-50 p-2 rounded-xl border border-dashed border-slate-300 uppercase italic text-[10px] font-bold text-slate-600">
-                <div id="distDisplay">---</div>
+            <div class="text-center bg-slate-900/5 p-4 rounded-[1.5rem] border border-dashed border-slate-300">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Distribution Map</p>
+                <div id="distDisplay" class="font-black text-slate-700 text-xs italic tracking-tighter">---</div>
             </div>
         </div>
 
-        <div id="deploysGrid" class="space-y-4"></div>
+        <div id="deploysGrid" class="space-y-4 pb-20"></div>
 
-        <div class="admin-only sticky bottom-4 flex gap-2">
-            <button id="saveBtn" disabled onclick="saveAll()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-xl shadow-2xl border-b-4 border-blue-800 uppercase italic">Save & Send Update</button>
-            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-6 py-5 rounded-2xl font-black text-sm shadow-2xl border-b-4 border-purple-800 uppercase italic whitespace-nowrap italic">⚡ Edit Only</button>
+        <div class="admin-only fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
+            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic tracking-tighter border-b-4 border-blue-900 flex items-center justify-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                Save & Broadcast
+            </button>
+            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-10 py-6 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic whitespace-nowrap active:scale-95 transition-all">
+                ⚡ Silent Edit
+            </button>
         </div>
     </div>
 
@@ -230,28 +331,43 @@
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
 
                 container.innerHTML += `
-                <div class="deploy-card bg-white p-4 rounded-xl shadow-sm border relative">
-                    <div class="flex justify-between items-center mb-3 border-b pb-2">
-                        <span class="bg-slate-800 text-white text-[10px] font-black px-2 py-1 rounded uppercase italic">Deploy ${i+1}</span>
-                        <span class="text-blue-600 font-bold text-xs underline">${bCount} Boites</span>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from p-2 border rounded text-xs font-bold uppercase" value="${d.from || ''}">
-                        <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id p-2 border rounded text-xs font-black text-blue-600 bg-blue-50 uppercase" value="${d.id || ''}">
-                        <select ${isReadonly} onchange="checkChanges()" class="inp-batch p-2 border rounded text-[10px] font-bold uppercase">
-                            ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                        </select>
-                        <select ${isReadonly} onchange="checkChanges()" class="inp-rules p-2 border rounded text-[10px] font-bold uppercase">
-                            ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="relative group mt-2">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[9px] font-black text-slate-400 uppercase italic">IP List</label>
-                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">${ipCount} IPS</span>
+                <div class="deploy-card glass-card p-5 rounded-[2rem] relative">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic tracking-tighter">Deploy ${i+1}</span>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Instance</span>
                         </div>
-                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-2 border rounded text-[10px] font-mono bg-slate-50 uppercase" rows="${userRole==='viewer'?4:1}">${d.ips || ''}</textarea>
-                        <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-2 top-8 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Copy</button>
+                        <span class="text-blue-600 font-black text-[11px] bg-blue-50 px-3 py-1 rounded-full">${bCount} BOITES</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        <div class="space-y-1">
+                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">From Name</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[10px] font-bold uppercase focus:border-blue-400 outline-none" value="${d.from || ''}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Offer ID</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id w-full p-3 border-2 border-blue-100 rounded-2xl text-[10px] font-black text-blue-600 bg-blue-50/50 uppercase focus:border-blue-500 outline-none" value="${d.id || ''}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Batch / Speed</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-batch w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[9px] font-bold uppercase focus:border-blue-400 outline-none">
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[8px] font-black text-slate-400 uppercase ml-1">Filter Rules</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-rules w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[9px] font-bold uppercase focus:border-blue-400 outline-none">
+                                ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="relative mt-2">
+                        <div class="flex justify-between items-center mb-1.5 px-1">
+                            <label class="text-[9px] font-black text-slate-500 uppercase italic tracking-tighter">Target IP List</label>
+                            <span class="ip-count text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-3 py-0.5 rounded-full shadow-sm">${ipCount} NODES</span>
+                        </div>
+                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase shadow-inner outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?6:2}">${d.ips || ''}</textarea>
+                        <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute right-3 bottom-3 bg-blue-600 text-white text-[9px] px-4 py-2 rounded-xl font-black uppercase shadow-lg shadow-blue-500/30 active:scale-95 transition-all">Copy IPs</button>
                     </div>
                 </div>`;
             }
@@ -261,7 +377,7 @@
         function updateIPCount(textarea) {
             const countSpan = textarea.previousElementSibling.querySelector('.ip-count');
             const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
-            countSpan.innerText = `${lines} IPS`;
+            countSpan.innerText = `${lines} NODES`;
         }
 
         function checkChanges() {
@@ -269,8 +385,6 @@
             let changed = false;
             if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
             if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
-            
-            // FIX 1: Editor change now triggers Save button activity
             if(document.getElementById('editorSelect').value !== (stateData.editor || "")) changed = true;
 
             const s = stateData.stats || {};
@@ -315,7 +429,6 @@
             let logChanges = [];
             if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
 
-            // FIX 2: Added Batch and Rules detection for Telegram Notifications
             deploys.forEach((d, i) => {
                 const o = stateData.deploys[i] || {};
                 let diffs = [];
