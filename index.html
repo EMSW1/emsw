@@ -76,7 +76,6 @@
         }
 
         .viewer-mode #statsSection, .viewer-mode #historySection { display: none !important; }
-        /* Removed header display:none from viewer-mode to allow Dark Mode toggle */
         .viewer-mode header .admin-only { display: none !important; }
 
         .target-only .plat-btn:not(.active) { display: none !important; }
@@ -87,7 +86,7 @@
         }
         .viewer-mode .inp-id { color: #3b82f6 !important; font-weight: 900; }
         .viewer-only-btn { display: none !important; }
-        .viewer-mode .viewer-only-btn { display: block !important; }
+        .viewer-mode .viewer-only-btn { display: flex !important; }
 
         #darkToggle { transition: all 0.3s; }
         #darkToggle:active { transform: scale(0.9); }
@@ -340,7 +339,11 @@
                 container.innerHTML += `
                 <div class="deploy-card glass-card p-5 rounded-[2rem] relative">
                     <div class="flex justify-between items-center mb-4 border-b border-slate-500/10 pb-3">
-                        <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic">Deploy ${i+1}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic">Deploy ${i+1}</span>
+                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase shadow-sm active:scale-95 transition-all">Copy IPs</button>
+                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full">${ipCount} IPS</span>
+                        </div>
                         <span class="text-blue-600 font-black text-[11px] bg-blue-500/10 px-3 py-1 rounded-full">${bCount} BOITES</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -366,14 +369,8 @@
                         </div>
                     </div>
                     <div class="relative mt-2">
-                        <div class="flex justify-between items-center mb-1.5 px-1">
-                            <label class="text-[9px] font-black uppercase italic">Target Nodes</label>
-                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-500/5 px-3 py-0.5 rounded-full">${ipCount} IPS</span>
-                        </div>
-                        <div class="relative flex items-center">
-                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden absolute left-3 bottom-3 z-10 bg-blue-600 text-white text-[9px] px-5 py-2.5 rounded-xl font-black uppercase shadow-lg shadow-blue-500/40 active:scale-95 transition-all">Copy IPs</button>
-                            <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?8:2}">${d.ips || ''}</textarea>
-                        </div>
+                        <label class="block text-[9px] font-black uppercase italic mb-1.5 px-1">Target Nodes</label>
+                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?8:2}">${d.ips || ''}</textarea>
                     </div>
                 </div>`;
             }
@@ -381,7 +378,7 @@
         }
 
         function updateIPCount(textarea) {
-            const countSpan = textarea.parentElement.previousElementSibling.querySelector('.ip-count');
+            const countSpan = textarea.closest('.deploy-card').querySelector('.ip-count');
             const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
             countSpan.innerText = `${lines} IPS`;
         }
