@@ -1,490 +1,221 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMSW | TEST</title>
+    <title>EMSW | DASHBOARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
     <style>
-        :root {
-            --bg-body: #f0f4f8;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --text-main: #1e293b;
-            --border-color: rgba(255, 255, 255, 0.4);
-            --input-bg: #f8fafc;
-            --label-color: #64748b;
-        }
+        body { font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+        .global-stat-card { border-radius: 24px; padding: 20px; text-align: center; border-bottom: 4px solid #3b82f6; }
+        .entity-label { transition: all 0.2s ease; cursor: pointer; }
+        .entity-label:hover { transform: translateX(10px); color: #3b82f6; }
+        .details-panel { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .details-panel.open { max-height: 2000px; transition: max-height 1s ease-in; }
+        .stat-input { background: rgba(0,0,0,0.05); border: 1px solid transparent; text-align: center; font-weight: 800; border-radius: 6px; width: 100%; font-size: 14px; padding: 4px; }
+        .dark .stat-input { background: rgba(255,255,255,0.05); color: white; }
+        .label-xs { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; }
 
-        .dark {
-            --bg-body: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.9);
-            --text-main: #f1f5f9;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --input-bg: #1e293b;
-            --label-color: #94a3b8;
-        }
-
-        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); transition: all 0.3s ease; }
-        
-        .glass-card { 
-            background: var(--card-bg); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-        }
-
-        label { color: var(--label-color) !important; opacity: 1 !important; }
-        select, input, textarea { color: var(--text-main) !important; background-color: var(--input-bg) !important; }
-        
-        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; padding-right: 2rem; }
-
-        .deploy-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 6px solid #e2e8f0; }
-        .deploy-card:hover { transform: translateY(-2px); border-left-color: #2563eb; }
-
-        .dark .deploy-card { border-left-color: #334155; }
-        .dark .deploy-card:hover { border-left-color: #3b82f6; }
-
-        .plat-btn { transition: all 0.2s; border: 2px solid transparent; background: var(--card-bg); color: var(--text-main); }
-        .plat-btn.active { 
-            border-color: #2563eb; 
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-
-        #loadingOverlay, #loginOverlay { 
-            background: var(--bg-body); 
-            backdrop-filter: blur(8px);
-            position: fixed; inset: 0; z-index: 200; 
-            align-items: center; justify-content: center; display: flex; flex-direction: column; 
-        }
-
-        .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
-        .admin-mode .super-only { display: none !important; }
-        .admin-locked { pointer-events: none; opacity: 0.8; }
-
-        #saveBtn { transition: all 0.3s; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; transform: scale(1) !important; }
-
-        #rotDetailPanel { 
-            display: none; position: fixed; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); z-index: 300; width: 95%; max-width: 500px; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .viewer-mode #statsSection, .viewer-mode #historySection { display: none !important; }
-        .viewer-mode header .admin-only { display: none !important; }
-
-        .target-only .plat-btn:not(.active) { display: none !important; }
-        
-        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
-            border: none !important; background: transparent !important;
-            pointer-events: none !important; color: var(--text-main) !important; padding-left: 0 !important;
-        }
-        .viewer-mode .inp-id { color: #3b82f6 !important; font-weight: 900; }
-        .viewer-only-btn { display: none !important; }
-        .viewer-mode .viewer-only-btn { display: flex !important; }
-
-        #darkToggle { transition: all 0.3s; }
-        #darkToggle:active { transform: scale(0.9); }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #loginOverlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #0b1120; }
+        .viewer-mode .save-btn { display: none !important; }
+        .viewer-mode .stat-input { pointer-events: none; opacity: 0.8; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 p-4 md:p-8">
 
     <div id="loginOverlay">
-        <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm text-center border">
-            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl">
-                <span class="text-white text-3xl font-black italic">W</span>
-            </div>
-            <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter">EMSW ACCESS</h2>
-            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 border-none rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button onclick="checkAccess()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black uppercase shadow-lg">Unlock</button>
+        <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm shadow-2xl text-center border border-white/10">
+            <h2 class="text-3xl font-[900] italic mb-6 uppercase">EMS <span class="text-blue-500">AUTH</span></h2>
+            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkRole()" placeholder="ENTER KEY" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl text-center mb-4 text-white font-black outline-none focus:border-blue-500 transition-all">
+            <button onclick="checkRole()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl uppercase text-sm tracking-widest transition-all">Login</button>
         </div>
     </div>
 
-    <div id="rotDetailPanel" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-black uppercase italic">Rotation Details</h3>
-            <button onclick="closeRot()" class="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-full">✕</button>
-        </div>
-        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-72 p-4 border-none rounded-2xl font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-blue-400 transition-all"></textarea>
-        <button onclick="closeRot()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Confirm</button>
-    </div>
-
-    <div id="loadingOverlay" style="display:none;"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600"></div></div>
-
-    <div id="appContent" class="hidden max-w-6xl mx-auto space-y-6">
-        <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center">
+    <div id="dashboardContent" class="hidden">
+        <header class="max-w-6xl mx-auto mb-10 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter">EMSW <span class="text-blue-600">TEST</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Control Panel</p>
+                <h1 class="text-3xl font-[900] italic tracking-tighter uppercase">EMSW <span class="text-blue-500">DASHBOARD</span></h1>
+                <p id="role-display" class="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Global Viewer</p>
             </div>
-            <div class="flex items-center gap-3">
-                <button id="darkToggle" onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:scale-110 transition-all">
-                    <span class="dark:hidden text-lg">🌙</span><span class="hidden dark:inline text-lg">☀️</span>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700">
+                    <span class="dark:hidden">☀️</span><span class="hidden dark:inline">🌙</span>
                 </button>
-                <span id="roleBadge" class="text-[9px] font-black px-4 py-1.5 rounded-full uppercase text-white">---</span>
-                <button onclick="logout()" class="admin-only p-2.5 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                </button>
+                <button onclick="logout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Logout</button>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
-                <span class="text-lg italic">WEB</span>
-                <input type="number" id="conf-WEB" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
-            </button>
-            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
-                <span class="text-lg italic">SELENIUM</span>
-                <input type="number" id="conf-SELENIUM" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('SELENIUM', this.value)" onclick="event.stopPropagation()" disabled>
-            </button>
-            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group">
-                <span class="text-lg italic">AUTOMAT</span>
-                <input type="number" id="conf-AUTOMAT" class="w-12 h-8 text-center rounded-lg text-xs" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
-            </button>
-        </div>
+        <section class="max-w-6xl mx-auto mb-12">
+            <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">Global Stats (Live)</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="glass-card global-stat-card"><p class="label-xs">Total RDPs</p><h3 id="global-rdps" class="text-3xl font-black italic">0</h3></div>
+                <div class="glass-card global-stat-card border-emerald-500"><p class="label-xs">Total Seeds</p><h3 id="global-seeds" class="text-3xl font-black italic text-emerald-500">0</h3></div>
+                <div class="glass-card global-stat-card border-purple-500"><p class="label-xs">Qualité en cours</p><h3 id="global-qualite" class="text-3xl font-black italic text-purple-500">0</h3></div>
+                <div class="glass-card global-stat-card border-orange-500"><p class="label-xs">Paused en cours</p><h3 id="global-paused" class="text-3xl font-black italic text-orange-500">0</h3></div>
+                <div class="glass-card global-stat-card border-slate-400"><p class="label-xs">Total Deploys</p><h3 id="global-proxy" class="text-3xl font-black italic">0</h3></div>
+            </div>
+        </section>
 
-        <div id="statsSection" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                <label class="block text-[8px] font-black uppercase text-center mb-1">Seeds</label>
-                <input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
-            </div>
-            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                <label class="block text-[8px] font-black uppercase text-center mb-1">RDPs</label>
-                <input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
-            </div>
-            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-center">
-                <label class="block text-[8px] font-black uppercase mb-1">Rotation</label>
-                <div class="flex justify-center items-center gap-0.5 font-black text-blue-500 text-xs mb-1">
-                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic"> / <input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic">
+        <section class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">Détails Entités</h2>
+            
+            <div class="glass-card rounded-[2rem] overflow-hidden">
+                <div onclick="togglePanel('ems4-panel')" class="entity-label p-6 flex justify-between items-center group">
+                    <div class="flex items-center gap-4">
+                        <span class="bg-blue-600 text-white font-black px-4 py-1 rounded-full italic text-sm">EMS4</span>
+                        <span class="text-sm font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-500">REAL-TIME MONITOR</span>
+                    </div>
+                    <svg class="w-5 h-5 text-slate-400 transform transition-transform" id="ems4-panel-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"></path></svg>
                 </div>
-                <button onclick="openRot()" class="bg-blue-600 text-white text-[7px] px-3 py-1 rounded-full font-black uppercase">Details</button>
-            </div>
-            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                <label class="block text-[8px] font-black uppercase text-center mb-1">Sessions</label>
-                <input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-500 outline-none text-center text-sm uppercase">
-            </div>
-            <div class="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center">
-                <label class="block text-[8px] font-black uppercase mb-1">Quality</label>
-                <input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-500 text-center outline-none text-sm uppercase">
-            </div>
-            <div class="p-3 bg-rose-500/5 rounded-2xl border border-rose-500/10 text-center">
-                <label class="block text-[8px] font-black uppercase mb-1">Paused</label>
-                <input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-500 text-center outline-none text-sm uppercase">
-            </div>
-            <div class="p-3 bg-orange-500/5 rounded-2xl border border-orange-500/10 text-center">
-                <label class="block text-[8px] font-black uppercase mb-1">Period</label>
-                <div class="flex gap-1"><input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="S"><input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="E"></div>
-            </div>
-        </div>
 
-        <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div class="flex gap-4 items-center">
-                <div class="admin-only w-1/3">
-                    <label class="block text-[9px] font-black uppercase mb-2 italic">Reporter</label>
-                    <select id="editorSelect" onchange="checkChanges()" class="w-full p-3 border-none rounded-2xl font-black text-[10px] outline-none">
-                        <option value="MOHAMED IAROCHENE">MOHAMED IAROCHENE</option>
-                        <option value="MEHDI AOURACHE">MEHDI AOURACHE</option>
-                        <option value="ALLAL GASMI">ALLAL GASMI</option>
-                        <option value="ISMAIL BENKIRANE">ISMAIL BENKIRANE</option>
-                        <option value="ANOUAR MOUATASSIM">ANOUAR MOUATASSIM</option>
-                    </select>
-                </div>
-                <div class="admin-only w-1/4">
-                    <label class="block text-[9px] font-black uppercase mb-2">Count</label>
-                    <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-3 rounded-2xl font-black text-blue-600 text-center border-none">
-                </div>
-                <div class="flex-1">
-                    <label class="block text-[9px] font-black text-blue-500 uppercase mb-2 italic">Deployment Keyword</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-3 border-2 border-blue-500/30 rounded-2xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none">
-                        <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Copy IDs</button>
+                <div id="ems4-panel" class="details-panel bg-slate-50/50 dark:bg-black/20 px-8 pb-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-blue-500/20 pb-1">
+                                <p class="text-blue-500 font-black italic uppercase text-xs">Platform Web</p>
+                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="web-total-seeds" class="text-blue-500 font-black">0</span></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/WEB/current/stats/rdps" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/WEB/current/stats/sessions" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="web-deploys-count" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseploysperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseedsperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrlancement" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/WEB/current/stats/rotMin" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/WEB/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
+                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/WEB/current/stats/paused" class="stat-input text-rose-500" disabled></div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-purple-500/20 pb-1">
+                                <p class="text-purple-500 font-black italic uppercase text-xs">Platform Selenium</p>
+                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="selenium-total-seeds" class="text-purple-500 font-black">0</span></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/rdps" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/sessions" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="selenium-deploys-count" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseploysperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseedsperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrlancement" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/rotMin" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
+                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/paused" class="stat-input text-rose-500" disabled></div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-emerald-500/20 pb-1">
+                                <p class="text-emerald-500 font-black italic uppercase text-xs">Platform Automat</p>
+                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="automat-total-seeds" class="text-emerald-500 font-black">0</span></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/rdps" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/sessions" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="automat-deploys-count" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseploysperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseedsperday" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrlancement" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/rotMin" class="stat-input" disabled></div>
+                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
+                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/paused" class="stat-input text-rose-500" disabled></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="text-center bg-slate-500/5 p-4 rounded-[1.5rem] border border-dashed border-slate-300">
-                <p class="text-[8px] font-black uppercase mb-1">Distribution</p>
-                <div id="distDisplay" class="font-black text-xs italic tracking-tighter">---</div>
-            </div>
-        </div>
-
-        <div id="deploysGrid" class="space-y-4 pb-20"></div>
-
-        <div class="admin-only fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
-            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95">Save Changes</button>
-            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-10 py-6 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic active:scale-95">⚡ Edit</button>
-        </div>
+        </section>
     </div>
 
     <script>
-        const CONFIG = {
-            adminKey: "emsw@test", superKey: "emsw@2026",
-            firebase: { apiKey: "AIzaSyCNCE95bWA5E5oB6sOIxxAY1bIutAGak9A", authDomain: "emsw-test.firebaseapp.com", databaseURL: "https://emsw-test-default-rtdb.firebaseio.com", projectId: "emsw-test" },
-            telegram: { token: '8340032430:AAHs6z-XPoA4ADGmpAISTSVxkHwsIo-cg0I', chatId: '-5224398844' }
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFR96bibEGLaMroqFZCLcSHyCoAdewz78",
+            authDomain: "ems4-reporting.firebaseapp.com",
+            databaseURL: "https://ems4-reporting-default-rtdb.firebaseio.com",
+            projectId: "ems4-reporting"
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
-        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: ""};
-        let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('emsw_darkmode', isDark);
+        const KEYS = { super: "1992", admin: "emsw@2026.." };
+        function checkRole() {
+            const k = document.getElementById('accessKey').value;
+            if (k === KEYS.super) loginSuccess("super");
+            else if (k === KEYS.admin) loginSuccess("admin");
+            else alert("Wrong Key ❌");
         }
-
-        window.onload = async () => {
-            if(localStorage.getItem('emsw_darkmode') === 'true' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            }
-            const params = new URLSearchParams(window.location.search);
-            const key = localStorage.getItem('emsw_key');
-            const isViewMode = params.get('mode') === 'view';
-
-            if (isViewMode) {
-                userRole = "viewer";
-                document.body.classList.add('viewer-mode');
-                if(params.get('target') === 'true') { document.body.classList.add('target-only'); }
-                await initApp();
-                const urlPlat = params.get('plat') || 'WEB';
-                selectPlatform(urlPlat);
-                return; 
-            }
-
-            if(key === CONFIG.adminKey || key === CONFIG.superKey) {
-                userRole = (key === CONFIG.superKey) ? "super" : "admin";
-                document.body.classList.add(userRole + '-mode');
-                await initApp();
-                selectPlatform('WEB');
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('appContent').classList.add('hidden');
-            }
-        };
-
-        async function initApp() {
+        function loginSuccess(role) {
+            localStorage.setItem('ems_role', role);
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('appContent').classList.remove('hidden');
-            const badge = document.getElementById('roleBadge');
-            badge.innerText = userRole.toUpperCase();
-            
-            if(userRole === 'super') {
-                badge.classList.add('bg-purple-600');
-                document.querySelectorAll('.super-only').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('input[type=number]').forEach(i => i.disabled = false);
-            } else { badge.classList.add(userRole==='admin'?'bg-blue-600':'bg-slate-400'); }
-
-            if(userRole !== 'super') {
-                document.querySelectorAll('.stat-field').forEach(i => i.classList.add('admin-locked'));
-                document.getElementById('rotDetailText').readOnly = true;
-            }
-
-            const confSnap = await db.ref('emsw/config/boites').once('value');
-            if(confSnap.exists()) boitesConfig = confSnap.val();
-            ['WEB','SELENIUM','AUTOMAT'].forEach(p => document.getElementById('conf-'+p).value = boitesConfig[p]);
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            document.getElementById('role-display').innerText = (role === 'super') ? "SUPER ADMIN ACCESS" : "ADMIN VIEWER ACCESS";
+            document.body.classList.toggle('viewer-mode', role !== 'super');
         }
+        function logout() { localStorage.removeItem('ems_role'); location.reload(); }
+        if (localStorage.getItem('ems_role')) loginSuccess(localStorage.getItem('ems_role'));
 
-        async function selectPlatform(p) {
-            currentPlatform = p;
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            document.querySelectorAll('.plat-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+p).classList.add('active');
-
-            const snap = await db.ref(`emsw/plans/${p}/current`).once('value');
-            stateData = snap.val() || { deploys: [], stats: {}, filter: "", editor: ""};
-            if(!stateData.deploys) stateData.deploys = [];
-            if(!stateData.stats) stateData.stats = {};
-            
-            const s = stateData.stats;
-            document.getElementById('statSeeds').value = s.seeds || '';
-            document.getElementById('statRDPs').value = s.rdps || '';
-            document.getElementById('statSessions').value = s.sessions || '';
-            document.getElementById('rotMin').value = s.rotMin || '';
-            document.getElementById('rotMax').value = s.rotMax || '';
-            document.getElementById('statQuality').value = s.quality || '';
-            document.getElementById('statPaused').value = s.paused || '';
-            document.getElementById('statStart').value = s.start || '';
-            document.getElementById('statEnd').value = s.end || '';
-            document.getElementById('rotDetailText').value = s.rotDetails || '';
-            document.getElementById('filterInput').value = stateData.filter || "";
-            document.getElementById('deployCount').value = (stateData.deploys.length > 0) ? stateData.deploys.length : 8;
-            if(stateData.editor) { document.getElementById('editorSelect').value = stateData.editor; }
-            
-            renderDeploys(stateData.deploys);
-            checkChanges();
-            document.getElementById('loadingOverlay').style.display = 'none';
+        function togglePanel(id) {
+            const panel = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            panel.classList.toggle('open');
+            icon.style.transform = panel.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
         }
-        
-        function renderDeploys(savedDeploys = null) {
-            const num = parseInt(document.getElementById('deployCount').value) || 0;
-            const container = document.getElementById('deploysGrid'); container.innerHTML = "";
-            const total = boitesConfig[currentPlatform] || 100;
-            const base = Math.floor(total / num); const rem = total % num;
-            let dist = [];
-            const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
 
-            for (let i = 0; i < num; i++) {
-                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
-                const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
-                const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
+        // LIVE SYNCHRONIZATION
+        db.ref('ems4/plans').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-                container.innerHTML += `
-                <div class="deploy-card glass-card p-5 rounded-[2rem] relative">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-500/10 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic">Deploy ${i+1}</span>
-                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase shadow-sm active:scale-95 transition-all">Copy IPs</button>
-                            <span class="ip-count text-[9px] font-black text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full">${ipCount} IPS</span>
-                        </div>
-                        <span class="text-blue-600 font-black text-[11px] bg-blue-500/10 px-3 py-1 rounded-full">${bCount} BOITES</span>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        <div class="space-y-1">
-                            <label class="block text-[8px] font-black uppercase">From</label>
-                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from w-full p-3 border-none rounded-2xl text-[10px] font-bold uppercase focus:ring-1 focus:ring-blue-400 outline-none" value="${d.from || ''}">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[8px] font-black uppercase">Offer ID</label>
-                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id w-full p-3 border-none rounded-2xl text-[10px] font-black text-blue-500 bg-blue-500/10 uppercase outline-none" value="${d.id || ''}">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[8px] font-black uppercase">Batch</label>
-                            <select ${isReadonly} onchange="checkChanges()" class="inp-batch w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none">
-                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[8px] font-black uppercase">Rules</label>
-                            <select ${isReadonly} onchange="checkChanges()" class="inp-rules w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none">
-                                ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="relative mt-2">
-                        <label class="block text-[9px] font-black uppercase italic mb-1.5 px-1">Target Nodes</label>
-                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-900 text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" rows="${userRole==='viewer'?8:2}">${d.ips || ''}</textarea>
-                    </div>
-                </div>`;
-            }
-            document.getElementById('distDisplay').innerText = dist.join(' | ');
-        }
-
-        function updateIPCount(textarea) {
-            const countSpan = textarea.closest('.deploy-card').querySelector('.ip-count');
-            const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
-            countSpan.innerText = `${lines} IPS`;
-        }
-
-        function checkChanges() {
-            if(userRole === 'viewer') return;
-            let changed = false;
-            if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
-            if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
-            if(document.getElementById('editorSelect').value !== (stateData.editor || "")) changed = true;
-
-            const s = stateData.stats || {};
-            const currentStats = {
-                seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
-                paused: document.getElementById('statPaused').value, rotDetails: document.getElementById('rotDetailText').value
-            };
-            if(currentStats.seeds !== (s.seeds || "") || currentStats.rdps !== (s.rdps || "") || currentStats.paused !== (s.paused || "") || currentStats.rotDetails !== (s.rotDetails || "")) changed = true;
-
-            if(!changed) {
-                const cards = document.querySelectorAll('.deploy-card');
-                for(let i=0; i<cards.length; i++) {
-                    const o = stateData.deploys[i] || {};
-                    const cur = { from: cards[i].querySelector('.inp-from').value, id: cards[i].querySelector('.inp-id').value, batch: cards[i].querySelector('.inp-batch').value, rules: cards[i].querySelector('.inp-rules').value, ips: cards[i].querySelector('.inp-ips').value };
-                    if(cur.id !== (o.id || "") || cur.from !== (o.from || "") || cur.batch !== (o.batch || "") || cur.rules !== (o.rules || "") || cur.ips !== (o.ips || "")) { changed = true; break; }
-                }
-            }
-            document.getElementById('saveBtn').disabled = !changed;
-        }
-
-        async function saveAll() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            const editorName = document.getElementById('editorSelect').value;
-            const cards = document.querySelectorAll('.deploy-card');
-            const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
-            const filter = document.getElementById('filterInput').value.trim();
-            const stats = { seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value, sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value, rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value, paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value, end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value };
-
-            let logChanges = [];
-            if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
-            deploys.forEach((d, i) => {
-                const o = stateData.deploys[i] || {};
-                let diffs = [];
-                if(d.id !== (o.id || "")) diffs.push("ID");
-                if(d.from !== (o.from || "")) diffs.push("FROM");
-                if(d.ips !== (o.ips || "")) diffs.push("IPs");
-                if(d.batch !== (o.batch || "")) diffs.push("Batch");
-                if(d.rules !== (o.rules || "")) diffs.push("Rules");
-                if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
+            // Simple mapping
+            document.querySelectorAll('[data-path]').forEach(inp => {
+                const path = inp.getAttribute('data-path').replace('ems4/plans/', '').split('/');
+                let val = data;
+                path.forEach(p => val = val ? val[p] : '');
+                inp.value = val || '-';
             });
 
-            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter, stats, editor: editorName, updatedAt: new Date().toLocaleString() });
+            const platforms = ['WEB', 'SELENIUM', 'AUTOMAT'];
+            let gRdp = 0, gSeeds = 0, gQual = 0, gPau = 0, gDep = 0;
 
-            if(logChanges.length > 0) {
-                const publicUrl = "https://emsw1.github.io/emsw/";
-                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                let changesText = ""; logChanges.forEach(l => { changesText += "• " + l + "\n"; });
-                const telegramMsg = `🚀 <b>UPDATE: #${currentPlatform}</b>\n` + `🖥️ <b>EDIT BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
-                try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
-            }
-            setTimeout(() => { location.reload(); }, 500);
-        }
+            platforms.forEach(p => {
+                const current = data[p]?.current || {};
+                const stats = current.stats || {};
+                const deployCount = (current.deploys) ? current.deploys.length : 0;
+                
+                // 1. Update Nbr-Deploys/h (Based on list length)
+                const depInp = document.getElementById(`${p.toLowerCase()}-deploys-count`);
+                if(depInp) depInp.value = deployCount;
 
-        async function superQuickSave() {
-            if(userRole !== 'super') return;
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            const editorName = document.getElementById('editorSelect').value;
-            const cards = document.querySelectorAll('.deploy-card');
-            const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
-            const stats = { seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value, sessions: document.getElementById('statSessions').value, rotMin: document.getElementById('rotMin').value, rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value, paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value, end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value };
-            await db.ref(`emsw/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, editor: editorName, updatedAt: new Date().toLocaleString() });
-            location.reload();
-        }
+                // 2. Update Total Seeds for each platform
+                const seedLabel = document.getElementById(`${p.toLowerCase()}-total-seeds`);
+                if(seedLabel) seedLabel.innerText = stats.seeds || 0;
 
-        async function updateGlobalConfig(plat, val) {
-            if(userRole !== 'super') return;
-            boitesConfig[plat] = parseInt(val) || 0;
-            await db.ref('emsw/config/boites').set(boitesConfig);
-            renderDeploys(stateData.deploys);
-            checkChanges();
-        }
-
-        function openRot() { document.getElementById('rotDetailPanel').style.display = 'block'; }
-        function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
-        function checkAccess() { const k = document.getElementById('accessKey').value; if(k === CONFIG.adminKey || k === CONFIG.superKey) { localStorage.setItem('emsw_key', k); location.reload(); } }
-        function logout() { localStorage.removeItem('emsw_key'); location.reload(); }
-        
-        function copyIPs(index, btn) {
-            const textarea = document.getElementById(`ips-${index}`);
-            textarea.select();
-            navigator.clipboard.writeText(textarea.value).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = "COPIED! ✅";
-                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
+                // Global totals
+                gRdp += parseInt(stats.rdps) || 0;
+                gSeeds += parseInt(stats.seeds) || 0;
+                gQual += parseInt(stats.quality) || 0;
+                gPau += parseInt(stats.paused) || 0;
+                gDep += deployCount;
             });
-        }
-        function copyAllIDs(btn) {
-            const idInputs = document.querySelectorAll('.inp-id');
-            const ids = Array.from(idInputs).map(inp => inp.value.trim()).filter(val => val !== "");
-            navigator.clipboard.writeText(ids.join('\n')).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = "DONE! ✅";
-                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
-            });
-        }
+
+            document.getElementById('global-rdps').innerText = gRdp;
+            document.getElementById('global-seeds').innerText = gSeeds;
+            document.getElementById('global-qualite').innerText = gQual;
+            document.getElementById('global-paused').innerText = gPau;
+            document.getElementById('global-proxy').innerText = gDep;
+        });
     </script>
 </body>
 </html>
