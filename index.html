@@ -1,261 +1,1218 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMSW | DASHBOARD</title>
+    <title>EMS4 | PLAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script>
-        tailwind.config = { darkMode: 'class' }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'blob': 'blob 10s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
     </script>
     <style>
-        body { 
-        font-family: 'Inter', sans-serif; 
-        transition: all 0.3s ease; 
-        min-height: 100vh;
-        /* Alwan f l-mode normal (Light) */
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-        background-size: 300% 300%;
-        animation: gradientBG 10s ease infinite;
-    }
-		
-		
-        .glass-card { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0,0,0,0.05); }
-		
-		
-        .dark body {
-        /* Alwan fati7a o pro (Royal Blue, Purple, Cyan) */
-        background: linear-gradient(-45deg, #060b19, #1e3a8a, #581c87, #0891b2, #060b19);
-        background-size: 300% 300%;
-    }
-		
-		@keyframes gradientBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-	
-		
-		.dark .glass-card { 
-        background: rgba(15, 23, 42, 0.75); /* Zdt l-chafafiya bach t-ban lor */
-        border: 1px solid rgba(255,255,255,0.05); 
-        backdrop-filter: blur(12px); 
-    }
-		
-        .global-stat-card { border-radius: 24px; padding: 20px; text-align: center; border-bottom: 4px solid #3b82f6; }
-		
-		
-        .entity-label { transition: all 0.2s ease; cursor: pointer; }
-		
-        .entity-label:hover { transform: translateX(10px); color: #3b82f6; }
-		
-        .details-panel { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
-		
-        .details-panel.open { max-height: 2000px; transition: max-height 1s ease-in; }
-		
-        .stat-input { background: rgba(0,0,0,0.05); border: 1px solid transparent; text-align: center; font-weight: 800; border-radius: 6px; width: 100%; font-size: 14px; padding: 4px; }
-		
-        .dark .stat-input { background: rgba(255,255,255,0.05); color: white; }
-		
-        .label-xs { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; }
+        :root {
+            /* Light Mode Variables (High Contrast) */
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --text-main: #0f172a;
+            --border-color: rgba(203, 213, 225, 0.8);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --label-color: #334155;
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
 
-        #loginOverlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #0b1120; }
+        .dark {
+            /* Dark Mode Variables (Glowing) */
+            --card-bg: rgba(15, 23, 42, 0.60);
+            --text-main: #f8fafc;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --input-bg: rgba(30, 41, 59, 0.4);
+            --label-color: #cbd5e1;
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Light slate base */
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .dark body {
+            background-color: #020617; /* Dark base */
+        }
+
+        /* --- OLD ANIMATED BACKGROUND (KEPT AS REQUESTED) --- */
+        .bg-animate-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10;
+            background: linear-gradient(45deg, #e2e8f0, #cbd5e1, #f1f5f9);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        .dark .bg-animate-container {
+            background: linear-gradient(45deg, #0f172a, #1e1b4b, #020617);
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- NEW: COSMIC BACKGROUND & SHOOTING STARS --- */
+        /* This overlays the old background to look better */
+        .cosmic-bg {
+            position: fixed; inset: 0; z-index: -11;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            overflow: hidden;
+            display: none; /* Hidden on light mode, shown in dark */
+        }
+        .dark .cosmic-bg { display: block; }
+        
+        /* Twinkling Stars */
+        .twinkle-stars {
+            position: fixed; inset: 0; z-index: -10;
+            background: transparent;
+        }
+        .twinkle-star {
+            position: absolute; border-radius: 50%; background: white;
+            box-shadow: 0 0 10px 1px white;
+            animation: twinkle 5s infinite;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.2; transform: scale(0.8); }
+        }
+
+        /* Shooting Stars */
+        .shooting_star {
+            position: absolute;
+            left: 50%; top: 50%; height: 2px;
+            background: linear-gradient(-45deg, #5f91ff, rgba(0, 0, 255, 0));
+            border-radius: 999px;
+            filter: drop-shadow(0 0 6px #699bff);
+            animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
+        }
+        .shooting_star::before {
+            content: ''; position: absolute; top: calc(50% - 1px); right: 0;
+            height: 2px; background: linear-gradient(-45deg, rgba(0, 0, 255, 0), #5f91ff, rgba(0, 0, 255, 0));
+            transform: translateX(50%) rotateZ(45deg); border-radius: 100%;
+            animation: shining 3000ms ease-in-out infinite;
+        }
+        .shooting_star::after {
+            content: ''; position: absolute; top: calc(50% - 1px); right: 0;
+            height: 2px; background: linear-gradient(-45deg, rgba(0, 0, 255, 0), #5f91ff, rgba(0, 0, 255, 0));
+            transform: translateX(50%) rotateZ(45deg); border-radius: 100%;
+            animation: shining 3000ms ease-in-out infinite; transform: translateX(50%) rotateZ(-45deg);
+        }
+        
+        @keyframes tail {
+            0% { width: 0; } 30% { width: 100px; } 100% { width: 0; }
+        }
+        @keyframes shooting {
+            0% { transform: translateX(0); } 100% { transform: translateX(300px); }
+        }
+        @keyframes shining {
+            0% { width: 0; } 50% { width: 30px; } 100% { width: 0; }
+        }
+        
+        /* Randomized Shooting Stars Positions */
+        .shooting_star:nth-child(1) { top: 0; left: 50%; animation-delay: 0s; transform: rotate(45deg); }
+        .shooting_star:nth-child(2) { top: 0; left: 20%; animation-delay: 2s; transform: rotate(35deg); }
+        .shooting_star:nth-child(3) { top: 20%; left: 0%; animation-delay: 4s; transform: rotate(60deg); }
+        .shooting_star:nth-child(4) { top: 0; left: 80%; animation-delay: 6s; transform: rotate(40deg); }
+        .shooting_star:nth-child(5) { top: 50%; left: 0%; animation-delay: 1s; transform: rotate(30deg); }
+
+        /* Floating Particles / Snow (Talj Effect) */
+        .snow-container {
+            position: fixed; inset: 0; z-index: -9; pointer-events: none;
+        }
+        .snowflake {
+            position: absolute; top: -10px;
+            background: white; border-radius: 50%; opacity: 0.8;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh); }
+        }
+        /* ------------------------------------- */
+
+        /* Stars/Particles Effect (OLD - Kept) */
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -9; pointer-events: none;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #94a3b8, transparent),
+                radial-gradient(2px 2px at 40px 70px, #64748b, transparent),
+                radial-gradient(2px 2px at 50px 160px, #94a3b8, transparent),
+                radial-gradient(2px 2px at 90px 40px, #64748b, transparent),
+                radial-gradient(2px 2px at 130px 80px, #94a3b8, transparent);
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: starMove 100s linear infinite;
+            opacity: 0.6;
+        }
+        
+        .dark .stars {
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #ffffff, transparent),
+                radial-gradient(2px 2px at 40px 70px, #ffffff, transparent),
+                radial-gradient(2px 2px at 50px 160px, #ffffff, transparent),
+                radial-gradient(2px 2px at 90px 40px, #ffffff, transparent),
+                radial-gradient(2px 2px at 130px 80px, #ffffff, transparent);
+            opacity: 0.4;
+        }
+
+        @keyframes starMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-1000px); }
+        }
+
+        /* Floating Blobs for Color */
+        .blob-bg {
+            position: fixed; filter: blur(80px); z-index: -8; opacity: 0.6;
+            animation: blob 20s infinite alternate;
+        }
+        .blob-1 { top: 0; left: -10%; width: 50vw; height: 50vw; background: rgba(59, 130, 246, 0.4); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        .blob-2 { bottom: 0; right: -10%; width: 50vw; height: 50vw; background: rgba(147, 51, 234, 0.4); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; animation-delay: -5s; }
+
+        .glass-card { 
+            background: var(--card-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--glass-shadow);
+        }
+
+        label { color: var(--label-color) !important; font-weight: 800; letter-spacing: 0.5px; }
+        
+        /* Input Readability Fixes */
+        select, input, textarea { 
+            color: var(--text-main) !important; 
+            background-color: var(--input-bg) !important; 
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.2s;
+        }
+        .dark select, .dark input, .dark textarea {
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        select:focus, input:focus, textarea:focus {
+            background-color: #ffffff !important;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .dark select:focus, .dark input:focus, .dark textarea:focus {
+            background-color: rgba(30, 41, 59, 0.8) !important;
+        }
+        
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; padding-right: 2rem; }
+
+        .deploy-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 6px solid #cbd5e1; }
+        .deploy-card:hover { transform: translateY(-5px) scale(1.005); border-left-color: #2563eb; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+        .dark .deploy-card { border-left-color: #334155; }
+        .dark .deploy-card:hover { border-left-color: #3b82f6; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        /* FIXED: Changed overflow to visible so toggle buttons can pop out */
+        .plat-btn { transition: all 0.2s; border: 2px solid transparent; background: var(--card-bg); color: var(--text-main); position: relative; overflow: visible; }
+        .plat-btn.active { 
+            border-color: #2563eb; 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .sub-plat-btn { transition: all 0.2s; border: 2px solid transparent; background: rgba(255,255,255,0.4); color: var(--text-main); position: relative; }
+        .dark .sub-plat-btn { background: rgba(255,255,255,0.05); }
+        
+        .sub-plat-btn.active { 
+            border-color: #f59e0b; 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white !important;
+        }
+
+        #loginOverlay { 
+            background: rgba(241, 245, 249, 0.9);
+            backdrop-filter: blur(12px);
+            position: fixed; inset: 0; z-index: 200; 
+            align-items: center; justify-content: center; display: flex; flex-direction: column; 
+        }
+        .dark #loginOverlay { background: rgba(2, 6, 23, 0.8); }
+
+        .viewer-mode .admin-only, .viewer-mode .super-only { display: none !important; }
+        .admin-mode .super-only { display: none !important; }
+        .admin-locked { pointer-events: none; opacity: 0.9; }
+        .super-locked { pointer-events: none; opacity: 0.9; border: 1px dashed rgba(128,128,128,0.3) !important; }
+        .super-mode .super-locked { pointer-events: auto; opacity: 1; border: none !important; }
+
+        #saveBtn { transition: all 0.3s; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        #saveBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; transform: scale(1) !important; }
+
+        #rotDetailPanel { 
+            display: none; position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 300; width: 95%; max-width: 500px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- MODIFICATION HERE: Hide Global Stats in Viewer Mode --- */
+        .viewer-mode #statsSection, .viewer-mode #historySection { display: none !important; }
+        .viewer-mode #globalStatsHeader { display: none !important; } /* NEW LINE ADDED */
+        .viewer-mode header .admin-only { display: none !important; }
+
+        .target-only .plat-btn:not(.active) { display: none !important; }
+        
+        .viewer-mode input, .viewer-mode select, .viewer-mode textarea {
+            border: none !important; background: transparent !important;
+            pointer-events: none !important; color: var(--text-main) !important; padding-left: 0 !important;
+        }
+        .viewer-mode .inp-id { 
+            color: #2563eb !important; /* Blue darker for viewer light */
+            font-weight: 900; 
+        }
+        .dark .viewer-mode .inp-id { color: #3b82f6 !important; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+
+        .viewer-only-btn { display: none !important; }
+        .viewer-mode .viewer-only-btn { display: flex !important; }
+
+        #darkToggle { transition: all 0.3s; }
+        #darkToggle:active { transform: scale(0.9); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .content-hidden { display: none !important; }
+
+        .plat-status-toggle {
+            position: absolute; top: -10px; right: -10px; z-index: 20;
+            background: #ef4444; width: 20px; height: 20px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 2px solid white;
+        }
+        .plat-status-toggle.is-active { background: #22c55e; }
+        .platform-disabled { display: none !important; }
+        .super-mode .platform-disabled { display: flex !important; opacity: 0.5; filter: grayscale(1); }
+
+        .viewer-mode .plat-btn, .viewer-mode .sub-plat-btn, .viewer-mode #seleniumSubMenu { display: none !important; }
+        .viewer-mode .deploy-card { pointer-events: none; }
+        .viewer-mode .viewer-only-btn { pointer-events: auto !important; cursor: pointer !important; z-index: 50; position: relative; }
+        .viewer-mode #appContent { margin-top: 2rem; }
+
+        #viewerPlatformLabel { display: none; }
+        .viewer-mode #viewerPlatformLabel { 
+            display: block !important; text-align: center; font-size: 2.5rem; font-weight: 900;
+            text-transform: uppercase; font-style: italic; margin-bottom: 1.5rem;
+            color: var(--text-main); text-shadow: 0 0 20px rgba(128,128,128,0.2);
+        }
+        
+        .global-stat-box {
+            text-align: center;
+            padding: 0.5rem;
+            border-right: 1px solid rgba(128,128,128,0.2);
+        }
+        .global-stat-box:last-child { border-right: none; }
+        .global-stat-label { font-size: 10px; font-weight: 900; opacity: 1; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
+        .global-stat-val { font-size: 1.2rem; font-weight: 900; width: 100%; text-align: center; background: transparent !important; border: none !important; outline: none; }
+        
+        /* Specific glow for values in dark mode */
+        .dark .global-stat-val { text-shadow: 0 0 10px currentColor; }
 		
-        .viewer-mode .save-btn { display: none !important; }
-		
-        .viewer-mode .stat-input { pointer-events: none; opacity: 0.8; }
+}
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 p-4 md:p-8">
+<body class="p-4 md:p-8">
+
+    <div class="cosmic-bg">
+        <div class="twinkle-stars" id="starContainer"></div>
+        <div class="snow-container" id="snowContainer"></div>
+        <div class="shooting_star"></div>
+        <div class="shooting_star"></div>
+        <div class="shooting_star"></div>
+        <div class="shooting_star"></div>
+        <div class="shooting_star"></div>
+    </div>
+
+    <div class="bg-animate-container"></div>
+    <div class="stars"></div>
+    <div class="blob-bg blob-1"></div>
+    <div class="blob-bg blob-2"></div>
 
     <div id="loginOverlay">
-        <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm shadow-2xl text-center border border-white/10">
-            <h2 class="text-3xl font-[900] italic mb-6 uppercase">EMS <span class="text-blue-500">AUTH</span></h2>
-            <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkRole()" placeholder="ENTER KEY" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl text-center mb-4 text-white font-black outline-none focus:border-blue-500 transition-all">
-            <button onclick="checkRole()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl uppercase text-sm tracking-widest transition-all">Login</button>
+        <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm text-center border shadow-2xl relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl ring-4 ring-blue-500/20">
+                    <span class="text-white text-3xl font-black italic">W</span>
+                </div>
+                <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter text-slate-800 dark:text-white">EMS4 ACCESS</h2>
+                <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 border-none rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-900 dark:text-white placeholder-slate-400">
+                <button onclick="checkAccess()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white p-4 rounded-2xl font-black uppercase shadow-lg transform hover:scale-105 transition-all">Unlock</button>
+            </div>
         </div>
     </div>
 
-    <div id="dashboardContent" class="hidden">
-        <header class="max-w-6xl mx-auto mb-10 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-[900] italic tracking-tighter uppercase">EMSW <span class="text-blue-500">DASHBOARD</span></h1>
-                <p id="role-display" class="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Global Viewer</p>
+    <div id="rotDetailPanel" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black uppercase italic text-slate-800 dark:text-white">Rotation Details</h3>
+            <button onclick="closeRot()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
+        </div>
+        <textarea id="rotDetailText" oninput="checkChanges()" class="w-full h-72 p-4 border-none rounded-2xl font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-blue-400 transition-all"></textarea>
+        <button onclick="closeRot()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg hover:shadow-blue-500/30">CLOSE</button>
+    </div>
+
+    <div id="loadingOverlay" style="display:none;"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 shadow-lg shadow-blue-500/50"></div></div>
+
+    <div id="appContent" class="hidden max-w-6xl mx-auto space-y-6">
+        <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="relative z-10">
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter drop-shadow-lg text-slate-800 dark:text-white">EMS4 <span class="text-blue-600 dark:text-blue-400">PLAN</span></h1>
+                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">REPORTING SYSTEM</p>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700">
-                    <span class="dark:hidden">☀️</span><span class="hidden dark:inline">🌙</span>
+            <div class="flex items-center gap-3 relative z-10">
+                <button id="darkToggle" onclick="toggleDarkMode()" class="p-2.5 bg-white dark:bg-slate-800/80 rounded-xl hover:scale-110 transition-all shadow-md text-slate-800 dark:text-white">
+                    <span class="dark:hidden text-lg">🌙</span><span class="hidden dark:inline text-lg">☀️</span>
                 </button>
-                <button onclick="logout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Logout</button>
+                <span id="roleBadge" class="text-[9px] font-black px-4 py-1.5 rounded-full uppercase text-white shadow-lg shadow-blue-500/20">---</span>
+                <button onclick="logout()" class="admin-only p-2.5 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-500 rounded-xl hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
             </div>
         </header>
 
-        <section class="max-w-6xl mx-auto mb-12">
-            <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">Global Stats (Live)</h2>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="glass-card global-stat-card"><p class="label-xs">Total RDPs</p><h3 id="global-rdps" class="text-3xl font-black italic">0</h3></div>
-                <div class="glass-card global-stat-card border-emerald-500"><p class="label-xs">Total Seeds</p><h3 id="global-seeds" class="text-3xl font-black italic text-emerald-500">0</h3></div>
-                <div class="glass-card global-stat-card border-purple-500"><p class="label-xs">Qualité en cours</p><h3 id="global-qualite" class="text-3xl font-black italic text-purple-500">0</h3></div>
-                <div class="glass-card global-stat-card border-orange-500"><p class="label-xs">Paused en cours</p><h3 id="global-paused" class="text-3xl font-black italic text-orange-500">0</h3></div>
-                <div class="glass-card global-stat-card border-slate-400"><p class="label-xs">Total Deploys</p><h3 id="global-proxy" class="text-3xl font-black italic">0</h3></div>
+        <div id="globalStatsHeader" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-5 gap-4 items-center animate-fade-in-down border-t-4 border-purple-500 shadow-lg shadow-purple-500/10">
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+                <div class="global-stat-label text-blue-700 dark:text-blue-400">TOTAL RDPs</div>
+                <input type="text" id="glb_rdps" oninput="checkChanges()" class="global-stat-val text-blue-700 dark:text-blue-500 super-locked" placeholder="-">
             </div>
-        </section>
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+                <div class="global-stat-label text-emerald-700 dark:text-emerald-400">TOTAL SEEDS</div>
+                <input type="text" id="glb_seeds" oninput="checkChanges()" class="global-stat-val text-emerald-700 dark:text-emerald-500 super-locked" placeholder="-">
+            </div>
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+                <div class="global-stat-label text-purple-700 dark:text-purple-400">QUALITÉ EN COURS</div>
+                <input type="text" id="glb_qual" oninput="checkChanges()" class="global-stat-val text-purple-700 dark:text-purple-500 super-locked" placeholder="-">
+            </div>
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+                <div class="global-stat-label text-rose-700 dark:text-rose-400">PAUSED EN COURS</div>
+                <input type="text" id="glb_pause" oninput="checkChanges()" class="global-stat-val text-rose-700 dark:text-rose-500 super-locked" placeholder="-">
+            </div>
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+                <div class="global-stat-label text-orange-700 dark:text-orange-400">TOTAL PROXY</div>
+                <input type="text" id="glb_proxy" oninput="checkChanges()" class="global-stat-val text-orange-700 dark:text-orange-500 super-locked" placeholder="-">
+            </div>
+        </div>
 
-        <section class="max-w-6xl mx-auto space-y-4">
-            <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">Détails Entités</h2>
+        <h2 id="viewerPlatformLabel">---</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="selectPlatform('WEB')" id="btn-WEB" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group hover:scale-[1.02] active:scale-95">
+                <div class="super-only plat-status-toggle" onclick="togglePlatVisibility('WEB', event)" title="Toggle Visibility"></div>
+                <span class="text-lg italic group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">WEB</span>
+                <input type="number" id="conf-WEB" class="w-12 h-8 text-center rounded-lg text-xs font-bold" onchange="updateGlobalConfig('WEB', this.value)" onclick="event.stopPropagation()" disabled>
+            </button>
             
-            <div class="glass-card rounded-[2rem] overflow-hidden">
-                <div onclick="togglePanel('ems4-panel')" class="entity-label p-6 flex justify-between items-center group">
-                    <div class="flex items-center gap-4">
-                        <span class="bg-blue-600 text-white font-black px-4 py-1 rounded-full italic text-sm">EMS4</span>
-                        <span class="text-sm font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-500">REAL-TIME MONITOR</span>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-400 transform transition-transform" id="ems4-panel-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"></path></svg>
-                </div>
+            <button onclick="selectPlatform('SELENIUM')" id="btn-SELENIUM" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group hover:scale-[1.02] active:scale-95">
+                <div class="super-only plat-status-toggle" onclick="togglePlatVisibility('SELENIUM', event)" title="Toggle Visibility"></div>
+                <span class="text-lg italic group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">SELENIUM</span>
+                <input type="number" id="conf-SELENIUM" class="w-12 h-8 text-center rounded-lg text-xs font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-500" onclick="event.stopPropagation()" disabled readonly>
+            </button>
 
-                <div id="ems4-panel" class="details-panel bg-slate-50/50 dark:bg-black/20 px-8 pb-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center border-b border-blue-500/20 pb-1">
-                                <p class="text-blue-500 font-black italic uppercase text-xs">Platform Web</p>
-                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="web-total-seeds" class="text-blue-500 font-black">0</span></p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/WEB/current/stats/rdps" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/WEB/current/stats/sessions" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="web-deploys-count" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseploysperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrseedsperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/WEB/current/stats/nbrlancement" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/WEB/current/stats/rotMin" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/WEB/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
-                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/WEB/current/stats/paused" class="stat-input text-rose-500" disabled></div>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center border-b border-purple-500/20 pb-1">
-                                <p class="text-purple-500 font-black italic uppercase text-xs">Platform Selenium</p>
-                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="selenium-total-seeds" class="text-purple-500 font-black">0</span></p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/rdps" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/sessions" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="selenium-deploys-count" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseploysperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrseedsperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/nbrlancement" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/rotMin" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
-                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/SELENIUM/current/stats/paused" class="stat-input text-rose-500" disabled></div>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center border-b border-emerald-500/20 pb-1">
-                                <p class="text-emerald-500 font-black italic uppercase text-xs">Platform Automat</p>
-                                <p class="text-[10px] font-black uppercase text-slate-400">Total Seeds: <span id="automat-total-seeds" class="text-emerald-500 font-black">0</span></p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><p class="label-xs">RDPs</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/rdps" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Sessions</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/sessions" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/h</p><input type="text" id="automat-deploys-count" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Deploys/d</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseploysperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/h</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseedsperhour" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Nbr-Seeds/d</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrseedsperday" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Lancements</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/nbrlancement" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Rotation</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/rotMin" class="stat-input" disabled></div>
-                                <div><p class="label-xs">Qualité</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/quality" class="stat-input text-emerald-500" disabled></div>
-                                <div><p class="label-xs">Paused</p><input type="text" data-path="ems4/plans/AUTOMAT/current/stats/paused" class="stat-input text-rose-500" disabled></div>
-                            </div>
+            <button onclick="selectPlatform('AUTOMAT')" id="btn-AUTOMAT" class="plat-btn glass-card p-6 rounded-3xl font-black uppercase flex justify-between items-center group hover:scale-[1.02] active:scale-95">
+                <div class="super-only plat-status-toggle" onclick="togglePlatVisibility('AUTOMAT', event)" title="Toggle Visibility"></div>
+                <span class="text-lg italic group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">AUTOMAT</span>
+                <input type="number" id="conf-AUTOMAT" class="w-12 h-8 text-center rounded-lg text-xs font-bold" onchange="updateGlobalConfig('AUTOMAT', this.value)" onclick="event.stopPropagation()" disabled>
+            </button>
+        </div>
+
+        <div id="seleniumSubMenu" class="hidden grid grid-cols-2 gap-4 md:w-2/3 mx-auto animate-fade-in-down">
+            <button onclick="selectPlatform('SELENIUM_CHROME')" id="btn-SELENIUM_CHROME" class="sub-plat-btn glass-card p-4 rounded-3xl font-black uppercase flex justify-between items-center hover:bg-orange-500/10 hover:border-orange-500/30">
+                <div class="super-only plat-status-toggle" onclick="togglePlatVisibility('SELENIUM_CHROME', event)" title="Toggle Visibility"></div>
+                <span class="text-sm italic">CHROME</span>
+                <input type="number" id="conf-SELENIUM_CHROME" class="w-12 h-8 text-center rounded-lg text-xs bg-white/50" onchange="updateGlobalConfig('SELENIUM_CHROME', this.value)" onclick="event.stopPropagation()" disabled>
+            </button>
+            <button onclick="selectPlatform('SELENIUM_BRAVE')" id="btn-SELENIUM_BRAVE" class="sub-plat-btn glass-card p-4 rounded-3xl font-black uppercase flex justify-between items-center hover:bg-orange-500/10 hover:border-orange-500/30">
+                <div class="super-only plat-status-toggle" onclick="togglePlatVisibility('SELENIUM_BRAVE', event)" title="Toggle Visibility"></div>
+                <span class="text-sm italic">BRAVE</span>
+                <input type="number" id="conf-SELENIUM_BRAVE" class="w-12 h-8 text-center rounded-lg text-xs bg-white/50" onchange="updateGlobalConfig('SELENIUM_BRAVE', this.value)" onclick="event.stopPropagation()" disabled>
+            </button>
+        </div>
+
+        <div id="statsSection" class="content-hidden glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 shadow-lg">
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">Seeds</label>
+                <input type="text" id="statSeeds" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">RDPs</label>
+                <input type="text" id="statRDPs" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+			<div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">Sessions</label>
+                <input type="text" id="statSessions" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+			<div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">DEPLOYS/day</label>
+                <input type="text" id="nbrseploysperday" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+			<div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">SEEDS/h</label>
+                <input type="text" id="nbrseedsperhour" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+			<div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">SEEDS/day</label>
+                <input type="text" id="nbrseedsperday" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+			<div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase text-center mb-1 text-blue-600 dark:text-blue-300">LANCEMENT</label>
+                <input type="text" id="nbrlancement" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-blue-700 dark:text-blue-500 outline-none text-center text-sm uppercase">
+            </div>
+            <div class="p-3 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-center hover:bg-blue-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase mb-1 text-blue-600 dark:text-blue-300">Rotation</label>
+                <div class="flex justify-center items-center gap-0.5 font-black text-blue-700 dark:text-blue-500 text-xs mb-1">
+                    <input type="number" id="rotMin" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic"> / <input type="number" id="rotMax" oninput="checkChanges()" class="stat-field w-8 bg-transparent text-center outline-none italic">
+                </div>
+                <button onclick="openRot()" class="bg-blue-600 hover:bg-blue-500 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase shadow-md transition-all">Details</button>
+            </div>
+            
+            <div class="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center hover:bg-emerald-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase mb-1 text-emerald-600 dark:text-emerald-300">Quality</label>
+                <input type="text" id="statQuality" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-emerald-700 dark:text-emerald-500 text-center outline-none text-sm uppercase">
+            </div>
+            <div class="p-3 bg-rose-500/5 rounded-2xl border border-rose-500/10 text-center hover:bg-rose-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase mb-1 text-rose-600 dark:text-rose-300">Paused</label>
+                <input type="text" id="statPaused" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-rose-700 dark:text-rose-500 text-center outline-none text-sm uppercase">
+            </div>
+            <div class="p-3 bg-orange-500/5 rounded-2xl border border-orange-500/10 text-center hover:bg-orange-500/10 transition-colors">
+                <label class="block text-[10px] font-black uppercase mb-1 text-orange-600 dark:text-orange-300">Period</label>
+                <div class="flex gap-1"><input type="text" id="statStart" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 dark:text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="S"><input type="text" id="statEnd" oninput="checkChanges()" class="stat-field w-full bg-transparent font-black text-orange-700 dark:text-orange-500 text-[10px] text-center outline-none uppercase" placeholder="E"></div>
+            </div>
+        </div>
+
+        <div id="mainContainer" class="content-hidden space-y-6">
+            <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg">
+                <div class="flex gap-4 items-center">
+                    <div class="admin-only w-1/3">
+                        <label class="block text-[12px] font-black uppercase mb-2 italic text-blue-600 dark:text-blue-300">EDITOR</label>
+                        <select id="editorSelect" onchange="checkChanges()" class="w-full p-3 border-none rounded-2xl font-black text-[10px] outline-none hover:bg-white/10 transition-colors cursor-pointer">
+								<option value="MOHAMED IAROCHENE">MOHAMED IAROCHENE</option>
+								<option value="MEHDI AOURACHE">MEHDI AOURACHE</option>
+								<option value="ALLAL GASMI">ALLAL GASMI</option>
+								<option value="ISMAIL BENKIRANE">ISMAIL BENKIRANE</option>
+								<option value="ANOUAR MOUATASSIM">ANOUAR MOUATASSIM</option>
+                        </select>
+                    </div>
+                    <div class="admin-only w-1/4">
+                        <label class="block text-[12px] font-black uppercase mb-2 text-blue-600 dark:text-blue-300">DEPLOYS</label>
+                        <input type="number" id="deployCount" oninput="renderDeploys(); checkChanges();" class="w-full p-3 rounded-2xl font-black text-blue-700 dark:text-blue-500 text-center border-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-[12px] font-black text-blue-600 dark:text-blue-500 uppercase mb-2 italic">KEYWORD FILTER</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="filterInput" oninput="checkChanges()" class="w-full p-3 border-2 border-blue-500/30 rounded-2xl font-black text-blue-700 dark:text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none placeholder-blue-500/30" placeholder="SEARCH...">
+                            <!-- NEW BUTTON ADDED HERE -->
+                            <button onclick="downloadAllIPs(this)" class="viewer-only-btn hidden bg-purple-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all">Download All IPs</button>
+                            <button onclick="copyAllIDs(this)" class="viewer-only-btn hidden bg-blue-600 text-white px-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Copy IDs</button>
                         </div>
                     </div>
+                </div>
+                <div class="text-center bg-slate-500/5 p-4 rounded-[1.5rem] border border-dashed border-slate-500/30">
+                    <p class="text-[12px] font-black uppercase mb-1 text-slate-500 dark:text-slate-400">DIVISION SEEDS BY DEPLOYS</p>
+                    <div id="distDisplay" class="font-black text-xs italic tracking-tighter text-slate-700 dark:text-slate-300">---</div>
                 </div>
             </div>
-        </section>
+
+            <div id="deploysGrid" class="space-y-4 pb-20"></div>
+
+        </div>
+        
+        <div id="actionToolbar" class="admin-only hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
+            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95 backdrop-blur-md">Save Changes</button>
+            <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-10 py-6 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic active:scale-95 backdrop-blur-md">⚡ Edit Only</button>
+        </div>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAFR96bibEGLaMroqFZCLcSHyCoAdewz78",
-            authDomain: "ems4-reporting.firebaseapp.com",
-            databaseURL: "https://ems4-reporting-default-rtdb.firebaseio.com",
-            projectId: "ems4-reporting"
+        const CONFIG = {
+            authUrl: "https://ems4-plan.alamiuness.workers.dev",
+            firebase: { 
+                apiKey: "AIzaSyAFR96bibEGLaMroqFZCLcSHyCoAdewz78", 
+                authDomain: "ems4-reporting.firebaseapp.com", 
+                databaseURL: "https://ems4-reporting-default-rtdb.firebaseio.com", 
+                projectId: "ems4-reporting",
+                storageBucket: "ems4-reporting.firebasestorage.app",
+                messagingSenderId: "290747078412",
+                appId: "1:290747078412:web:f1ddc2273dc07cc6e55b29",
+                measurementId: "G-PTFJKHYZ1R"
+            },
+            telegram: { 
+                token: '8445418590:AAEzun8AqYrkmFnzMoXaz3UBIQRTQCgQHeI', 
+                chatId: '-4243492710' 
+            }
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
 
-        const KEYS = { super: "1992", admin: "emsw@2026.." };
-        function checkRole() {
-            const k = document.getElementById('accessKey').value;
-            if (k === KEYS.super) loginSuccess("super");
-            else if (k === KEYS.admin) loginSuccess("admin");
-            else alert("Wrong Key ❌");
+        firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
+        let userRole = "viewer"; let currentPlatform = ""; let stateData = { deploys: [], stats: {}, filter: "", editor: ""};
+        let globalStatsData = { rdps:"", seeds:"", qual:"", pause:"", proxy:"" };
+        let boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20, SELENIUM_CHROME: 75, SELENIUM_BRAVE: 75 };
+        let platVisibility = { WEB: true, SELENIUM: true, AUTOMAT: true, SELENIUM_CHROME: true, SELENIUM_BRAVE: true };
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('ems4_darkmode', isDark);
         }
-        function loginSuccess(role) {
-            localStorage.setItem('ems_role', role);
+
+        window.onload = async () => {
+            // Apply dark mode immediately based on preference or local storage
+            if(localStorage.getItem('ems4_darkmode') === 'true' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                 // Default to dark mode as requested, but user can switch
+                 document.documentElement.classList.add('dark');
+            }
+            
+            // --- ADDED: SCRIPT TO GENERATE RANDOM STARS/SNOW ---
+            generateSpaceEffect();
+
+            const params = new URLSearchParams(window.location.search);
+            const savedRole = localStorage.getItem('ems4_role');
+            const isViewMode = params.get('mode') === 'view';
+
+            if (isViewMode) {
+                userRole = "viewer";
+                document.body.classList.add('viewer-mode');
+                if(params.get('target') === 'true') { document.body.classList.add('target-only'); }
+                await initApp();
+                const urlPlat = params.get('plat') || 'WEB';
+                selectPlatform(urlPlat);
+                return; 
+            }
+
+            if(savedRole === 'admin' || savedRole === 'super') {
+                userRole = savedRole;
+                document.body.classList.add(userRole + '-mode');
+                await initApp();
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('appContent').classList.add('hidden');
+            }
+        };
+
+        // --- NEW FUNCTION: Generate Stars & Snow ---
+        function generateSpaceEffect() {
+            // 1. Twinkling Stars
+            const starContainer = document.getElementById('starContainer');
+            for(let i=0; i<50; i++) {
+                const s = document.createElement('div');
+                s.className = 'twinkle-star';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.width = Math.random() * 2 + 1 + 'px';
+                s.style.height = s.style.width;
+                s.style.animationDelay = Math.random() * 5 + 's';
+                starContainer.appendChild(s);
+            }
+            // 2. Snow/Particles
+            const snowContainer = document.getElementById('snowContainer');
+            for(let i=0; i<30; i++) {
+                const f = document.createElement('div');
+                f.className = 'snowflake';
+                f.style.left = Math.random() * 100 + '%';
+                f.style.width = Math.random() * 4 + 2 + 'px';
+                f.style.height = f.style.width;
+                f.style.animationDuration = Math.random() * 5 + 5 + 's'; // 5 to 10s fall
+                f.style.animationDelay = Math.random() * -10 + 's';
+                f.style.opacity = Math.random() * 0.5 + 0.1;
+                snowContainer.appendChild(f);
+            }
+        }
+
+        async function initApp() {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('dashboardContent').classList.remove('hidden');
-            document.getElementById('role-display').innerText = (role === 'super') ? "SUPER ADMIN ACCESS" : "ADMIN VIEWER ACCESS";
-            document.body.classList.toggle('viewer-mode', role !== 'super');
-        }
-        function logout() { localStorage.removeItem('ems_role'); location.reload(); }
-        if (localStorage.getItem('ems_role')) loginSuccess(localStorage.getItem('ems_role'));
+            document.getElementById('appContent').classList.remove('hidden');
+            const badge = document.getElementById('roleBadge');
+            badge.innerText = userRole.toUpperCase();
+            
+            // Fetch Global Stats & Visibility
+            await loadGlobalStats();
+            const visSnap = await db.ref('ems4/config/visibility').once('value');
+            if(visSnap.exists()) { platVisibility = {...platVisibility, ...visSnap.val()}; }
+            applyVisibilityToUI();
 
-        function togglePanel(id) {
-            const panel = document.getElementById(id);
-            const icon = document.getElementById(id + '-icon');
-            panel.classList.toggle('open');
-            icon.style.transform = panel.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
-        }
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
-
-        // LIVE SYNCHRONIZATION
-        db.ref('ems4/plans').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            // Simple mapping
-            document.querySelectorAll('[data-path]').forEach(inp => {
-                const path = inp.getAttribute('data-path').replace('ems4/plans/', '').split('/');
-                let val = data;
-                path.forEach(p => val = val ? val[p] : '');
-                inp.value = val || '-';
-            });
-
-            const platforms = ['WEB', 'SELENIUM', 'AUTOMAT'];
-            let gRdp = 0, gSeeds = 0, gQual = 0, gPau = 0, gDep = 0;
-
-            platforms.forEach(p => {
-                const current = data[p]?.current || {};
-                const stats = current.stats || {};
-                const deployCount = (current.deploys) ? current.deploys.length : 0;
+            if(userRole === 'super') {
+                badge.classList.add('bg-purple-600');
+                document.querySelectorAll('.super-only').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.deploy-card input[type=number]').forEach(i => i.disabled = false);
+                document.getElementById('conf-WEB').disabled = false;
+                document.getElementById('conf-AUTOMAT').disabled = false;
+                document.getElementById('conf-SELENIUM_CHROME').disabled = false;
+                document.getElementById('conf-SELENIUM_BRAVE').disabled = false;
+                document.getElementById('conf-SELENIUM').disabled = true;
                 
-                // 1. Update Nbr-Deploys/h (Based on list length)
-                const depInp = document.getElementById(`${p.toLowerCase()}-deploys-count`);
-                if(depInp) depInp.value = deployCount;
+                // Super can edit Global Stats
+                document.querySelectorAll('.super-locked').forEach(i => {
+                   i.classList.remove('super-locked'); 
+                });
+            } else { 
+                badge.classList.add(userRole==='admin'?'bg-blue-600':'bg-slate-400'); 
+            }
 
-                // 2. Update Total Seeds for each platform
-                const seedLabel = document.getElementById(`${p.toLowerCase()}-total-seeds`);
-                if(seedLabel) seedLabel.innerText = stats.seeds || 0;
+            if(userRole !== 'super') {
+                document.querySelectorAll('.stat-field').forEach(i => i.classList.add('admin-locked'));
+                document.getElementById('rotDetailText').readOnly = true;
+            }
 
-                // Global totals
-                gRdp += parseInt(stats.rdps) || 0;
-                gSeeds += parseInt(stats.seeds) || 0;
-                gQual += parseInt(stats.quality) || 0;
-                gPau += parseInt(stats.paused) || 0;
-                gDep += deployCount;
+            const confSnap = await db.ref('ems4/config/boites').once('value');
+            if(confSnap.exists()) {
+                const loaded = confSnap.val();
+                boitesConfig = {...boitesConfig, ...loaded};
+            }
+            
+            ['WEB','AUTOMAT'].forEach(p => {
+                const el = document.getElementById('conf-'+p);
+                if(el) el.value = boitesConfig[p] || 0;
+            });
+            
+            ['SELENIUM_CHROME', 'SELENIUM_BRAVE'].forEach(p => {
+                const el = document.getElementById('conf-'+p);
+                // Fix: Use 0 if undefined, don't fall back to SELENIUM parent to avoid double count logic here
+                if(el) el.value = boitesConfig[p] !== undefined ? boitesConfig[p] : 0;
             });
 
-            document.getElementById('global-rdps').innerText = gRdp;
-            document.getElementById('global-seeds').innerText = gSeeds;
-            document.getElementById('global-qualite').innerText = gQual;
-            document.getElementById('global-paused').innerText = gPau;
-            document.getElementById('global-proxy').innerText = gDep;
-        });
+            // Fix: Allow 0 to be a value. Only fallback to 0 if undefined.
+            const chromeVal = boitesConfig['SELENIUM_CHROME'] !== undefined ? parseInt(boitesConfig['SELENIUM_CHROME']) : 0;
+            const braveVal = boitesConfig['SELENIUM_BRAVE'] !== undefined ? parseInt(boitesConfig['SELENIUM_BRAVE']) : 0;
+            const seleniumSum = chromeVal + braveVal;
+            
+            document.getElementById('conf-SELENIUM').value = seleniumSum;
+            boitesConfig['SELENIUM'] = seleniumSum;
+        }
+
+        async function loadGlobalStats() {
+            const snap = await db.ref('ems4/global_stats').once('value');
+            if(snap.exists()) {
+                globalStatsData = snap.val();
+                document.getElementById('glb_rdps').value = globalStatsData.rdps || '';
+                document.getElementById('glb_seeds').value = globalStatsData.seeds || '';
+                document.getElementById('glb_qual').value = globalStatsData.qual || '';
+                document.getElementById('glb_pause').value = globalStatsData.pause || '';
+                document.getElementById('glb_proxy').value = globalStatsData.proxy || '';
+            }
+        }
+
+        function applyVisibilityToUI() {
+            Object.keys(platVisibility).forEach(p => {
+                const btn = document.getElementById('btn-' + p);
+                const toggle = btn?.querySelector('.plat-status-toggle');
+                if (btn) {
+                    if (platVisibility[p]) {
+                        btn.classList.remove('platform-disabled');
+                        if(toggle) toggle.classList.add('is-active');
+                    } else {
+                        btn.classList.add('platform-disabled');
+                        if(toggle) toggle.classList.remove('is-active');
+                    }
+                }
+            });
+        }
+
+        async function togglePlatVisibility(p, event) {
+            event.stopPropagation(); // Stop parent click
+            if(userRole !== 'super') return;
+            
+            platVisibility[p] = !platVisibility[p];
+            applyVisibilityToUI();
+            
+            // Sync with Firebase
+            await db.ref('ems4/config/visibility').set(platVisibility);
+        }
+
+        async function selectPlatform(p) {
+            // --- UPDATE TITLE FOR VIEWER ---
+            const viewerLabel = document.getElementById('viewerPlatformLabel');
+            if(viewerLabel) {
+                let displayName = p.replace('SELENIUM_', '');
+                if(p === 'SELENIUM_BRAVE') displayName = 'BRAVE';
+                else if(p === 'SELENIUM_CHROME') displayName = 'CHROME';
+                viewerLabel.innerText = displayName;
+            }
+            // -------------------------------
+
+            const seleniumMenu = document.getElementById('seleniumSubMenu');
+            const seleniumBtn = document.getElementById('btn-SELENIUM');
+
+            if (p === 'SELENIUM') {
+                if (seleniumMenu.classList.contains('hidden')) {
+                    seleniumMenu.classList.remove('hidden');
+                    seleniumBtn.classList.add('active');
+                    document.getElementById('btn-WEB').classList.remove('active');
+                    document.getElementById('btn-AUTOMAT').classList.remove('active');
+                    document.getElementById('statsSection').classList.add('content-hidden');
+                    document.getElementById('mainContainer').classList.add('content-hidden');
+                } else {
+                    seleniumMenu.classList.add('hidden');
+                    seleniumBtn.classList.remove('active');
+                    document.getElementById('statsSection').classList.add('content-hidden');
+                    document.getElementById('mainContainer').classList.add('content-hidden');
+                    currentPlatform = "";
+                    checkChanges(); // Update toolbar visibility
+                }
+                return;
+            }
+
+            if (p === 'WEB' || p === 'AUTOMAT') {
+                seleniumMenu.classList.add('hidden');
+                seleniumBtn.classList.remove('active');
+                document.querySelectorAll('.sub-plat-btn').forEach(b => b.classList.remove('active'));
+            }
+
+            if (p.includes('SELENIUM_')) {
+                seleniumMenu.classList.remove('hidden');
+                seleniumBtn.classList.add('active');
+                document.querySelectorAll('.sub-plat-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('btn-'+p).classList.add('active');
+            }
+
+            const stats = document.getElementById('statsSection');
+            const mainCont = document.getElementById('mainContainer');
+            
+            if (currentPlatform === p && !mainCont.classList.contains('content-hidden')) {
+                stats.classList.add('content-hidden');
+                mainCont.classList.add('content-hidden');
+                const btn = document.getElementById('btn-'+p);
+                if(btn) btn.classList.remove('active');
+                currentPlatform = "";
+                checkChanges(); // Update toolbar visibility
+                return;
+            }
+
+            currentPlatform = p;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            if(!p.includes('SELENIUM_')) {
+                document.querySelectorAll('.plat-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = document.getElementById('btn-'+p);
+                if(targetBtn) targetBtn.classList.add('active');
+            }
+            
+            stats.classList.remove('content-hidden');
+            mainCont.classList.remove('content-hidden');
+
+            const snap = await db.ref(`ems4/plans/${p}/current`).once('value');
+            stateData = snap.val() || { deploys: [], stats: {}, filter: "", editor: ""};
+            if(!stateData.deploys) stateData.deploys = [];
+            if(!stateData.stats) stateData.stats = {};
+            
+            const s = stateData.stats;
+            document.getElementById('statSeeds').value = s.seeds || '';
+            document.getElementById('statRDPs').value = s.rdps || '';
+            document.getElementById('statSessions').value = s.sessions || '';
+			// document.getElementById('statProxy').value = s.proxy || 0; // REMOVED
+			document.getElementById('nbrseploysperday').value = s.nbrseploysperday || '';
+			document.getElementById('nbrseedsperhour').value = s.nbrseedsperhour || '';
+			document.getElementById('nbrseedsperday').value = s.nbrseedsperday || '';
+			document.getElementById('nbrlancement').value = s.nbrlancement || '';
+            document.getElementById('rotMin').value = s.rotMin || '';
+            document.getElementById('rotMax').value = s.rotMax || '';
+            document.getElementById('statQuality').value = s.quality || '';
+            document.getElementById('statPaused').value = s.paused || '';
+            document.getElementById('statStart').value = s.start || '';
+            document.getElementById('statEnd').value = s.end || '';
+            document.getElementById('rotDetailText').value = s.rotDetails || '';
+            document.getElementById('filterInput').value = stateData.filter || "";
+            document.getElementById('deployCount').value = (stateData.deploys.length > 0) ? stateData.deploys.length : 8;
+            if(stateData.editor) { document.getElementById('editorSelect').value = stateData.editor; }
+            
+            renderDeploys(stateData.deploys);
+            checkChanges();
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        function renderDeploys(savedDeploys = null) {
+            const num = parseInt(document.getElementById('deployCount').value) || 0;
+            const container = document.getElementById('deploysGrid'); container.innerHTML = "";
+			
+			// --- NEW: IF DEPLOY COUNT IS 0, CLEAR & EXIT ---
+            if (num <= 0) {
+                document.getElementById('distDisplay').innerText = "---";
+                return;
+            }
+            // ----------------------------------------------
+			
+            const total = boitesConfig[currentPlatform] || boitesConfig[currentPlatform.split('_')[0]] || 100;
+            const base = Math.floor(total / num); const rem = total % num;
+            let dist = [];
+            const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+
+            for (let i = 0; i < num; i++) {
+                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
+                const d = (savedDeploys && savedDeploys[i]) ? savedDeploys[i] : { from: '', id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
+                const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
+
+                container.innerHTML += `
+                <div class="deploy-card glass-card p-5 rounded-[2rem] relative">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-500/10 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-900 dark:bg-slate-900 text-white text-[12px] font-black px-3 py-1 rounded-full uppercase italic shadow-md">Deploy ${i+1}</span>
+                            <button onclick="downloadIPs(${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-sm active:scale-95 transition-all">⬇️ TXT</button>
+                            <button onclick="copyIPs(${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[12px] px-3 py-1 rounded-full font-black uppercase shadow-sm active:scale-95 transition-all hover:bg-blue-500">Copy IPs</button>
+                            <span class="ip-count text-[12px] font-black text-blue-700 dark:text-blue-300 bg-blue-500/10 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">${ipCount} IPS</span>
+                        </div>
+                        <span class="text-blue-700 dark:text-blue-300 font-black text-[12px] bg-blue-500/10 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">${bCount} BOITES</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">From</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-from w-full p-3 border-none rounded-2xl text-[10px] font-bold uppercase focus:ring-1 focus:ring-blue-400 outline-none" value="${d.from || ''}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">DEPLOY ID</label>
+                            <input type="text" ${isReadonly} oninput="checkChanges()" class="inp-id w-full p-3 border-none rounded-2xl text-[10px] font-black text-blue-700 dark:text-blue-500 bg-blue-500/10 uppercase outline-none" value="${d.id || ''}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">Batch</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-batch w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">Rules</label>
+                            <select ${isReadonly} onchange="checkChanges()" class="inp-rules w-full p-3 border-none rounded-2xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="relative mt-2">
+                        <label class="block text-[10px] font-black uppercase italic mb-1.5 px-1 text-slate-500 dark:text-slate-400">IPS LIST</label>
+                        <textarea id="ips-${i}" ${isReadonly} oninput="updateIPCount(this); checkChanges();" class="inp-ips w-full p-4 bg-slate-200 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 border-none rounded-[1.5rem] font-mono text-[10px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" rows="${userRole==='viewer'? 8 : 2}">${d.ips || ''}</textarea>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('distDisplay').innerText = dist.join(' | ');
+        }
+
+        function updateIPCount(textarea) {
+            const countSpan = textarea.closest('.deploy-card').querySelector('.ip-count');
+            const lines = textarea.value.trim() ? textarea.value.trim().split(/\r\n|\r|\n/).filter(line => line.trim() !== "").length : 0;
+            countSpan.innerText = `${lines} IPS`;
+        }
+
+        function checkChanges() {
+            if(userRole === 'viewer') return;
+            let changed = false;
+            let globalChanged = false;
+            
+            // Global Stats check
+            if(document.getElementById('glb_rdps').value !== (globalStatsData.rdps||"") ||
+               document.getElementById('glb_seeds').value !== (globalStatsData.seeds||"") ||
+               document.getElementById('glb_qual').value !== (globalStatsData.qual||"") ||
+               document.getElementById('glb_pause').value !== (globalStatsData.pause||"") ||
+               document.getElementById('glb_proxy').value !== (globalStatsData.proxy||"")) {
+                   changed = true;
+                   globalChanged = true;
+            }
+
+            if(currentPlatform) {
+                if(document.getElementById('filterInput').value !== (stateData.filter || "")) changed = true;
+                if(parseInt(document.getElementById('deployCount').value) !== (stateData.deploys.length)) changed = true;
+                if(document.getElementById('editorSelect').value !== (stateData.editor || "")) changed = true;
+
+                const s = stateData.stats || {};
+                const currentStats = {
+                    seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value,
+                    paused: document.getElementById('statPaused').value, rotDetails: document.getElementById('rotDetailText').value
+                };
+                if(currentStats.seeds !== (s.seeds || "") || currentStats.rdps !== (s.rdps || "") || currentStats.paused !== (s.paused || "") || currentStats.rotDetails !== (s.rotDetails || "")) changed = true;
+
+                if(!changed) {
+                    const cards = document.querySelectorAll('.deploy-card');
+                    for(let i=0; i<cards.length; i++) {
+                        const o = stateData.deploys[i] || {};
+                        const cur = { from: cards[i].querySelector('.inp-from').value, id: cards[i].querySelector('.inp-id').value, batch: cards[i].querySelector('.inp-batch').value, rules: cards[i].querySelector('.inp-rules').value, ips: cards[i].querySelector('.inp-ips').value };
+                        if(cur.id !== (o.id || "") || cur.from !== (o.from || "") || cur.batch !== (o.batch || "") || cur.rules !== (o.rules || "") || cur.ips !== (o.ips || "")) { changed = true; break; }
+                    }
+                }
+            }
+            
+            // Logic for Toolbar Visibility
+            const toolbar = document.getElementById('actionToolbar');
+            if (changed) {
+                toolbar.classList.remove('hidden');
+                document.getElementById('saveBtn').disabled = !changed;
+            } else {
+                toolbar.classList.add('hidden');
+            }
+            
+            // Specific logic for Super Admin:
+            // If Global Changed, show toolbar even if no platform selected
+            if (globalChanged && userRole === 'super') {
+                toolbar.classList.remove('hidden');
+            }
+        }
+
+        async function saveAll() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Save Global Stats first
+            if(userRole === 'super') {
+                const newGlobal = {
+                    rdps: document.getElementById('glb_rdps').value,
+                    seeds: document.getElementById('glb_seeds').value,
+                    qual: document.getElementById('glb_qual').value,
+                    pause: document.getElementById('glb_pause').value,
+                    proxy: document.getElementById('glb_proxy').value
+                };
+                await db.ref('ems4/global_stats').set(newGlobal);
+            }
+            
+            // If no platform is selected, we stop here (after saving global)
+            if (!currentPlatform) {
+                 location.reload();
+                 return;
+            }
+
+            // Save Platform specific
+            const editorName = document.getElementById('editorSelect').value;
+            const cards = document.querySelectorAll('.deploy-card');
+            const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
+            const filter = document.getElementById('filterInput').value.trim();
+            const stats = { seeds: document.getElementById('statSeeds').value, rdps: document.getElementById('statRDPs').value, sessions: document.getElementById('statSessions').value, proxy: "", nbrseploysperday: document.getElementById('nbrseploysperday').value,nbrseedsperhour: document.getElementById('nbrseedsperhour').value,nbrseedsperday: document.getElementById('nbrseedsperday').value,nbrlancement: document.getElementById('nbrlancement').value, rotMin: document.getElementById('rotMin').value, rotMax: document.getElementById('rotMax').value, quality: document.getElementById('statQuality').value, paused: document.getElementById('statPaused').value, start: document.getElementById('statStart').value, end: document.getElementById('statEnd').value, rotDetails: document.getElementById('rotDetailText').value };
+
+            let logChanges = [];
+            let forceTelegram = false;
+
+            // --- ADDED: CHECK IF DEPLOYS ARE 0 (STOPPED) ---
+            if (deploys.length === 0) {
+                 forceTelegram = true;
+            } else {
+                 if(filter !== (stateData.filter || "")) logChanges.push(`🔍 Keyword: ${filter || 'NONE'}`);
+                 deploys.forEach((d, i) => {
+                    const o = stateData.deploys[i] || {};
+                    let diffs = [];
+                    if(d.id !== (o.id || "")) diffs.push("ID");
+                    if(d.from !== (o.from || "")) diffs.push("FROM");
+                    if(d.ips !== (o.ips || "")) diffs.push("IPs");
+                    if(d.batch !== (o.batch || "")) diffs.push("Batch");
+                    if(d.rules !== (o.rules || "")) diffs.push("Rules");
+                    if(diffs.length > 0) logChanges.push(`📍 D${i+1} (${d.id || 'Empty'}): ${diffs.join(', ')} updated`);
+                });
+            }
+            // ----------------------------------------------
+
+            await db.ref(`ems4/plans/${currentPlatform}/current`).set({ deploys, filter, stats, editor: editorName, updatedAt: new Date().toLocaleString() });
+
+            // --- MODIFIED TELEGRAM SEND LOGIC ---
+            if(forceTelegram) {
+                const publicUrl = "https://ems4-plan.pages.dev/";
+                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
+                const telegramMsg = `⚠️ <b>STOPPED: #${currentPlatform}</b>\n` + `👤 <b>BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
+                try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
+            }
+            else if(logChanges.length > 0) {
+                const publicUrl = "https://ems4-plan.pages.dev/";
+                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
+                let changesText = ""; logChanges.forEach(l => { changesText += "• " + l + "\n"; });
+                const telegramMsg = `🔄 <b>UPDATE: #${currentPlatform}</b>\n` + `👤 <b>BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+                try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
+            }
+            
+            setTimeout(() => { location.reload(); }, 500);
+        }
+
+        async function superQuickSave() {
+            if(userRole !== 'super') return;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Save Global
+            const newGlobal = {
+                rdps: document.getElementById('glb_rdps').value,
+                seeds: document.getElementById('glb_seeds').value,
+                qual: document.getElementById('glb_qual').value,
+                pause: document.getElementById('glb_pause').value,
+                proxy: document.getElementById('glb_proxy').value
+            };
+            await db.ref('ems4/global_stats').set(newGlobal);
+
+            // If a platform is selected, save it too
+            if (currentPlatform) {
+                const editorName = document.getElementById('editorSelect').value;
+                const cards = document.querySelectorAll('.deploy-card');
+                const deploys = Array.from(cards).map(c => ({ from: c.querySelector('.inp-from').value.trim(), id: c.querySelector('.inp-id').value.trim(), batch: c.querySelector('.inp-batch').value, rules: c.querySelector('.inp-rules').value, ips: c.querySelector('.inp-ips').value.trim() }));
+                
+                const stats = { 
+                seeds: document.getElementById('statSeeds').value, 
+                rdps: document.getElementById('statRDPs').value, 
+                sessions: document.getElementById('statSessions').value,
+                proxy: "",
+                nbrseploysperday: document.getElementById('nbrseploysperday').value,
+                nbrseedsperhour: document.getElementById('nbrseedsperhour').value,
+                nbrseedsperday: document.getElementById('nbrseedsperday').value,
+                nbrlancement: document.getElementById('nbrlancement').value,
+                rotMin: document.getElementById('rotMin').value, 
+                rotMax: document.getElementById('rotMax').value, 
+                quality: document.getElementById('statQuality').value, 
+                paused: document.getElementById('statPaused').value, 
+                start: document.getElementById('statStart').value, 
+                end: document.getElementById('statEnd').value, 
+                rotDetails: document.getElementById('rotDetailText').value 
+                };
+                await db.ref(`ems4/plans/${currentPlatform}/current`).set({ deploys, filter: document.getElementById('filterInput').value.trim(), stats, editor: editorName, updatedAt: new Date().toLocaleString() });
+            }
+            
+            location.reload();
+        }
+
+        async function updateGlobalConfig(plat, val) {
+            if(userRole !== 'super') return;
+            const newVal = parseInt(val) || 0;
+            boitesConfig[plat] = newVal;
+            
+            if(plat === 'SELENIUM_CHROME' || plat === 'SELENIUM_BRAVE') {
+                const chrome = parseInt(boitesConfig['SELENIUM_CHROME'] !== undefined ? boitesConfig['SELENIUM_CHROME'] : 0);
+                const brave = parseInt(boitesConfig['SELENIUM_BRAVE'] !== undefined ? boitesConfig['SELENIUM_BRAVE'] : 0);
+                const sum = chrome + brave;
+                document.getElementById('conf-SELENIUM').value = sum;
+                boitesConfig['SELENIUM'] = sum;
+            }
+
+            await db.ref('ems4/config/boites').set(boitesConfig);
+            if(currentPlatform === plat || (currentPlatform.startsWith(plat + '_'))) {
+                renderDeploys(stateData.deploys);
+            }
+        }
+
+        function openRot() { document.getElementById('rotDetailPanel').style.display = 'block'; }
+        function closeRot() { document.getElementById('rotDetailPanel').style.display = 'none'; }
+        function checkAccess() { 
+            const k = document.getElementById('accessKey').value; 
+            
+            fetch(CONFIG.authUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: k })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('ems4_key', 'valid'); // Dummy value just to check existence if needed
+                    localStorage.setItem('ems4_role', data.role);
+                    location.reload();
+                } else {
+                    alert("Access Denied");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error connecting to Auth Service");
+            });
+        }
+        function logout() { localStorage.removeItem('ems4_key'); localStorage.removeItem('ems4_role'); location.reload(); }
+        
+        function copyIPs(index, btn) {
+            const textarea = document.getElementById(`ips-${index}`);
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "COPIED! ✅";
+                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
+            });
+        }
+        function copyAllIDs(btn) {
+            const idInputs = document.querySelectorAll('.inp-id');
+            const ids = Array.from(idInputs).map(inp => inp.value.trim()).filter(val => val !== "");
+            navigator.clipboard.writeText(ids.join('\n')).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "DONE! ✅";
+                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+                setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); }, 2000);
+            });
+        }
+		
+        function downloadIPs(index) {
+            const textarea = document.getElementById(`ips-${index}`);
+            const text = textarea.value.trim();
+            if (!text) {
+                alert("No IPs to download");
+                return;
+            }
+            
+            // Generate filename: ips1ems4.txt, ips2ems4.txt, etc.
+            const filename = `ips${index + 1}ems4.txt`;
+            
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            
+            element.click();
+            
+            document.body.removeChild(element);
+        }
+
+        // --- NEW: Download All Files Function ---
+        function downloadAllIPs(btn) {
+            const textareas = document.querySelectorAll('.inp-ips');
+            let count = 0;
+            textareas.forEach((textarea, index) => {
+                const text = textarea.value.trim();
+                if (text) {
+                    setTimeout(() => {
+                        const filename = `ips${index + 1}ems4.txt`;
+                        const element = document.createElement('a');
+                        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                        element.setAttribute('download', filename);
+                        element.style.display = 'none';
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                    }, count * 200); // 200ms delay to prevent browser blocking
+                    count++;
+                }
+            });
+
+            if (count > 0) {
+                const originalText = btn.innerText;
+                btn.innerText = "DOWNLOADING... ⏳";
+                setTimeout(() => {
+                    btn.innerText = "DONE! ✅";
+                    btn.classList.replace('bg-purple-600', 'bg-emerald-500');
+                    setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.classList.replace('bg-emerald-500', 'bg-purple-600');
+                    }, 2000);
+                }, count * 200 + 500);
+            } else {
+                alert("No IPs found to download.");
+            }
+        }
     </script>
 </body>
 </html>
