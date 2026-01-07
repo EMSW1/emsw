@@ -430,7 +430,7 @@
         let globalEditor = "";
         let platVisibility = {};
         let activeDetailsPlat = null;
-        let modifiedPlats = new Set(); // TRACKS CHANGES PER PLATFORM
+        let platformChanges = {}; // TRACKS SPECIFIC MODIFICATION TYPES PER PLATFORM
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -487,7 +487,6 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
-            // Load Configs
             const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
                 db.ref('emsw/global_stats').once('value'),
@@ -497,9 +496,7 @@
             
             if(confSnap.exists()) boitesConfig = confSnap.val();
             else boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
-
             if(visibilitySnap.exists()) platVisibility = visibilitySnap.val();
-            
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
             else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; 
 
@@ -511,11 +508,11 @@
                 });
             }
 
-            // Initialize Data Structures for new platforms if any
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
                 if(!boitesConfig[p]) boitesConfig[p] = 100; 
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
+                if(!platformChanges[p]) platformChanges[p] = new Set();
             });
 
             renderAllPlatforms();
@@ -523,7 +520,6 @@
         }
 
         function generateDynamicAdminTools() {
-            // 1. Distributor Targets
             const distContainer = document.getElementById('distributor-targets');
             distContainer.innerHTML = '';
             PLATFORMS.forEach(plat => {
@@ -541,16 +537,13 @@
                 distContainer.insertAdjacentHTML('beforeend', html);
             });
 
-            // 2. ID / Batch / Rules Managers
             ['id', 'batch', 'rules'].forEach(type => {
                 const container = document.getElementById(`${type}ManagerContainer`);
                 container.innerHTML = '';
-                
                 PLATFORMS.forEach(plat => {
                     let color = 'blue';
                     if(type === 'batch') color = 'orange';
                     if(type === 'rules') color = 'pink';
-
                     const html = `
                     <div class="bg-slate-50/50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div class="flex justify-between items-center mb-1">
@@ -573,29 +566,19 @@
             document.getElementById('loadingOverlay').style.display = 'flex';
             const container = document.getElementById('platformsContainer');
             container.innerHTML = '';
-
             let firstEditor = "";
             let totalSeeds = 0, totalQuality = 0, totalPaused = 0;
-            
             const params = new URLSearchParams(window.location.search);
             const targetPlat = params.get('plat');
 
             for (const plat of PLATFORMS) {
-                // Visibility Logic
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
-                
-                // IF TARGET PLAT IS SET (Bot Link), ONLY RENDER THAT PLATFORM
                 if (targetPlat && plat.toUpperCase() !== targetPlat.toUpperCase()) continue;
 
-                // Fetch data
                 const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                 const data = snap.val() || { deploys: [], stats: {}, filter: "" };
-                if(!data.deploys) data.deploys = [];
-                if(!data.stats) data.stats = {};
                 platformsData[plat] = data;
-                
                 if(!firstEditor && data.editor) firstEditor = data.editor;
-
                 totalSeeds += parseInt(data.stats.seeds || 0);
                 totalQuality += parseInt(data.stats.quality || 0);
                 totalPaused += parseInt(data.stats.paused || 0);
@@ -621,9 +604,8 @@
                     <div class="flex items-center gap-4 mb-4">
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
-                        <button onclick="openPlatformDetails('${plat}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
+                        <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
-
                     <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg mb-6 border-l-8 border-l-blue-500">
                         <div class="flex gap-4 items-center">
                             <div class="admin-only w-1/4">
@@ -633,7 +615,7 @@
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges('${plat}')" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges('${plat}', 'Filter')" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">ALL IPS ⬇️</button>
                                     <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">IDs 📋</button>
                                 </div>
@@ -644,15 +626,11 @@
                             <div id="dist-${plat}" class="font-black text-xs italic tracking-tighter text-slate-700 dark:text-slate-300">---</div>
                         </div>
                     </div>
-
                     <div id="grid-${plat}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
                 </div>`;
-                
                 container.insertAdjacentHTML('beforeend', html);
-                if(data.editor) document.getElementById('globalEditor').value = data.editor;
                 renderPlatformDeploys(plat);
             }
-            
             document.getElementById('glb_seeds').value = totalSeeds;
             document.getElementById('glb_qual').value = totalQuality;
             document.getElementById('glb_pause').value = totalPaused;
@@ -677,7 +655,7 @@
             for (let i = 0; i < num; i++) {
                 const bCount = base + (i < rem ? 1 : 0);
                 dist.push(bCount);
-                const d = savedDeploys[i] || { id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
+                const d = savedDeploys[i];
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
                 const cardHtml = `
                 <div class="deploy-card glass-card p-4 rounded-[1.5rem] relative group/card">
@@ -699,7 +677,7 @@
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
@@ -718,7 +696,7 @@
 
         async function addNewPlatform() {
             const name = document.getElementById('newPlatName').value.trim().toUpperCase();
-            if(!name || PLATFORMS.includes(name)) return alert("Invalid or existing name");
+            if(!name || PLATFORMS.includes(name)) return alert("Invalid name");
             PLATFORMS.push(name);
             boitesConfig[name] = 0;
             platVisibility[name] = true;
@@ -732,12 +710,9 @@
         }
 
         async function deletePlatform(name) {
-            if(confirm(`Are you sure you want to delete ${name}?`)) {
+            if(confirm(`Delete ${name}?`)) {
                 PLATFORMS = PLATFORMS.filter(p => p !== name);
-                await Promise.all([
-                    db.ref('emsw/config/platforms_list').set(PLATFORMS),
-                    db.ref(`emsw/plans/${name}`).remove()
-                ]);
+                await Promise.all([db.ref('emsw/config/platforms_list').set(PLATFORMS), db.ref(`emsw/plans/${name}`).remove()]);
                 location.reload();
             }
         }
@@ -747,38 +722,38 @@
             boitesConfig[plat] = parseInt(val) || 0;
             await db.ref('emsw/config/boites').set(boitesConfig);
             renderPlatformDeploys(plat);
-            checkChanges(plat);
+            checkChanges(plat, 'Boites');
         }
 
         function addDeploy(plat) {
-            platformsData[plat].deploys.push({ id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' });
+            platformsData[plat].deploys.push({ id: '', batch: '10/3000 P', rules: 'SELECT ALL IPS', ips: '' });
             renderPlatformDeploys(plat);
             updateDistributorCounts();
             renderAllSelectors();
-            checkChanges(plat);
+            checkChanges(plat, 'Added Deploy');
         }
 
         function removeDeploy(plat, index) {
-            if(confirm('Delete this deploy?')) {
+            if(confirm('Delete deploy?')) {
                 platformsData[plat].deploys.splice(index, 1);
                 renderPlatformDeploys(plat);
                 updateDistributorCounts();
                 renderAllSelectors();
-                checkChanges(plat);
+                checkChanges(plat, 'Removed Deploy');
             }
         }
         
         function updateDistributorCounts() {
             PLATFORMS.forEach(plat => {
-                const count = (platformsData[plat] && platformsData[plat].deploys) ? platformsData[plat].deploys.length : 0;
+                const count = (platformsData[plat]?.deploys) ? platformsData[plat].deploys.length : 0;
                 const el = document.getElementById(`dist-count-${plat}`);
-                if(el) el.innerText = `(${count} deploys)`;
+                if(el) el.innerText = `(${count})`;
             });
         }
 
         function updateDeployData(plat, index, field, value) {
             platformsData[plat].deploys[index][field] = value;
-            checkChanges(plat);
+            checkChanges(plat, field.toUpperCase());
         }
 
         function renderAllSelectors() {
@@ -791,7 +766,7 @@
                 if(!container) return;
                 const deploys = platformsData[plat].deploys || [];
                 container.innerHTML = '';
-                if (deploys.length === 0) { container.innerHTML = '<span class="text-[9px] text-slate-400 italic pl-1">No Deploys</span>'; return; }
+                if (deploys.length === 0) { container.innerHTML = '<span class="text-[9px] text-slate-400 italic pl-1">Empty</span>'; return; }
                 deploys.forEach((d, i) => {
                      const html = `<label class="flex items-center gap-2 cursor-pointer hover:bg-white/20 p-1 rounded"><input type="checkbox" class="w-3.5 h-3.5 rounded focus:ring-0 border-gray-300 ${type}-chk-target-${plat}" value="${i}"><span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">D${i+1}</span></label>`;
                      container.insertAdjacentHTML('beforeend', html);
@@ -809,28 +784,26 @@
 
         function toggleAllGeneric(type, plat, masterChk) {
             const container = document.getElementById(`${type}-list-${plat}`);
-            const boxes = container.querySelectorAll(`input[type="checkbox"]`);
-            boxes.forEach(b => b.checked = masterChk.checked);
+            container.querySelectorAll(`input[type="checkbox"]`).forEach(b => b.checked = masterChk.checked);
         }
 
-        function applyBulkId() { const val = document.getElementById('bulkIdInput').value.trim(); if(!val) return alert("Enter ID"); applyBulkGeneric('id', val); }
+        function applyBulkId() { applyBulkGeneric('id', document.getElementById('bulkIdInput').value.trim()); }
         function applyBulkBatch() { applyBulkGeneric('batch', document.getElementById('bulkBatchInput').value); }
         function applyBulkRules() { applyBulkGeneric('rules', document.getElementById('bulkRulesInput').value); }
 
         function applyBulkGeneric(field, value) {
-            let appliedCount = 0;
+            let count = 0;
             PLATFORMS.forEach(plat => {
                  const chk = document.getElementById(`${field}-chk-${plat}`);
                  if(chk && chk.checked) {
-                     const checkboxes = document.querySelectorAll(`.${field}-chk-target-${plat}:checked`);
-                     checkboxes.forEach(chk => {
+                     document.querySelectorAll(`.${field}-chk-target-${plat}:checked`).forEach(chk => {
                          const idx = parseInt(chk.value);
-                         if(platformsData[plat].deploys[idx]) { platformsData[plat].deploys[idx][field] = value; appliedCount++; }
+                         if(platformsData[plat].deploys[idx]) { platformsData[plat].deploys[idx][field] = value; count++; }
                      });
-                     if(checkboxes.length > 0) { renderPlatformDeploys(plat); checkChanges(plat); }
+                     if(count > 0) { renderPlatformDeploys(plat); checkChanges(plat, 'Bulk ' + field.toUpperCase()); }
                  }
             });
-            if(appliedCount > 0) alert(`${field.toUpperCase()} applied!`);
+            if(count > 0) alert("Applied!");
         }
 
         function distributeMasterIPs() {
@@ -838,24 +811,21 @@
             let ips = text.split('\n').map(s => s.trim()).filter(s => s);
             const targets = [];
             PLATFORMS.forEach(p => {
-                const chk = document.getElementById('chk-'+p);
-                if(chk && chk.checked && platformsData[p] && platformsData[p].deploys) {
+                if(document.getElementById('chk-'+p).checked) {
                     platformsData[p].deploys.forEach((d, i) => { d.ips = ""; targets.push({plat: p, index: i}); });
                 }
             });
-            if(targets.length === 0 || ips.length === 0) return alert("Select platform and enter IPs.");
+            if(targets.length === 0 || ips.length === 0) return alert("Select target and IPs.");
             const method = document.querySelector('input[name="distMethod"]:checked').value;
             if (method === 'same') {
-                const fullList = ips.join('\n');
-                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = fullList; checkChanges(t.plat); });
+                const list = ips.join('\n');
+                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = list; checkChanges(t.plat, 'IPs'); });
             } else {
-                const isRandom = document.querySelector('input[name="distMode"]:checked').value === 'random';
-                if(isRandom) ips.sort(() => Math.random() - 0.5);
+                if(document.querySelector('input[name="distMode"]:checked').value === 'random') ips.sort(() => Math.random() - 0.5);
                 ips.forEach((ip, i) => {
-                    const target = targets[i % targets.length];
-                    const currentContent = platformsData[target.plat].deploys[target.index].ips;
-                    platformsData[target.plat].deploys[target.index].ips = currentContent ? currentContent + "\n" + ip : ip;
-                    checkChanges(target.plat);
+                    const t = targets[i % targets.length];
+                    platformsData[t.plat].deploys[t.index].ips = platformsData[t.plat].deploys[t.index].ips ? platformsData[t.plat].deploys[t.index].ips + "\n" + ip : ip;
+                    checkChanges(t.plat, 'IPs');
                 });
             }
             PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) renderPlatformDeploys(p); });
@@ -864,13 +834,17 @@
 
         function updateCount(plat, index) {
             const txt = document.getElementById(`ips-${plat}-${index}`).value;
-            const count = txt.trim() ? txt.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
+            const count = txt.trim() ? txt.trim().split(/\n/).filter(l => l.trim() !== "").length : 0;
             document.querySelector(`.count-${plat}-${index}`).innerText = `${count} IPS`;
+            checkChanges(plat, 'IPs');
         }
 
-        function checkChanges(plat) {
+        function checkChanges(plat, type) {
             if(userRole === 'viewer') return;
-            if(plat) modifiedPlats.add(plat);
+            if(plat && type) {
+                if(!platformChanges[plat]) platformChanges[plat] = new Set();
+                platformChanges[plat].add(type);
+            }
             document.getElementById('saveBtn').disabled = false;
             document.getElementById('actionToolbar').classList.remove('hidden');
         }
@@ -886,68 +860,60 @@
                     proxy: document.getElementById('glb_proxy').value
                 });
             }
-            
-            const editorName = document.getElementById('globalEditor').value;
+            const editor = document.getElementById('globalEditor').value;
             const publicUrl = window.location.origin + window.location.pathname;
-
-            // IF NO SPECIFIC PLATFORM WAS MODIFIED (e.g. initial save), PROCESS ALL ACTIVE
-            const platsToSave = modifiedPlats.size > 0 ? Array.from(modifiedPlats) : PLATFORMS.filter(p => platVisibility[p]);
+            
+            // Collect modified platforms
+            const platsToSave = Array.from(new Set([...Object.keys(platformsData).filter(p => platformChanges[p] && platformChanges[p].size > 0)]));
+            
+            if(platsToSave.length === 0) {
+                 // Fallback to all visible if no explicit changes detected (e.g. initial save)
+                 PLATFORMS.filter(p => platVisibility[p]).forEach(p => platsToSave.push(p));
+            }
 
             for (const plat of platsToSave) {
                 const data = platformsData[plat];
-                if(!data) continue;
-                
                 const filter = document.getElementById(`filter-${plat}`)?.value.trim() || "";
                 await db.ref(`emsw/plans/${plat}/current`).set({ 
-                    deploys: data.deploys || [], 
-                    filter, 
-                    stats: data.stats || {}, 
-                    editor: editorName, 
-                    updatedAt: new Date().toLocaleString() 
+                    deploys: data.deploys || [], filter, stats: data.stats || {}, editor, updatedAt: new Date().toLocaleString() 
                 });
 
-                // FORMATTED LINK AS PER REQUEST: ONLY VIEW TARGET PLATFORM
+                const changesStr = platformChanges[plat] && platformChanges[plat].size > 0 ? Array.from(platformChanges[plat]).join(', ') : 'Plan Saved';
                 const viewLink = `${publicUrl}?mode=view&plat=${plat}`;
-                const telegramMsg = `🔔 <b>${plat} UPDATE</b>\n👤 <b>EDITOR: ${editorName}</b>\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">${publicUrl}</a>`;
+                const telegramMsg = `🔔 <b>${plat} UPDATE</b>\n👤 <b>EDITOR: ${editor}</b>\n📝 <b>CHANGES: ${changesStr}</b>\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">${publicUrl}</a>`;
                 
                 try {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
                     });
-                } catch (e) { console.error("Telegram Error", e); }
+                } catch (e) { console.error(e); }
+                if(platformChanges[plat]) platformChanges[plat].clear();
             }
-            
-            modifiedPlats.clear();
-            setTimeout(() => { location.reload(); }, 500);
+            setTimeout(() => location.reload(), 500);
         }
         
         async function superQuickSave() { saveAll(); }
-
         function checkAccess() {
-            const k = document.getElementById('accessKey').value;
             fetch(CONFIG.authUrl, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: k })
+                body: JSON.stringify({ password: document.getElementById('accessKey').value })
             }).then(r=>r.json()).then(d=>{
                 if(d.success) { localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role); location.reload(); }
-                else alert('Access Denied');
-            }).catch(()=>alert('Auth Error'));
+                else alert('Denied');
+            });
         }
         function logout() { localStorage.clear(); location.reload(); }
         function downloadOneIPs(plat, index) { downloadFile(document.getElementById(`ips-${plat}-${index}`).value.trim(), `ips${index+1}${plat.toLowerCase()}.txt`); }
         function copyOneIPs(plat, index, btn) { navigator.clipboard.writeText(document.getElementById(`ips-${plat}-${index}`).value).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="📋", 1500); }); }
-        function downloadAllIPs(plat, btn) { const areas = document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-ips'); areas.forEach((ta, i) => { if(ta.value.trim()) downloadFile(ta.value.trim(), `ips${i+1}${plat.toLowerCase()}.txt`); }); }
+        function downloadAllIPs(plat, btn) { document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-ips').forEach((ta, i) => { if(ta.value.trim()) downloadFile(ta.value.trim(), `ips${i+1}${plat.toLowerCase()}.txt`); }); }
         function downloadFile(content, filename) { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = filename; a.click(); }
-        function copyAllIDs(plat, btn) { const ids = Array.from(document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-id')).map(i=>i.value.trim()).filter(v=>v).join('\n'); if(ids) navigator.clipboard.writeText(ids).then(() => { btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText="IDs 📋", 1500); }); }
-        
+        function copyAllIDs(plat, btn) { const ids = Array.from(document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-id')).map(i=>i.value.trim()).filter(v=>v).join('\n'); if(ids) navigator.clipboard.writeText(ids).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="IDs 📋", 1500); }); }
         async function toggleVisibility(plat) {
             platVisibility[plat] = !platVisibility[plat];
             await db.ref('emsw/config/visibility').set(platVisibility);
             location.reload();
         }
-
         function openPlatformDetails(plat) {
             activeDetailsPlat = plat;
             document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`;
@@ -967,31 +933,19 @@
             document.getElementById('modal-rotMax').value = stats.rotMax || '';
             document.getElementById('rotDetailText').value = stats.rotDetails || '';
         }
-
         function closeDetails() { document.getElementById('platformDetailModal').classList.add('hidden'); activeDetailsPlat = null; }
-
         function saveDetails() {
             if(!activeDetailsPlat) return;
-            const p = activeDetailsPlat;
-            if(!platformsData[p].stats) platformsData[p].stats = {};
-            const s = platformsData[p].stats;
-            s.seeds = document.getElementById('modal-seeds').value;
-            s.rdps = document.getElementById('modal-rdps').value;
-            s.sessions = document.getElementById('modal-sessions').value;
-            s.nbrseploysperday = document.getElementById('modal-deploysday').value;
-            s.nbrseedsperhour = document.getElementById('modal-seedsh').value;
-            s.nbrseedsperday = document.getElementById('modal-seedsday').value;
-            s.nbrlancement = document.getElementById('modal-lancement').value;
-            s.quality = document.getElementById('modal-quality').value;
-            s.paused = document.getElementById('modal-paused').value;
-            s.period = document.getElementById('modal-period').value;
-            s.rotMin = document.getElementById('modal-rotMin').value;
-            s.rotMax = document.getElementById('modal-rotMax').value;
+            const p = activeDetailsPlat, s = platformsData[p].stats = platformsData[p].stats || {};
+            s.seeds = document.getElementById('modal-seeds').value; s.rdps = document.getElementById('modal-rdps').value;
+            s.sessions = document.getElementById('modal-sessions').value; s.nbrseploysperday = document.getElementById('modal-deploysday').value;
+            s.nbrseedsperhour = document.getElementById('modal-seedsh').value; s.nbrseedsperday = document.getElementById('modal-seedsday').value;
+            s.nbrlancement = document.getElementById('modal-lancement').value; s.quality = document.getElementById('modal-quality').value;
+            s.paused = document.getElementById('modal-paused').value; s.period = document.getElementById('modal-period').value;
+            s.rotMin = document.getElementById('modal-rotMin').value; s.rotMax = document.getElementById('modal-rotMax').value;
             s.rotDetails = document.getElementById('rotDetailText').value;
-            checkChanges(p);
-            closeDetails();
+            checkChanges(p, 'Details'); closeDetails();
         }
-
         function quickRemoveLastDeploy(plat) { if(platformsData[plat]?.deploys.length > 0) removeDeploy(plat, platformsData[plat].deploys.length - 1); }
         function toggleDistMode(enable) { const c = document.getElementById('logicContainer'); if(enable) c.classList.remove('opacity-50', 'pointer-events-none'); else c.classList.add('opacity-50', 'pointer-events-none'); }
     </script>
