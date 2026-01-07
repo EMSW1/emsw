@@ -430,7 +430,7 @@
         let globalEditor = "";
         let platVisibility = {};
         let activeDetailsPlat = null;
-        let platformChanges = {}; // TRACKS SPECIFIC MODIFICATION TYPES PER PLATFORM
+        let platformChanges = {}; // STRUCTURE: { plat: { global: Set(), deploys: { index: Set() } } }
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -512,7 +512,7 @@
                 if(!platformsData[p]) platformsData[p] = {};
                 if(!boitesConfig[p]) boitesConfig[p] = 100; 
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
-                if(!platformChanges[p]) platformChanges[p] = new Set();
+                if(!platformChanges[p]) platformChanges[p] = { global: new Set(), deploys: {} };
             });
 
             renderAllPlatforms();
@@ -753,7 +753,7 @@
 
         function updateDeployData(plat, index, field, value) {
             platformsData[plat].deploys[index][field] = value;
-            checkChanges(plat, field.toUpperCase());
+            checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), index);
         }
 
         function renderAllSelectors() {
@@ -798,9 +798,13 @@
                  if(chk && chk.checked) {
                      document.querySelectorAll(`.${field}-chk-target-${plat}:checked`).forEach(chk => {
                          const idx = parseInt(chk.value);
-                         if(platformsData[plat].deploys[idx]) { platformsData[plat].deploys[idx][field] = value; count++; }
+                         if(platformsData[plat].deploys[idx]) { 
+                             platformsData[plat].deploys[idx][field] = value; 
+                             count++; 
+                             checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), idx);
+                         }
                      });
-                     if(count > 0) { renderPlatformDeploys(plat); checkChanges(plat, 'Bulk ' + field.toUpperCase()); }
+                     if(count > 0) renderPlatformDeploys(plat);
                  }
             });
             if(count > 0) alert("Applied!");
@@ -819,13 +823,13 @@
             const method = document.querySelector('input[name="distMethod"]:checked').value;
             if (method === 'same') {
                 const list = ips.join('\n');
-                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = list; checkChanges(t.plat, 'IPs'); });
+                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = list; checkChanges(t.plat, 'IPs', t.index); });
             } else {
                 if(document.querySelector('input[name="distMode"]:checked').value === 'random') ips.sort(() => Math.random() - 0.5);
                 ips.forEach((ip, i) => {
                     const t = targets[i % targets.length];
                     platformsData[t.plat].deploys[t.index].ips = platformsData[t.plat].deploys[t.index].ips ? platformsData[t.plat].deploys[t.index].ips + "\n" + ip : ip;
-                    checkChanges(t.plat, 'IPs');
+                    checkChanges(t.plat, 'IPs', t.index);
                 });
             }
             PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) renderPlatformDeploys(p); });
@@ -836,14 +840,19 @@
             const txt = document.getElementById(`ips-${plat}-${index}`).value;
             const count = txt.trim() ? txt.trim().split(/\n/).filter(l => l.trim() !== "").length : 0;
             document.querySelector(`.count-${plat}-${index}`).innerText = `${count} IPS`;
-            checkChanges(plat, 'IPs');
+            checkChanges(plat, 'IPs', index);
         }
 
-        function checkChanges(plat, type) {
+        function checkChanges(plat, type, deployIndex) {
             if(userRole === 'viewer') return;
             if(plat && type) {
-                if(!platformChanges[plat]) platformChanges[plat] = new Set();
-                platformChanges[plat].add(type);
+                if(!platformChanges[plat]) platformChanges[plat] = { global: new Set(), deploys: {} };
+                if(deployIndex !== undefined) {
+                    if(!platformChanges[plat].deploys[deployIndex]) platformChanges[plat].deploys[deployIndex] = new Set();
+                    platformChanges[plat].deploys[deployIndex].add(type);
+                } else {
+                    platformChanges[plat].global.add(type);
+                }
             }
             document.getElementById('saveBtn').disabled = false;
             document.getElementById('actionToolbar').classList.remove('hidden');
@@ -863,11 +872,9 @@
             const editor = document.getElementById('globalEditor').value;
             const publicUrl = window.location.origin + window.location.pathname;
             
-            // Collect modified platforms
-            const platsToSave = Array.from(new Set([...Object.keys(platformsData).filter(p => platformChanges[p] && platformChanges[p].size > 0)]));
+            const platsToSave = Array.from(new Set([...Object.keys(platformsData).filter(p => platformChanges[p] && (platformChanges[p].global.size > 0 || Object.keys(platformChanges[p].deploys).length > 0))]));
             
             if(platsToSave.length === 0) {
-                 // Fallback to all visible if no explicit changes detected (e.g. initial save)
                  PLATFORMS.filter(p => platVisibility[p]).forEach(p => platsToSave.push(p));
             }
 
@@ -878,9 +885,22 @@
                     deploys: data.deploys || [], filter, stats: data.stats || {}, editor, updatedAt: new Date().toLocaleString() 
                 });
 
-                const changesStr = platformChanges[plat] && platformChanges[plat].size > 0 ? Array.from(platformChanges[plat]).join(', ') : 'Plan Saved';
+                // FORMAT CHANGE STRING GRANULARLY
+                let lines = [];
+                if(platformChanges[plat]) {
+                    if(platformChanges[plat].global.size > 0) {
+                        lines.push(`• Global: ${Array.from(platformChanges[plat].global).join(', ')}`);
+                    }
+                    const sortedIndices = Object.keys(platformChanges[plat].deploys).sort((a,b) => a-b);
+                    sortedIndices.forEach(idx => {
+                        const fields = Array.from(platformChanges[plat].deploys[idx]).join(', ');
+                        lines.push(`• D${parseInt(idx)+1} : ${fields} updated`);
+                    });
+                }
+                
+                const changesStr = lines.length > 0 ? lines.join('\n') : 'Plan Saved';
                 const viewLink = `${publicUrl}?mode=view&plat=${plat}`;
-                const telegramMsg = `🔔 <b>${plat} UPDATE</b>\n👤 <b>EDITOR: ${editor}</b>\n📝 <b>CHANGES: ${changesStr}</b>\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">${publicUrl}</a>`;
+                const telegramMsg = `🔔 <b>${plat} UPDATE</b>\n👤 <b>EDITOR: ${editor}</b>\n📝 <b>CHANGES:</b>\n${changesStr}\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">${publicUrl}</a>`;
                 
                 try {
                     await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
@@ -888,7 +908,10 @@
                         body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
                     });
                 } catch (e) { console.error(e); }
-                if(platformChanges[plat]) platformChanges[plat].clear();
+                if(platformChanges[plat]) {
+                    platformChanges[plat].global.clear();
+                    platformChanges[plat].deploys = {};
+                }
             }
             setTimeout(() => location.reload(), 500);
         }
