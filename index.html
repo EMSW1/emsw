@@ -57,6 +57,7 @@
 
         .dark body { background-color: #020617; }
 
+        /* Cosmic & Animations */
         .bg-animate-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: linear-gradient(45deg, #e2e8f0, #cbd5e1, #f1f5f9); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
         .dark .bg-animate-container { background: linear-gradient(45deg, #0f172a, #1e1b4b, #020617); background-size: 400% 400%; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -74,10 +75,12 @@
         @keyframes shooting { 0% { transform: translateX(0); } 100% { transform: translateX(300px); } }
         @keyframes shining { 0% { width: 0; } 50% { width: 30px; } 100% { width: 0; } }
         
+        /* Snow */
         .snow-container { position: fixed; inset: 0; z-index: -9; pointer-events: none; }
         .snowflake { position: absolute; top: -10px; background: white; border-radius: 50%; opacity: 0.8; animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(110vh); } }
 
+        /* UI Components */
         .glass-card { background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-color); box-shadow: var(--glass-shadow); }
         label { color: var(--label-color) !important; font-weight: 800; letter-spacing: 0.5px; }
         select, input, textarea { color: var(--text-main) !important; background-color: var(--input-bg) !important; border: 1px solid rgba(148, 163, 184, 0.3); transition: all 0.2s; }
@@ -98,6 +101,7 @@
         .admin-locked { pointer-events: none; opacity: 0.9; }
         .super-locked { pointer-events: none; opacity: 0.9; border: 1px dashed rgba(128,128,128,0.3) !important; }
         .super-mode .super-locked { pointer-events: auto; opacity: 1; border: none !important; }
+        /* Auto-calculated fields */
         .auto-calc { pointer-events: none; opacity: 0.8; background-color: rgba(128,128,128,0.1) !important; }
 
         #saveBtn { transition: all 0.3s; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
@@ -120,6 +124,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
+        /* Platform Section Styles */
         .platform-section {
             opacity: 0;
             animation: fadeIn 0.5s forwards;
@@ -140,6 +145,7 @@
         .global-stat-val { font-size: 1.2rem; font-weight: 900; width: 100%; text-align: center; background: transparent !important; border: none !important; outline: none; }
         .dark .global-stat-val { text-shadow: 0 0 10px currentColor; }
 
+        /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #10B981; }
         .toggle-checkbox:checked + .toggle-label { background-color: #10B981; }
     </style>
@@ -153,11 +159,12 @@
     </div>
     <div class="bg-animate-container"></div>
 
+    <!-- Login -->
     <div id="loginOverlay">
         <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm text-center border shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl ring-4 ring-blue-500/20">
-                    <span class="text-white text-3xl font-black italic">W</span>
+                    <span class="text-white text-3xl font-black italic">EMSW PLAN</span>
                 </div>
                 <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter text-slate-800 dark:text-white">EMSW ACCESS</h2>
                 <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 border-none rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-900 dark:text-white placeholder-slate-400">
@@ -166,6 +173,7 @@
         </div>
     </div>
 
+    <!-- Platform Details Modal -->
     <div id="platformDetailModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-4xl hidden shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-black uppercase italic text-slate-800 dark:text-white" id="detailModalTitle">DETAILS</h3>
@@ -207,10 +215,11 @@
     </div>
 
     <div id="appContent" class="hidden max-w-7xl mx-auto space-y-8 pb-24">
+        <!-- Header -->
         <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center relative overflow-hidden group">
             <div class="relative z-10">
                 <h1 class="text-2xl font-black italic uppercase tracking-tighter drop-shadow-lg text-slate-800 dark:text-white">EMSW <span class="text-blue-600 dark:text-blue-400">PLAN</span></h1>
-                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">MASTER DASHBOARD</p>
+                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">REPORTING</p>
             </div>
             <div class="flex items-center gap-3 relative z-10">
                 <button id="darkToggle" onclick="toggleDarkMode()" class="p-2.5 bg-white dark:bg-slate-800/80 rounded-xl hover:scale-110 transition-all shadow-md text-slate-800 dark:text-white">
@@ -223,33 +232,35 @@
             </div>
         </header>
 
+        <!-- Global Stats (AUTO CALCULATED) -->
         <div id="globalStatsHeader" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-5 gap-4 items-center animate-fade-in-down border-t-4 border-purple-500 shadow-lg shadow-purple-500/10">
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-blue-700 dark:text-blue-400">TOTAL RDPs</div>
+                <div class="global-stat-label text-blue-700 font-bold dark:text-blue-400">TOTAL RDPs</div>
                 <input type="text" id="glb_rdps" oninput="checkChanges()" class="global-stat-val text-blue-700 dark:text-blue-500 super-locked" placeholder="-">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-emerald-700 dark:text-emerald-400">TOTAL SEEDS</div>
+                <div class="global-stat-label text-emerald-700 font-bold dark:text-emerald-400">TOTAL SEEDS</div>
                 <input type="text" id="glb_seeds" readonly class="global-stat-val text-emerald-700 dark:text-emerald-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-purple-700 dark:text-purple-400">QUALITÉ</div>
+                <div class="global-stat-label text-purple-700 font-bold dark:text-purple-400">QUALITÉ</div>
                 <input type="text" id="glb_qual" readonly class="global-stat-val text-purple-700 dark:text-purple-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-rose-700 dark:text-rose-400">PAUSED</div>
+                <div class="global-stat-label text-rose-700 font-bold dark:text-rose-400">PAUSED</div>
                 <input type="text" id="glb_pause" readonly class="global-stat-val text-rose-700 dark:text-rose-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-orange-700 dark:text-orange-400">PROXY</div>
+                <div class="global-stat-label text-orange-700 font-bold dark:text-orange-400">PROXY</div>
                 <input type="text" id="glb_proxy" oninput="checkChanges()" class="global-stat-val text-orange-700 dark:text-orange-500 super-locked" placeholder="-">
             </div>
         </div>
 
+        <!-- Global Settings Card (Editor) -->
         <div class="glass-card p-6 rounded-[2rem] shadow-lg border-l-8 border-purple-500 admin-only">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="w-full">
-                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">GLOBAL SESSION EDITOR</label>
+                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITOR</label>
                     <select id="globalEditor" onchange="checkChanges()" class="w-full p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
                         <option value="MOUAD LAHCRECH">MOUAD LAHCRECH</option>
                         <option value="ADNANE EL ASSAM">ADNANE EL ASSAM</option>
@@ -260,6 +271,7 @@
             </div>
         </div>
         
+         <!-- SUPER ADMIN: Platform Manager -->
         <div class="glass-card p-6 rounded-[2rem] shadow-lg border-l-8 border-orange-500 super-only">
             <h3 class="text-sm font-black uppercase italic text-orange-600 mb-4">Platform Manager</h3>
             <div class="flex gap-2">
@@ -268,17 +280,29 @@
             </div>
         </div>
 
+        <!-- ALL ADMIN TOOLS CONTAINER -->
         <div class="flex flex-col xl:flex-row gap-6 admin-only">
+            
+            <!-- LEFT: SMART DISTRIBUTOR (1/3 Width) -->
             <div id="distributorSection" class="glass-card p-6 rounded-[2rem] shadow-2xl border-t-4 border-emerald-500 relative overflow-hidden group w-full xl:w-1/3">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                </div>
+                
                 <h3 class="text-lg font-black uppercase italic text-emerald-700 dark:text-emerald-400 mb-4 flex items-center gap-2">
-                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs">🧪</span> Smart Distributor
+                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs"></span> IP Distributor
                 </h3>
+                
                 <div class="flex flex-col gap-4">
                     <textarea id="masterIpList" class="w-full h-32 p-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border-2 border-dashed border-slate-300 dark:border-slate-700 font-mono text-[10px] focus:border-emerald-500 focus:ring-0 transition-all outline-none resize-none" placeholder="192.168.1.1&#10;192.168.1.2..."></textarea>
+
                     <div class="bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <label class="block text-[9px] font-black uppercase mb-2 text-slate-500">Targets</label>
-                        <div class="space-y-1" id="distributor-targets"></div>
+                        <label class="block text-[9px] font-black uppercase mb-2 text-slate-500">PLATFORMS</label>
+                        <div class="space-y-1" id="distributor-targets">
+                             <!-- Dynamic Targets -->
+                        </div>
                     </div>
+
                     <div class="flex flex-col gap-2">
                          <div class="flex gap-2 justify-center bg-slate-50/50 dark:bg-slate-800/30 p-1 rounded-lg">
                              <label class="flex items-center gap-1 cursor-pointer">
@@ -290,6 +314,7 @@
                                 <span class="text-[10px] font-bold">Division</span>
                             </label>
                         </div>
+                        
                         <div id="logicContainer" class="flex gap-2 justify-center">
                              <label class="flex items-center gap-1 cursor-pointer bg-white/50 p-1 rounded">
                                 <input type="radio" name="distMode" value="sequential" checked class="w-3 h-3 text-emerald-500 focus:ring-emerald-500">
@@ -301,19 +326,33 @@
                             </label>
                         </div>
                     </div>
-                    <button onclick="distributeMasterIPs()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white rounded-xl font-black uppercase shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs">🚀 Distribute</button>
+
+                    <button onclick="distributeMasterIPs()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white rounded-xl font-black uppercase shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs">
+                        <span></span> Distribute
+                    </button>
                 </div>
             </div>
 
+            <!-- RIGHT: BULK MANAGERS (2/3 Width) -->
             <div class="w-full xl:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- ID MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
-                    <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">🆔 ID Manager</h3>
+                    <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
+                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID 
+                    </h3>
                     <input type="text" id="bulkIdInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-blue-500 outline-none text-xs" placeholder="NEW ID">
-                    <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer"></div>
+                    <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
                     <button onclick="applyBulkId()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY ID</button>
                 </div>
+
+                <!-- BATCH MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-orange-500 relative flex flex-col">
-                    <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">📦 Batch</h3>
+                    <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
+                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> BATCH
+                    </h3>
                     <select id="bulkBatchInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-orange-500 outline-none text-xs">
                          <option value="0/0 P">0/0 P</option>
                          <option value="3/3000 P">3/3000 P</option>
@@ -321,11 +360,17 @@
                          <option value="10/3000 P">10/3000 P</option>
 						 <option value="20/3000 P">20/3000 P</option>
                     </select>
-                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="batchManagerContainer"></div>
+                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="batchManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
                     <button onclick="applyBulkBatch()" class="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY BATCH</button>
                 </div>
+
+                <!-- RULES MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-pink-500 relative flex flex-col">
-                    <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">📜 Rules</h3>
+                    <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">
+                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> RULES
+                    </h3>
                     <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
                         <option value="SELECT ALL IPS">SELECT ALL IPS</option>
                         <option value="SELECT 30 IPS MAX">SELECT 30 IPS MAX</option>
@@ -335,14 +380,21 @@
                         <option value="RANDOM ON CLASS">RANDOM ON CLASS</option>
                         <option value="2 IPS RANDOM ON SERVER SELECTED">2 IPS RANDOM ON SERVER SELECTED</option>
                     </select>
-                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="rulesManagerContainer"></div>
+                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="rulesManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
                     <button onclick="applyBulkRules()" class="w-full py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY RULES</button>
                 </div>
             </div>
+
         </div>
 
-        <div id="platformsContainer" class="space-y-12"></div>
+        <!-- PLATFORMS CONTAINER -->
+        <div id="platformsContainer" class="space-y-12">
+            <!-- Content Injected via JS -->
+        </div>
 
+        <!-- Sticky Action Bar -->
         <div id="actionToolbar" class="admin-only hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
             <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-4 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95 backdrop-blur-md">Save Changes</button>
             <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic active:scale-95 backdrop-blur-md">⚡ Global</button>
@@ -373,15 +425,12 @@
         
         let PLATFORMS = []; 
         let platformsData = {};
-        let originalPlatformsData = {}; // CLONE FOR REAL-TIME COMPARISON
         let boitesConfig = {};
         let globalStatsData = { rdps:"", seeds:"", qual:"", pause:"", proxy:"" };
-        let originalGlobalStats = {};
+        let globalEditor = "";
         let platVisibility = {};
         let activeDetailsPlat = null;
-
-        function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
-        function isEqual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+        let platformChanges = {}; // STRUCTURE: { plat: { global: Set(), deploys: { index: Set() } } }
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -391,13 +440,19 @@
         window.onload = async () => {
             if(localStorage.getItem('emsw_darkmode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
             generateSpaceEffect();
+
             const params = new URLSearchParams(window.location.search);
             const savedRole = localStorage.getItem('emsw_role');
             const isViewMode = params.get('mode') === 'view';
+
             if (isViewMode) {
-                userRole = "viewer"; document.body.classList.add('viewer-mode'); await initApp();
+                userRole = "viewer";
+                document.body.classList.add('viewer-mode');
+                await initApp();
             } else if(savedRole === 'admin' || savedRole === 'super') {
-                userRole = savedRole; document.body.classList.add(userRole + '-mode'); await initApp();
+                userRole = savedRole;
+                document.body.classList.add(userRole + '-mode');
+                await initApp();
             } else {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('appContent').classList.add('hidden');
@@ -423,6 +478,7 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('roleBadge').innerText = userRole.toUpperCase();
+            
             if(userRole === 'super') {
                 document.getElementById('roleBadge').classList.add('bg-purple-600');
                 document.querySelectorAll('.super-only').forEach(el => el.classList.remove('hidden'));
@@ -430,31 +486,37 @@
             } else {
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
+
             const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
-                db.ref('emsw/config/boites').once('value'), db.ref('emsw/global_stats').once('value'),
-                db.ref('emsw/config/visibility').once('value'), db.ref('emsw/config/platforms_list').once('value')
+                db.ref('emsw/config/boites').once('value'),
+                db.ref('emsw/global_stats').once('value'),
+                db.ref('emsw/config/visibility').once('value'),
+                db.ref('emsw/config/platforms_list').once('value')
             ]);
+            
             if(confSnap.exists()) boitesConfig = confSnap.val();
+            else boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
             if(visibilitySnap.exists()) platVisibility = visibilitySnap.val();
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
             else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; 
+
             if(globalSnap.exists()) {
                 globalStatsData = globalSnap.val();
-                originalGlobalStats = deepClone(globalStatsData);
                 ['rdps','proxy'].forEach(k => {
                     const el = document.getElementById('glb_'+k);
                     if(el) el.value = globalStatsData[k] || '';
                 });
             }
+
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
                 if(!boitesConfig[p]) boitesConfig[p] = 100; 
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
+                if(!platformChanges[p]) platformChanges[p] = { global: new Set(), deploys: {} };
             });
-            await renderAllPlatforms();
-            originalPlatformsData = deepClone(platformsData); // STORE ORIGINAL
+
+            renderAllPlatforms();
             generateDynamicAdminTools(); 
-            checkChanges(); // INITIAL RESET
         }
 
         function generateDynamicAdminTools() {
@@ -468,20 +530,25 @@
                         <span class="font-bold text-xs">${plat} <span id="dist-count-${plat}" class="text-[9px] text-slate-400 ml-1 font-normal opacity-75">(0)</span></span>
                     </label>
                     <div class="flex gap-1 ml-2">
-                         <button onclick="quickRemoveLastDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-md font-black shadow-sm transition-colors">-</button>
-                         <button onclick="addDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-md font-black shadow-sm transition-colors">+</button>
+                         <button onclick="quickRemoveLastDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-md font-black shadow-sm transition-colors" title="Remove Last">-</button>
+                         <button onclick="addDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-md font-black shadow-sm transition-colors" title="Add New">+</button>
                     </div>
                 </div>`;
                 distContainer.insertAdjacentHTML('beforeend', html);
             });
+
             ['id', 'batch', 'rules'].forEach(type => {
-                const container = document.getElementById(`${type}ManagerContainer`); container.innerHTML = '';
+                const container = document.getElementById(`${type}ManagerContainer`);
+                container.innerHTML = '';
                 PLATFORMS.forEach(plat => {
+                    let color = 'blue';
+                    if(type === 'batch') color = 'orange';
+                    if(type === 'rules') color = 'pink';
                     const html = `
                     <div class="bg-slate-50/50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div class="flex justify-between items-center mb-1">
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" id="${type}-chk-${plat}" onchange="toggleGenericPlatform('${type}', '${plat}')" class="w-3 h-3 rounded">
+                                <input type="checkbox" id="${type}-chk-${plat}" onchange="toggleGenericPlatform('${type}', '${plat}')" class="w-3 h-3 text-${color}-500 rounded">
                                 <span class="font-bold text-[10px]">${plat}</span>
                             </label>
                             <label id="${type}-select-all-${plat}-container" class="hidden text-[9px] font-bold text-slate-400 cursor-pointer">
@@ -497,57 +564,79 @@
 
         async function renderAllPlatforms() {
             document.getElementById('loadingOverlay').style.display = 'flex';
-            const container = document.getElementById('platformsContainer'); container.innerHTML = '';
-            let firstEditor = ""; let totalSeeds = 0, totalQuality = 0, totalPaused = 0;
+            const container = document.getElementById('platformsContainer');
+            container.innerHTML = '';
+            let firstEditor = "";
+            let totalSeeds = 0, totalQuality = 0, totalPaused = 0;
             const params = new URLSearchParams(window.location.search);
             const targetPlat = params.get('plat');
+
             for (const plat of PLATFORMS) {
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
                 if (targetPlat && plat.toUpperCase() !== targetPlat.toUpperCase()) continue;
+
                 const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                 const data = snap.val() || { deploys: [], stats: {}, filter: "" };
                 platformsData[plat] = data;
                 if(!firstEditor && data.editor) firstEditor = data.editor;
-                totalSeeds += parseInt(data.stats.seeds || 0); totalQuality += parseInt(data.stats.quality || 0); totalPaused += parseInt(data.stats.paused || 0);
+                totalSeeds += parseInt(data.stats.seeds || 0);
+                totalQuality += parseInt(data.stats.quality || 0);
+                totalPaused += parseInt(data.stats.paused || 0);
+
                 const isHidden = !platVisibility[plat];
                 const opacityClass = isHidden ? 'opacity-50 grayscale' : '';
+                const visibilityToggle = userRole === 'super' ? `
+                    <div class="absolute top-4 right-4 z-20 flex gap-2 items-center">
+                        <button onclick="deletePlatform('${plat}')" class="text-red-500 hover:text-red-700 font-bold text-xs" title="Delete Platform">🗑️</button>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" value="" class="sr-only peer toggle-checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleVisibility('${plat}')">
+                          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 toggle-label"></div>
+                        </label>
+                    </div>` : '';
+
                 const boxInput = userRole === 'super' ? 
-                    `<input type="number" class="w-16 p-1 text-center rounded bg-white/50 text-xs font-bold border" value="${boitesConfig[plat]}" onchange="updateBoitesConfig('${plat}', this.value)">` :
-                    `<span class="text-xs font-bold bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">${boitesConfig[plat] || 0}</span>`;
+                    `<input type="number" class="w-16 p-1 text-center rounded bg-white/50 text-xs font-bold border border-slate-300" value="${boitesConfig[plat]}" onchange="updateBoitesConfig('${plat}', this.value)">` :
+                    `<span class="text-xs font-bold bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500">${boitesConfig[plat] || 0}</span>`;
+
                 const html = `
                 <div id="wrapper-${plat}" class="platform-section relative ${opacityClass} transition-all duration-300">
+                    ${visibilityToggle}
                     <div class="flex items-center gap-4 mb-4">
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
-                        <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase">DETAILS</button>
+                        <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
                     <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg mb-6 border-l-8 border-l-blue-500">
                         <div class="flex gap-4 items-center">
                             <div class="admin-only w-1/4">
                                 <label class="block text-[10px] font-black uppercase mb-1 text-slate-500">ADD DEPLOY</label>
-                                <button onclick="addDeploy('${plat}')" class="w-full p-2 rounded-xl font-black bg-emerald-500 hover:bg-emerald-600 text-white text-xl">+</button>
+                                <button onclick="addDeploy('${plat}')" class="w-full p-2 rounded-xl font-black bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-95 transition-all text-xl">+</button>
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1">FILTER</label>
+                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="platformsData['${plat}'].filter=this.value; checkChanges()" class="w-full p-2 border-2 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase outline-none" placeholder="SEARCH...">
-                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl text-[9px] uppercase">ALL ⬇️</button>
-                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl text-[9px] uppercase">IDs 📋</button>
+                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges('${plat}', 'Filter')" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">ALL IPS ⬇️</button>
+                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">IDs 📋</button>
                                 </div>
                             </div>
                         </div>
                         <div class="text-center bg-slate-500/5 p-3 rounded-[1.5rem] border border-dashed border-slate-500/30">
                             <p class="text-[10px] font-black uppercase mb-1 text-slate-500">DIVISION SEEDS</p>
-                            <div id="dist-${plat}" class="font-black text-xs italic tracking-tighter">---</div>
+                            <div id="dist-${plat}" class="font-black text-xs italic tracking-tighter text-slate-700 dark:text-slate-300">---</div>
                         </div>
                     </div>
                     <div id="grid-${plat}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
                 </div>`;
-                container.insertAdjacentHTML('beforeend', html); renderPlatformDeploys(plat);
+                container.insertAdjacentHTML('beforeend', html);
+                renderPlatformDeploys(plat);
             }
-            document.getElementById('glb_seeds').value = totalSeeds; document.getElementById('glb_qual').value = totalQuality; document.getElementById('glb_pause').value = totalPaused;
+            document.getElementById('glb_seeds').value = totalSeeds;
+            document.getElementById('glb_qual').value = totalQuality;
+            document.getElementById('glb_pause').value = totalPaused;
             if(firstEditor) document.getElementById('globalEditor').value = firstEditor;
-            updateDistributorCounts(); renderAllSelectors();
+            updateDistributorCounts();
+            renderAllSelectors();
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
@@ -555,187 +644,334 @@
             const container = document.getElementById(`grid-${plat}`);
             const distDisplay = document.getElementById(`dist-${plat}`);
             const savedDeploys = platformsData[plat].deploys || [];
-            const num = savedDeploys.length; container.innerHTML = "";
+            const num = savedDeploys.length;
+            container.innerHTML = "";
             if (num <= 0) { distDisplay.innerText = "---"; return; }
             const total = boitesConfig[plat] || 100;
-            const base = Math.floor(total / num); const rem = total % num;
-            let dist = []; const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+            const base = Math.floor(total / num);
+            const rem = total % num;
+            let dist = [];
+            const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
             for (let i = 0; i < num; i++) {
-                const bCount = base + (i < rem ? 1 : 0); dist.push(bCount);
-                const d = savedDeploys[i]; const ipCount = d.ips ? d.ips.trim().split(/\n/).filter(l => l.trim() !== "").length : 0;
+                const bCount = base + (i < rem ? 1 : 0);
+                dist.push(bCount);
+                const d = savedDeploys[i];
+                const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
                 const cardHtml = `
                 <div class="deploy-card glass-card p-4 rounded-[1.5rem] relative group/card">
-                    <button onclick="removeDeploy('${plat}', ${i})" class="delete-btn admin-only absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold z-10 scale-0 group-hover/card:scale-100 transition-transform">-</button>
+                    <button onclick="removeDeploy('${plat}', ${i})" class="delete-btn admin-only absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md font-bold z-10 scale-0 group-hover/card:scale-100 transition-transform">-</button>
                     <div class="flex justify-between items-center mb-3 border-b border-slate-500/10 pb-2">
                         <div class="flex items-center gap-2">
-                            <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase">D${i+1}</span>
-                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 text-white text-[9px] px-2 py-1 rounded-full font-bold">⬇️ TXT</button>
-                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold">📋</button>
-                            <span class="text-[10px] font-black text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full count-${plat}-${i}">${ipCount} IPS</span>
+                            <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">D${i+1}</span>
+                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">⬇️ TXT</button>
+                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">📋</button>
+                            <span class="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 count-${plat}-${i}">${ipCount} IPS</span>
                         </div>
-                        <span class="text-blue-600 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full">${bCount} B</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} B</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                        <div><label class="text-[9px] font-black text-slate-500">ID</label><input type="text" ${isReadonly} oninput="platformsData['${plat}'].deploys[${i}].id=this.value; checkChanges()" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 bg-blue-500/10 uppercase outline-none" value="${d.id||''}"></div>
-                        <div><label class="text-[9px] font-black text-slate-500">Batch</label><select ${isReadonly} onchange="platformsData['${plat}'].deploys[${i}].batch=this.value; checkChanges()" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none">
-                            ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
-                        </select></div>
-                        <div><label class="text-[9px] font-black text-slate-500">Rules</label><select ${isReadonly} onchange="platformsData['${plat}'].deploys[${i}].rules=this.value; checkChanges()" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none">
-                            ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
-                        </select></div>
+                        <div>
+                            <label class="block text-[9px] font-black uppercase text-slate-500">ID</label>
+                            <input type="text" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'id', this.value)" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 uppercase outline-none" value="${d.id||''}">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
+                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-black uppercase text-slate-500">Rules</label>
+                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
-                    <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="platformsData['${plat}'].deploys[${i}].ips=this.value; updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-700 dark:text-slate-300" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
+                    <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'ips', this.value); updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner text-slate-700 dark:text-slate-300" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', cardHtml);
             }
             distDisplay.innerText = dist.join(' | ');
         }
 
-        function checkChanges() {
+        async function addNewPlatform() {
+            const name = document.getElementById('newPlatName').value.trim().toUpperCase();
+            if(!name || PLATFORMS.includes(name)) return alert("Invalid name");
+            PLATFORMS.push(name);
+            boitesConfig[name] = 0;
+            platVisibility[name] = true;
+            platformsData[name] = { deploys: [], stats: {}, filter: "" };
+            await Promise.all([
+                db.ref('emsw/config/platforms_list').set(PLATFORMS),
+                db.ref('emsw/config/boites').set(boitesConfig),
+                db.ref('emsw/config/visibility').set(platVisibility)
+            ]);
+            location.reload();
+        }
+
+        async function deletePlatform(name) {
+            if(confirm(`Delete ${name}?`)) {
+                PLATFORMS = PLATFORMS.filter(p => p !== name);
+                await Promise.all([db.ref('emsw/config/platforms_list').set(PLATFORMS), db.ref(`emsw/plans/${name}`).remove()]);
+                location.reload();
+            }
+        }
+
+        async function updateBoitesConfig(plat, val) {
+            if(userRole !== 'super') return;
+            boitesConfig[plat] = parseInt(val) || 0;
+            await db.ref('emsw/config/boites').set(boitesConfig);
+            renderPlatformDeploys(plat);
+            checkChanges(plat, 'Boites');
+        }
+
+        function addDeploy(plat) {
+            platformsData[plat].deploys.push({ id: '', batch: '10/3000 P', rules: 'SELECT ALL IPS', ips: '' });
+            renderPlatformDeploys(plat);
+            updateDistributorCounts();
+            renderAllSelectors();
+            checkChanges(plat, 'Added Deploy');
+        }
+
+        function removeDeploy(plat, index) {
+            if(confirm('Delete deploy?')) {
+                platformsData[plat].deploys.splice(index, 1);
+                renderPlatformDeploys(plat);
+                updateDistributorCounts();
+                renderAllSelectors();
+                checkChanges(plat, 'Removed Deploy');
+            }
+        }
+        
+        function updateDistributorCounts() {
+            PLATFORMS.forEach(plat => {
+                const count = (platformsData[plat]?.deploys) ? platformsData[plat].deploys.length : 0;
+                const el = document.getElementById(`dist-count-${plat}`);
+                if(el) el.innerText = `(${count})`;
+            });
+        }
+
+        function updateDeployData(plat, index, field, value) {
+            platformsData[plat].deploys[index][field] = value;
+            checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), index);
+        }
+
+        function renderAllSelectors() {
+            renderGenericSelectors('id'); renderGenericSelectors('batch'); renderGenericSelectors('rules');
+        }
+
+        function renderGenericSelectors(type) {
+            PLATFORMS.forEach(plat => {
+                const container = document.getElementById(`${type}-list-${plat}`);
+                if(!container) return;
+                const deploys = platformsData[plat].deploys || [];
+                container.innerHTML = '';
+                if (deploys.length === 0) { container.innerHTML = '<span class="text-[9px] text-slate-400 italic pl-1">Empty</span>'; return; }
+                deploys.forEach((d, i) => {
+                     const html = `<label class="flex items-center gap-2 cursor-pointer hover:bg-white/20 p-1 rounded"><input type="checkbox" class="w-3.5 h-3.5 rounded focus:ring-0 border-gray-300 ${type}-chk-target-${plat}" value="${i}"><span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">D${i+1}</span></label>`;
+                     container.insertAdjacentHTML('beforeend', html);
+                });
+            });
+        }
+
+        function toggleGenericPlatform(type, plat) {
+            const list = document.getElementById(`${type}-list-${plat}`);
+            const selectAll = document.getElementById(`${type}-select-all-${plat}-container`);
+            const isChecked = document.getElementById(`${type}-chk-${plat}`).checked;
+            if(isChecked) { list.classList.remove('hidden'); selectAll.classList.remove('hidden'); }
+            else { list.classList.add('hidden'); selectAll.classList.add('hidden'); }
+        }
+
+        function toggleAllGeneric(type, plat, masterChk) {
+            const container = document.getElementById(`${type}-list-${plat}`);
+            container.querySelectorAll(`input[type="checkbox"]`).forEach(b => b.checked = masterChk.checked);
+        }
+
+        function applyBulkId() { applyBulkGeneric('id', document.getElementById('bulkIdInput').value.trim()); }
+        function applyBulkBatch() { applyBulkGeneric('batch', document.getElementById('bulkBatchInput').value); }
+        function applyBulkRules() { applyBulkGeneric('rules', document.getElementById('bulkRulesInput').value); }
+
+        function applyBulkGeneric(field, value) {
+            let count = 0;
+            PLATFORMS.forEach(plat => {
+                 const chk = document.getElementById(`${field}-chk-${plat}`);
+                 if(chk && chk.checked) {
+                     document.querySelectorAll(`.${field}-chk-target-${plat}:checked`).forEach(chk => {
+                         const idx = parseInt(chk.value);
+                         if(platformsData[plat].deploys[idx]) { 
+                             platformsData[plat].deploys[idx][field] = value; 
+                             count++; 
+                             checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), idx);
+                         }
+                     });
+                     if(count > 0) renderPlatformDeploys(plat);
+                 }
+            });
+            if(count > 0) alert("Applied!");
+        }
+
+        function distributeMasterIPs() {
+            const text = document.getElementById('masterIpList').value;
+            let ips = text.split('\n').map(s => s.trim()).filter(s => s);
+            const targets = [];
+            PLATFORMS.forEach(p => {
+                if(document.getElementById('chk-'+p).checked) {
+                    platformsData[p].deploys.forEach((d, i) => { d.ips = ""; targets.push({plat: p, index: i}); });
+                }
+            });
+            if(targets.length === 0 || ips.length === 0) return alert("Select target and IPs.");
+            const method = document.querySelector('input[name="distMethod"]:checked').value;
+            if (method === 'same') {
+                const list = ips.join('\n');
+                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = list; checkChanges(t.plat, 'IPs', t.index); });
+            } else {
+                if(document.querySelector('input[name="distMode"]:checked').value === 'random') ips.sort(() => Math.random() - 0.5);
+                ips.forEach((ip, i) => {
+                    const t = targets[i % targets.length];
+                    platformsData[t.plat].deploys[t.index].ips = platformsData[t.plat].deploys[t.index].ips ? platformsData[t.plat].deploys[t.index].ips + "\n" + ip : ip;
+                    checkChanges(t.plat, 'IPs', t.index);
+                });
+            }
+            PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) renderPlatformDeploys(p); });
+            alert("Done!");
+        }
+
+        function updateCount(plat, index) {
+            const txt = document.getElementById(`ips-${plat}-${index}`).value;
+            const count = txt.trim() ? txt.trim().split(/\n/).filter(l => l.trim() !== "").length : 0;
+            document.querySelector(`.count-${plat}-${index}`).innerText = `${count} IPS`;
+            checkChanges(plat, 'IPs', index);
+        }
+
+        function checkChanges(plat, type, deployIndex) {
             if(userRole === 'viewer') return;
-            const currentStats = {
-                rdps: document.getElementById('glb_rdps')?.value || '',
-                proxy: document.getElementById('glb_proxy')?.value || ''
-            };
-            const statsChanged = userRole === 'super' && !isEqual(currentStats, {rdps: originalGlobalStats.rdps, proxy: originalGlobalStats.proxy});
-            const platsChanged = !isEqual(platformsData, originalPlatformsData);
-            const anyChange = statsChanged || platsChanged;
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = !anyChange;
-            if(anyChange) document.getElementById('actionToolbar').classList.remove('hidden');
-            else document.getElementById('actionToolbar').classList.add('hidden');
+            if(plat && type) {
+                if(!platformChanges[plat]) platformChanges[plat] = { global: new Set(), deploys: {} };
+                if(deployIndex !== undefined) {
+                    if(!platformChanges[plat].deploys[deployIndex]) platformChanges[plat].deploys[deployIndex] = new Set();
+                    platformChanges[plat].deploys[deployIndex].add(type);
+                } else {
+                    platformChanges[plat].global.add(type);
+                }
+            }
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('actionToolbar').classList.remove('hidden');
         }
 
         async function saveAll() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             if(userRole === 'super') {
-                const newStats = { rdps: document.getElementById('glb_rdps').value, proxy: document.getElementById('glb_proxy').value };
-                await db.ref('emsw/global_stats').update(newStats);
-                originalGlobalStats = deepClone({...originalGlobalStats, ...newStats});
+                await db.ref('emsw/global_stats').set({
+                    rdps: document.getElementById('glb_rdps').value,
+                    seeds: document.getElementById('glb_seeds').value,
+                    qual: document.getElementById('glb_qual').value,
+                    pause: document.getElementById('glb_pause').value,
+                    proxy: document.getElementById('glb_proxy').value
+                });
             }
             const editor = document.getElementById('globalEditor').value;
             const publicUrl = window.location.origin + window.location.pathname;
             
-            for (const plat of PLATFORMS) {
-                if(!isEqual(platformsData[plat], originalPlatformsData[plat])) {
-                    const data = platformsData[plat];
-                    await db.ref(`emsw/plans/${plat}/current`).set({ ...data, editor, updatedAt: new Date().toLocaleString() });
-                    
-                    let lines = [];
-                    const origDeploys = originalPlatformsData[plat].deploys || [];
-                    const currDeploys = data.deploys || [];
-                    const maxLen = Math.max(origDeploys.length, currDeploys.length);
-                    
-                    for(let i=0; i<maxLen; i++) {
-                        const d1 = origDeploys[i] || {}; const d2 = currDeploys[i] || {};
-                        if(!isEqual(d1, d2)) {
-                            let diffs = [];
-                            if(d1.id !== d2.id) diffs.push("ID");
-                            if(d1.ips !== d2.ips) diffs.push("IPs");
-                            if(d1.batch !== d2.batch) diffs.push("Batch");
-                            if(d1.rules !== d2.rules) diffs.push("FROM");
-                            if(diffs.length > 0) lines.push(`• D${i+1} : ${diffs.join(', ')} updated`);
-                            else if(!origDeploys[i]) lines.push(`• D${i+1} : Added new deploy`);
-                        }
-                    }
-                    if(!isEqual(originalPlatformsData[plat].filter, data.filter)) lines.push(`• Filter updated`);
-                    if(!isEqual(originalPlatformsData[plat].stats, data.stats)) lines.push(`• Details stats updated`);
+            const platsToSave = Array.from(new Set([...Object.keys(platformsData).filter(p => platformChanges[p] && (platformChanges[p].global.size > 0 || Object.keys(platformChanges[p].deploys).length > 0))]));
+            
+            if(platsToSave.length === 0) {
+                 PLATFORMS.filter(p => platVisibility[p]).forEach(p => platsToSave.push(p));
+            }
 
-                    const changesStr = lines.join('\n') || 'Plan modifications saved';
-                    const viewLink = `${publicUrl}?mode=view&plat=${plat}`;
-                    const telegramMsg = `🔔 <b>${plat} UPDATE</b>\n👤 <b>EDITOR: ${editor}</b>\n📝 <b>CHANGES:</b>\n${changesStr}\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">${publicUrl}</a>`;
-                    try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) {}
+            for (const plat of platsToSave) {
+                const data = platformsData[plat];
+                const filter = document.getElementById(`filter-${plat}`)?.value.trim() || "";
+                await db.ref(`emsw/plans/${plat}/current`).set({ 
+                    deploys: data.deploys || [], filter, stats: data.stats || {}, editor, updatedAt: new Date().toLocaleString() 
+                });
+
+                // FORMAT CHANGE STRING GRANULARLY
+                let lines = [];
+                if(platformChanges[plat]) {
+                    if(platformChanges[plat].global.size > 0) {
+                        lines.push(`• Global: ${Array.from(platformChanges[plat].global).join(', ')}`);
+                    }
+                    const sortedIndices = Object.keys(platformChanges[plat].deploys).sort((a,b) => a-b);
+                    sortedIndices.forEach(idx => {
+                        const fields = Array.from(platformChanges[plat].deploys[idx]).join(', ');
+                        lines.push(`• D${parseInt(idx)+1} : ${fields} updated`);
+                    });
+                }
+                
+                const changesStr = lines.length > 0 ? lines.join('\n') : 'Plan Saved';
+                const viewLink = `${publicUrl}?mode=view&plat=${plat}`;
+                const telegramMsg = `🔄 <b>${plat} UPDATE</b>\n👤 <b>BY: ${editor}</b>\n📝 <b>CHANGES:</b>\n${changesStr}\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">VIEW MODIFICATIONS</a>`;
+				
+                try {
+                    await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
+                    });
+                } catch (e) { console.error(e); }
+                if(platformChanges[plat]) {
+                    platformChanges[plat].global.clear();
+                    platformChanges[plat].deploys = {};
                 }
             }
-            originalPlatformsData = deepClone(platformsData);
             setTimeout(() => location.reload(), 500);
         }
-
-        async function updateBoitesConfig(plat, val) {
-            if(userRole !== 'super') return; boitesConfig[plat] = parseInt(val) || 0;
-            await db.ref('emsw/config/boites').set(boitesConfig); renderPlatformDeploys(plat); checkChanges();
-        }
-        function addDeploy(plat) { platformsData[plat].deploys.push({ id: '', batch: '10/3000 P', rules: 'SELECT ALL IPS', ips: '' }); renderPlatformDeploys(plat); updateDistributorCounts(); renderAllSelectors(); checkChanges(); }
-        function removeDeploy(plat, index) { if(confirm('Delete?')) { platformsData[plat].deploys.splice(index, 1); renderPlatformDeploys(plat); updateDistributorCounts(); renderAllSelectors(); checkChanges(); } }
-        function updateDistributorCounts() { PLATFORMS.forEach(p => { const count = platformsData[p]?.deploys?.length || 0; const el = document.getElementById(`dist-count-${p}`); if(el) el.innerText = `(${count})`; }); }
-        function updateCount(plat, index) { const txt = document.getElementById(`ips-${plat}-${index}`).value; document.querySelector(`.count-${plat}-${index}`).innerText = `${txt.trim() ? txt.trim().split(/\n/).filter(l => l.trim() !== "").length : 0} IPS`; checkChanges(); }
-        function distributeMasterIPs() {
-            const ips = document.getElementById('masterIpList').value.split('\n').map(s => s.trim()).filter(s => s);
-            const targets = []; PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) platformsData[p].deploys.forEach((d, i) => { d.ips = ""; targets.push({plat: p, index: i}); }); });
-            if(targets.length === 0 || ips.length === 0) return alert("Select target/IPs.");
-            if (document.querySelector('input[name="distMethod"]:checked').value === 'same') {
-                const list = ips.join('\n'); targets.forEach(t => platformsData[t.plat].deploys[t.index].ips = list);
-            } else {
-                if(document.querySelector('input[name="distMode"]:checked').value === 'random') ips.sort(() => Math.random() - 0.5);
-                ips.forEach((ip, i) => { const t = targets[i % targets.length]; platformsData[t.plat].deploys[t.index].ips = platformsData[t.plat].deploys[t.index].ips ? platformsData[t.plat].deploys[t.index].ips + "\n" + ip : ip; });
-            }
-            PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) renderPlatformDeploys(p); }); checkChanges();
-        }
-        function applyBulkGeneric(field, value) {
-            PLATFORMS.forEach(plat => {
-                 if(document.getElementById(`${field}-chk-${plat}`)?.checked) {
-                     document.querySelectorAll(`.${field}-chk-target-${plat}:checked`).forEach(chk => {
-                         const idx = parseInt(chk.value); if(platformsData[plat].deploys[idx]) platformsData[plat].deploys[idx][field] = value;
-                     });
-                     renderPlatformDeploys(plat);
-                 }
-            });
-            checkChanges();
-        }
-        function applyBulkId() { applyBulkGeneric('id', document.getElementById('bulkIdInput').value.trim()); }
-        function applyBulkBatch() { applyBulkGeneric('batch', document.getElementById('bulkBatchInput').value); }
-        function applyBulkRules() { applyBulkGeneric('rules', document.getElementById('bulkRulesInput').value); }
-        function renderAllSelectors() { ['id','batch','rules'].forEach(renderGenericSelectors); }
-        function renderGenericSelectors(type) {
-            PLATFORMS.forEach(plat => {
-                const container = document.getElementById(`${type}-list-${plat}`); if(!container) return;
-                const deploys = platformsData[plat].deploys || []; container.innerHTML = deploys.length === 0 ? '<span class="text-[9px] italic">Empty</span>' : '';
-                deploys.forEach((d, i) => container.insertAdjacentHTML('beforeend', `<label class="flex items-center gap-2 cursor-pointer hover:bg-white/20 p-1 rounded"><input type="checkbox" class="w-3.5 h-3.5 rounded ${type}-chk-target-${plat}" value="${i}"><span class="text-[10px] font-bold">D${i+1}</span></label>`));
+        
+        async function superQuickSave() { saveAll(); }
+        function checkAccess() {
+            fetch(CONFIG.authUrl, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: document.getElementById('accessKey').value })
+            }).then(r=>r.json()).then(d=>{
+                if(d.success) { localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role); location.reload(); }
+                else alert('Denied');
             });
         }
-        function toggleGenericPlatform(type, plat) {
-            const list = document.getElementById(`${type}-list-${plat}`); const selectAll = document.getElementById(`${type}-select-all-${plat}-container`);
-            const isChecked = document.getElementById(`${type}-chk-${plat}`).checked;
-            if(isChecked) { list.classList.remove('hidden'); selectAll.classList.remove('hidden'); } else { list.classList.add('hidden'); selectAll.classList.add('hidden'); }
+        function logout() { localStorage.clear(); location.reload(); }
+        function downloadOneIPs(plat, index) { downloadFile(document.getElementById(`ips-${plat}-${index}`).value.trim(), `ips${index+1}${plat.toLowerCase()}.txt`); }
+        function copyOneIPs(plat, index, btn) { navigator.clipboard.writeText(document.getElementById(`ips-${plat}-${index}`).value).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="📋", 1500); }); }
+        function downloadAllIPs(plat, btn) { document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-ips').forEach((ta, i) => { if(ta.value.trim()) downloadFile(ta.value.trim(), `ips${i+1}${plat.toLowerCase()}.txt`); }); }
+        function downloadFile(content, filename) { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = filename; a.click(); }
+        function copyAllIDs(plat, btn) { const ids = Array.from(document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-id')).map(i=>i.value.trim()).filter(v=>v).join('\n'); if(ids) navigator.clipboard.writeText(ids).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="IDs 📋", 1500); }); }
+        async function toggleVisibility(plat) {
+            platVisibility[plat] = !platVisibility[plat];
+            await db.ref('emsw/config/visibility').set(platVisibility);
+            location.reload();
         }
-        function toggleAllGeneric(type, plat, masterChk) { document.getElementById(`${type}-list-${plat}`).querySelectorAll(`input[type="checkbox"]`).forEach(b => b.checked = masterChk.checked); }
         function openPlatformDetails(plat) {
-            activeDetailsPlat = plat; document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`; document.getElementById('platformDetailModal').classList.remove('hidden');
+            activeDetailsPlat = plat;
+            document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`;
+            document.getElementById('platformDetailModal').classList.remove('hidden');
             const stats = platformsData[plat].stats || {};
-            ['seeds','rdps','sessions','deploysday','seedsh','seedsday','lancement','quality','paused','period','rotMin','rotMax'].forEach(k => {
-                const map = {deploysday:'nbrseploysperday', seedsh:'nbrseedsperhour', seedsday:'nbrseedsperday', lancement:'nbrlancement'};
-                document.getElementById('modal-'+k).value = stats[map[k] || k] || '';
-            });
+            document.getElementById('modal-seeds').value = stats.seeds || '';
+            document.getElementById('modal-rdps').value = stats.rdps || '';
+            document.getElementById('modal-sessions').value = stats.sessions || '';
+            document.getElementById('modal-deploysday').value = stats.nbrseploysperday || '';
+            document.getElementById('modal-seedsh').value = stats.nbrseedsperhour || '';
+            document.getElementById('modal-seedsday').value = stats.nbrseedsperday || '';
+            document.getElementById('modal-lancement').value = stats.nbrlancement || '';
+            document.getElementById('modal-quality').value = stats.quality || '';
+            document.getElementById('modal-paused').value = stats.paused || '';
+            document.getElementById('modal-period').value = stats.period || '';
+            document.getElementById('modal-rotMin').value = stats.rotMin || '';
+            document.getElementById('modal-rotMax').value = stats.rotMax || '';
             document.getElementById('rotDetailText').value = stats.rotDetails || '';
         }
         function closeDetails() { document.getElementById('platformDetailModal').classList.add('hidden'); activeDetailsPlat = null; }
         function saveDetails() {
-            if(!activeDetailsPlat) return; const p = activeDetailsPlat, s = platformsData[p].stats = platformsData[p].stats || {};
-            ['seeds','rdps','sessions','deploysday','seedsh','seedsday','lancement','quality','paused','period','rotMin','rotMax'].forEach(k => {
-                const map = {deploysday:'nbrseploysperday', seedsh:'nbrseedsperhour', seedsday:'nbrseedsperday', lancement:'nbrlancement'};
-                s[map[k] || k] = document.getElementById('modal-'+k).value;
-            });
+            if(!activeDetailsPlat) return;
+            const p = activeDetailsPlat, s = platformsData[p].stats = platformsData[p].stats || {};
+            s.seeds = document.getElementById('modal-seeds').value; s.rdps = document.getElementById('modal-rdps').value;
+            s.sessions = document.getElementById('modal-sessions').value; s.nbrseploysperday = document.getElementById('modal-deploysday').value;
+            s.nbrseedsperhour = document.getElementById('modal-seedsh').value; s.nbrseedsperday = document.getElementById('modal-seedsday').value;
+            s.nbrlancement = document.getElementById('modal-lancement').value; s.quality = document.getElementById('modal-quality').value;
+            s.paused = document.getElementById('modal-paused').value; s.period = document.getElementById('modal-period').value;
+            s.rotMin = document.getElementById('modal-rotMin').value; s.rotMax = document.getElementById('modal-rotMax').value;
             s.rotDetails = document.getElementById('rotDetailText').value;
-            checkChanges(); closeDetails();
+            checkChanges(p, 'Details'); closeDetails();
         }
-        function logout() { localStorage.clear(); location.reload(); }
-        function checkAccess() {
-            fetch(CONFIG.authUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('accessKey').value }) })
-            .then(r=>r.json()).then(d=>{ if(d.success) { localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role); location.reload(); } else alert('Denied'); });
-        }
-        async function addNewPlatform() {
-            const name = document.getElementById('newPlatName').value.trim().toUpperCase(); if(!name || PLATFORMS.includes(name)) return alert("Invalid");
-            PLATFORMS.push(name); await db.ref('emsw/config/platforms_list').set(PLATFORMS); location.reload();
-        }
-        async function deletePlatform(name) { if(confirm(`Delete ${name}?`)) { PLATFORMS = PLATFORMS.filter(p => p !== name); await db.ref('emsw/config/platforms_list').set(PLATFORMS); location.reload(); } }
-        async function toggleVisibility(plat) { platVisibility[plat] = !platVisibility[plat]; await db.ref('emsw/config/visibility').set(platVisibility); location.reload(); }
-        function downloadFile(content, filename) { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = filename; a.click(); }
-        function downloadOneIPs(plat, index) { downloadFile(document.getElementById(`ips-${plat}-${index}`).value.trim(), `ips${index+1}${plat.toLowerCase()}.txt`); }
-        function copyOneIPs(plat, index, btn) { navigator.clipboard.writeText(document.getElementById(`ips-${plat}-${index}`).value).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="📋", 1500); }); }
-        function downloadAllIPs(plat, btn) { document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-ips').forEach((ta, i) => { if(ta.value.trim()) downloadFile(ta.value.trim(), `ips${i+1}${plat.toLowerCase()}.txt`); }); }
-        function copyAllIDs(plat, btn) { const ids = Array.from(document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-id')).map(i=>i.value.trim()).filter(v=>v).join('\n'); if(ids) navigator.clipboard.writeText(ids).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="IDs 📋", 1500); }); }
         function quickRemoveLastDeploy(plat) { if(platformsData[plat]?.deploys.length > 0) removeDeploy(plat, platformsData[plat].deploys.length - 1); }
         function toggleDistMode(enable) { const c = document.getElementById('logicContainer'); if(enable) c.classList.remove('opacity-50', 'pointer-events-none'); else c.classList.add('opacity-50', 'pointer-events-none'); }
     </script>
 </body>
 </html>
+
