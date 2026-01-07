@@ -753,7 +753,7 @@
 
         function updateDeployData(plat, index, field, value) {
             platformsData[plat].deploys[index][field] = value;
-            checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), index);
+            checkChanges(plat, field === 'rules' ? 'RULES' : field.toUpperCase(), index);
         }
 
         function renderAllSelectors() {
@@ -801,7 +801,7 @@
                          if(platformsData[plat].deploys[idx]) { 
                              platformsData[plat].deploys[idx][field] = value; 
                              count++; 
-                             checkChanges(plat, field === 'rules' ? 'FROM' : field.toUpperCase(), idx);
+                             checkChanges(plat, field === 'rules' ? 'RULES' : field.toUpperCase(), idx);
                          }
                      });
                      if(count > 0) renderPlatformDeploys(plat);
