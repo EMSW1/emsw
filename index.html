@@ -235,7 +235,7 @@
         <!-- Global Stats (AUTO CALCULATED) -->
         <div id="globalStatsHeader" class="glass-card p-4 rounded-[2rem] grid grid-cols-2 md:grid-cols-5 gap-4 items-center animate-fade-in-down border-t-4 border-purple-500 shadow-lg shadow-purple-500/10">
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-blue-700 dark:text-blue-400">TOTAL RDPs</div>
+                <div class="global-stat-label text-blue-700 font-bold dark:text-blue-400">TOTAL RDPs</div>
                 <input type="text" id="glb_rdps" oninput="checkChanges()" class="global-stat-val text-blue-700 dark:text-blue-500 super-locked" placeholder="-">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
@@ -243,15 +243,15 @@
                 <input type="text" id="glb_seeds" readonly class="global-stat-val text-emerald-700 dark:text-emerald-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-purple-700 dark:text-purple-400">QUALITÉ</div>
+                <div class="global-stat-label text-purple-700 font-bold dark:text-purple-400">QUALITÉ</div>
                 <input type="text" id="glb_qual" readonly class="global-stat-val text-purple-700 dark:text-purple-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-rose-700 dark:text-rose-400">PAUSED</div>
+                <div class="global-stat-label text-rose-700 font-bold dark:text-rose-400">PAUSED</div>
                 <input type="text" id="glb_pause" readonly class="global-stat-val text-rose-700 dark:text-rose-500 auto-calc" placeholder="0">
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
-                <div class="global-stat-label text-orange-700 dark:text-orange-400">PROXY</div>
+                <div class="global-stat-label text-orange-700 font-bold dark:text-orange-400">PROXY</div>
                 <input type="text" id="glb_proxy" oninput="checkChanges()" class="global-stat-val text-orange-700 dark:text-orange-500 super-locked" placeholder="-">
             </div>
         </div>
@@ -260,7 +260,7 @@
         <div class="glass-card p-6 rounded-[2rem] shadow-lg border-l-8 border-purple-500 admin-only">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="w-full">
-                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">GLOBAL SESSION EDITOR</label>
+                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITING BY</label>
                     <select id="globalEditor" onchange="checkChanges()" class="w-full p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
                         <option value="MOUAD LAHCRECH">MOUAD LAHCRECH</option>
                         <option value="ADNANE EL ASSAM">ADNANE EL ASSAM</option>
@@ -290,14 +290,14 @@
                 </div>
                 
                 <h3 class="text-lg font-black uppercase italic text-emerald-700 dark:text-emerald-400 mb-4 flex items-center gap-2">
-                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs">🧪</span> Smart Distributor
+                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs"></span> IPs Distributor
                 </h3>
                 
                 <div class="flex flex-col gap-4">
                     <textarea id="masterIpList" class="w-full h-32 p-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border-2 border-dashed border-slate-300 dark:border-slate-700 font-mono text-[10px] focus:border-emerald-500 focus:ring-0 transition-all outline-none resize-none" placeholder="192.168.1.1&#10;192.168.1.2..."></textarea>
 
                     <div class="bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <label class="block text-[9px] font-black uppercase mb-2 text-slate-500">Targets</label>
+                        <label class="block text-[9px] font-black uppercase mb-2 text-slate-500">platforms</label>
                         <div class="space-y-1" id="distributor-targets">
                              <!-- Dynamic Targets -->
                         </div>
@@ -328,7 +328,7 @@
                     </div>
 
                     <button onclick="distributeMasterIPs()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white rounded-xl font-black uppercase shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs">
-                        <span>🚀</span> Distribute
+                        <span></span> Distribute
                     </button>
                 </div>
             </div>
@@ -339,7 +339,7 @@
                 <!-- ID MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
-                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]">🆔</span> ID Manager
+                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID
                     </h3>
                     <input type="text" id="bulkIdInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-blue-500 outline-none text-xs" placeholder="NEW ID">
                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer">
@@ -351,7 +351,7 @@
                 <!-- BATCH MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-orange-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
-                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]">📦</span> Batch
+                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> Batch
                     </h3>
                     <select id="bulkBatchInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-orange-500 outline-none text-xs">
                          <option value="0/0 P">0/0 P</option>
@@ -369,7 +369,7 @@
                 <!-- RULES MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-pink-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">
-                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]">📜</span> Rules
+                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> Rules
                     </h3>
                     <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
                         <option value="SELECT ALL IPS">SELECT ALL IPS</option>
@@ -648,11 +648,11 @@
                                 <button onclick="addDeploy('${plat}')" class="w-full p-2 rounded-xl font-black bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-95 transition-all text-xl">+</button>
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">FILTER</label>
+                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
                                     <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
-                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">ALL IPS ⬇️</button>
-                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">IDs 📋</button>
+                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY ALL IPS ⬇</button>
+                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IDs</button>
                                 </div>
                             </div>
                         </div>
@@ -724,11 +724,11 @@
                     <div class="flex justify-between items-center mb-3 border-b border-slate-500/10 pb-2">
                         <div class="flex items-center gap-2">
                             <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">D${i+1}</span>
-                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">⬇️ TXT</button>
-                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">📋</button>
+                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">DOWNLOAD IPS</button>
+                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">COPY IPS</button>
                             <span class="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 count-${plat}-${i}">${ipCount} IPS</span>
                         </div>
-                        <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} B</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} Boites</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                         <div>
