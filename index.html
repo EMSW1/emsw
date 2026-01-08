@@ -164,7 +164,9 @@
         <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-sm text-center border shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl ring-4 ring-blue-500/20">
-                    <span class="text-white text-3xl font-black italic">EMS</span>
+                    <span class="text-white text-3xl font-black italic">
+					<img src="https://www.novojob.com/attachments/company_logo/logo_2517413.jpg" alt="Logo" class="h-20 w-auto inline-block">
+					</span>
                 </div>
                 <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter text-slate-800 dark:text-white">EMSW ACCESS</h2>
                 <input type="password" id="accessKey" onkeypress="if(event.key==='Enter') checkAccess()" placeholder="••••••••" class="w-full p-4 border-none rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-900 dark:text-white placeholder-slate-400">
@@ -203,7 +205,7 @@
                  </div>
              </div>
              <div class="flex flex-col">
-                 <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Rotation Log</h4>
+                 <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Rotation Seeds</h4>
                  <textarea id="rotDetailText" class="flex-1 p-4 border-none rounded-2xl font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-slate-100 dark:bg-slate-900 super-locked"></textarea>
              </div>
         </div>
@@ -260,7 +262,7 @@
         <div class="glass-card p-6 rounded-[2rem] shadow-lg border-l-8 border-purple-500 admin-only">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="w-full">
-                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITOR</label>
+                    <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITING BY</label>
                     <select id="globalEditor" onchange="checkChanges()" class="w-full p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
                         <option value="MOUAD LAHCRECH">MOUAD LAHCRECH</option>
                         <option value="ADNANE EL ASSAM">ADNANE EL ASSAM</option>
@@ -290,7 +292,7 @@
                 </div>
                 
                 <h3 class="text-lg font-black uppercase italic text-emerald-700 dark:text-emerald-400 mb-4 flex items-center gap-2">
-                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs"></span> IP Distributor
+                    <span class="bg-emerald-500 text-white rounded-lg p-1 text-xs">🧪</span> IPs Distributor
                 </h3>
                 
                 <div class="flex flex-col gap-4">
@@ -339,7 +341,7 @@
                 <!-- ID MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
-                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID 
+                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID
                     </h3>
                     <input type="text" id="bulkIdInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-blue-500 outline-none text-xs" placeholder="NEW ID">
                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer">
@@ -351,7 +353,7 @@
                 <!-- BATCH MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-orange-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
-                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> BATCH
+                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> Batch
                     </h3>
                     <select id="bulkBatchInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-orange-500 outline-none text-xs">
                          <option value="0/0 P">0/0 P</option>
@@ -369,7 +371,7 @@
                 <!-- RULES MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-pink-500 relative flex flex-col">
                     <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">
-                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> RULES
+                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> Rules
                     </h3>
                     <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
                         <option value="SELECT ALL IPS">SELECT ALL IPS</option>
@@ -423,14 +425,14 @@
         firebase.initializeApp(CONFIG.firebase); const db = firebase.database();
         let userRole = "viewer"; 
         
-        let PLATFORMS = []; 
+        let PLATFORMS = []; // Dynamic now
         let platformsData = {};
         let boitesConfig = {};
         let globalStatsData = { rdps:"", seeds:"", qual:"", pause:"", proxy:"" };
         let globalEditor = "";
         let platVisibility = {};
         let activeDetailsPlat = null;
-        let platformChanges = {}; // STRUCTURE: { plat: { global: Set(), deploys: { index: Set() } } }
+        let currentPlatform = null; // Defined explicitly for logic
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -487,6 +489,7 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
+            // Load Configs
             const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
                 db.ref('emsw/global_stats').once('value'),
@@ -496,9 +499,11 @@
             
             if(confSnap.exists()) boitesConfig = confSnap.val();
             else boitesConfig = { WEB: 100, SELENIUM: 75, AUTOMAT: 20 };
+
             if(visibilitySnap.exists()) platVisibility = visibilitySnap.val();
+            
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
-            else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; 
+            else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; // Default
 
             if(globalSnap.exists()) {
                 globalStatsData = globalSnap.val();
@@ -508,46 +513,57 @@
                 });
             }
 
+            // Initialize Data Structures for new platforms if any
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
-                if(!boitesConfig[p]) boitesConfig[p] = 100; 
+                if(!boitesConfig[p]) boitesConfig[p] = 100; // Default count
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
-                if(!platformChanges[p]) platformChanges[p] = { global: new Set(), deploys: {} };
             });
 
             renderAllPlatforms();
-            generateDynamicAdminTools(); 
+            generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
         }
 
         function generateDynamicAdminTools() {
+            // 1. Distributor Targets
             const distContainer = document.getElementById('distributor-targets');
             distContainer.innerHTML = '';
             PLATFORMS.forEach(plat => {
+                // Modified structure to include deploy list container
                 const html = `
-                <div class="flex items-center justify-between hover:bg-white/50 p-1 rounded transition-colors">
-                    <label class="flex items-center gap-2 cursor-pointer flex-1">
-                        <input type="checkbox" id="chk-${plat}" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-gray-300">
-                        <span class="font-bold text-xs">${plat} <span id="dist-count-${plat}" class="text-[9px] text-slate-400 ml-1 font-normal opacity-75">(0)</span></span>
-                    </label>
-                    <div class="flex gap-1 ml-2">
-                         <button onclick="quickRemoveLastDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-md font-black shadow-sm transition-colors" title="Remove Last">-</button>
-                         <button onclick="addDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-md font-black shadow-sm transition-colors" title="Add New">+</button>
+                <div class="flex flex-col bg-white/5 rounded-lg mb-1">
+                    <div class="flex items-center justify-between hover:bg-white/50 p-1 rounded transition-colors">
+                        <label class="flex items-center gap-2 cursor-pointer flex-1">
+                            <input type="checkbox" id="chk-${plat}" onchange="toggleDistPlatform('${plat}')" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-gray-300">
+                            <span class="font-bold text-xs">${plat} <span id="dist-count-${plat}" class="text-[9px] text-slate-400 ml-1 font-normal opacity-75">(0)</span></span>
+                        </label>
+                        <div class="flex gap-1 ml-2">
+                             <button onclick="quickRemoveLastDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-md font-black shadow-sm transition-colors" title="Remove Last">-</button>
+                             <button onclick="addDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-md font-black shadow-sm transition-colors" title="Add New">+</button>
+                        </div>
+                    </div>
+                    <div id="dist-list-${plat}" class="hidden pl-2 pr-2 py-1 grid grid-cols-4 gap-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-b-lg border-x border-b border-emerald-500/20">
+                         <!-- Individual Deploy Checkboxes will be rendered here -->
                     </div>
                 </div>`;
                 distContainer.insertAdjacentHTML('beforeend', html);
             });
 
+            // 2. ID / Batch / Rules Managers
             ['id', 'batch', 'rules'].forEach(type => {
                 const container = document.getElementById(`${type}ManagerContainer`);
                 container.innerHTML = '';
+                
                 PLATFORMS.forEach(plat => {
+                    // Define colors
                     let color = 'blue';
                     if(type === 'batch') color = 'orange';
                     if(type === 'rules') color = 'pink';
+
                     const html = `
-                    <div class="bg-slate-50/50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="flex items-center gap-1 cursor-pointer">
+                    <div class="bg-slate-50/50 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-700 mb-1">
+                        <div class="flex justify-between items-center p-2 hover:bg-white/50 transition-colors rounded-t-lg">
+                            <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="${type}-chk-${plat}" onchange="toggleGenericPlatform('${type}', '${plat}')" class="w-3 h-3 text-${color}-500 rounded">
                                 <span class="font-bold text-[10px]">${plat}</span>
                             </label>
@@ -555,7 +571,7 @@
                                 <input type="checkbox" onclick="toggleAllGeneric('${type}', '${plat}', this)" class="w-3 h-3 rounded"> All
                             </label>
                         </div>
-                        <div id="${type}-list-${plat}" class="space-y-0.5 hidden max-h-20 overflow-y-auto"></div>
+                        <div id="${type}-list-${plat}" class="hidden pl-2 pr-2 py-2 grid grid-cols-4 gap-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-b-lg border-t border-${color}-500/10 max-h-32 overflow-y-auto"></div>
                     </div>`;
                     container.insertAdjacentHTML('beforeend', html);
                 });
@@ -566,23 +582,35 @@
             document.getElementById('loadingOverlay').style.display = 'flex';
             const container = document.getElementById('platformsContainer');
             container.innerHTML = '';
+
             let firstEditor = "";
             let totalSeeds = 0, totalQuality = 0, totalPaused = 0;
+            
+            // Filtering support
             const params = new URLSearchParams(window.location.search);
             const targetPlat = params.get('plat');
 
             for (const plat of PLATFORMS) {
+                // Visibility Logic
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
-                if (targetPlat && plat.toUpperCase() !== targetPlat.toUpperCase()) continue;
+                if (targetPlat && plat !== targetPlat) continue;
 
+                // Fetch data for this platform
                 const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                 const data = snap.val() || { deploys: [], stats: {}, filter: "" };
+                // Fix missing fields to prevent errors
+                if(!data.deploys) data.deploys = [];
+                if(!data.stats) data.stats = {};
                 platformsData[plat] = data;
+                
                 if(!firstEditor && data.editor) firstEditor = data.editor;
+
+                // Accumulate Globals
                 totalSeeds += parseInt(data.stats.seeds || 0);
                 totalQuality += parseInt(data.stats.quality || 0);
                 totalPaused += parseInt(data.stats.paused || 0);
 
+                // Build HTML Structure for Platform
                 const isHidden = !platVisibility[plat];
                 const opacityClass = isHidden ? 'opacity-50 grayscale' : '';
                 const visibilityToggle = userRole === 'super' ? `
@@ -604,20 +632,23 @@
                     <div class="flex items-center gap-4 mb-4">
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
-                        <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
+                        <button onclick="openPlatformDetails('${plat}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
+
+                    <!-- Controls Card -->
                     <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg mb-6 border-l-8 border-l-blue-500">
                         <div class="flex gap-4 items-center">
+                            
                             <div class="admin-only w-1/4">
                                 <label class="block text-[10px] font-black uppercase mb-1 text-slate-500">ADD DEPLOY</label>
                                 <button onclick="addDeploy('${plat}')" class="w-full p-2 rounded-xl font-black bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-95 transition-all text-xl">+</button>
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
+                                <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges('${plat}', 'Filter')" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
-                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPs</button>
-                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY ALL IDs</button>
+                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">ALL IPS ⬇️</button>
+                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">IDs 📋</button>
                                 </div>
                             </div>
                         </div>
@@ -626,17 +657,33 @@
                             <div id="dist-${plat}" class="font-black text-xs italic tracking-tighter text-slate-700 dark:text-slate-300">---</div>
                         </div>
                     </div>
+
+                    <!-- Grid -->
                     <div id="grid-${plat}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
                 </div>`;
+                
                 container.insertAdjacentHTML('beforeend', html);
+                
+                // Set Editor value
+                if(data.editor) document.getElementById('globalEditor').value = data.editor;
+
+                // Render Deploys for this platform
                 renderPlatformDeploys(plat);
             }
+            
+            // Update Global Stats in DOM
             document.getElementById('glb_seeds').value = totalSeeds;
             document.getElementById('glb_qual').value = totalQuality;
             document.getElementById('glb_pause').value = totalPaused;
+            
+            // Set Global Editor
             if(firstEditor) document.getElementById('globalEditor').value = firstEditor;
+            
+            // Update Distributor Counts & ID/Batch/Rules Selectors
             updateDistributorCounts();
             renderAllSelectors();
+            renderDistSelectors(); // Added call for new distributor selectors
+
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
@@ -645,29 +692,39 @@
             const distDisplay = document.getElementById(`dist-${plat}`);
             const savedDeploys = platformsData[plat].deploys || [];
             const num = savedDeploys.length;
+            
             container.innerHTML = "";
-            if (num <= 0) { distDisplay.innerText = "---"; return; }
+
+            if (num <= 0) {
+                distDisplay.innerText = "---";
+                return; 
+            }
+
             const total = boitesConfig[plat] || 100;
             const base = Math.floor(total / num);
             const rem = total % num;
             let dist = [];
             const isReadonly = (userRole === 'viewer') ? 'disabled' : '';
+
             for (let i = 0; i < num; i++) {
                 const bCount = base + (i < rem ? 1 : 0);
                 dist.push(bCount);
-                const d = savedDeploys[i];
+                
+                const d = savedDeploys[i] || { id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
+
                 const cardHtml = `
                 <div class="deploy-card glass-card p-4 rounded-[1.5rem] relative group/card">
                     <button onclick="removeDeploy('${plat}', ${i})" class="delete-btn admin-only absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md font-bold z-10 scale-0 group-hover/card:scale-100 transition-transform">-</button>
+                    
                     <div class="flex justify-between items-center mb-3 border-b border-slate-500/10 pb-2">
                         <div class="flex items-center gap-2">
                             <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">D${i+1}</span>
-                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">Download IPs</button>
-                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">COPY IPs</button>
+                            <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">DOWNLOAD IPS</button>
+                            <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">COPY IPS</button>
                             <span class="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 count-${plat}-${i}">${ipCount} IPS</span>
                         </div>
-                        <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} B</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} Boites</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                         <div>
@@ -677,7 +734,7 @@
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
@@ -687,7 +744,9 @@
                             </select>
                         </div>
                     </div>
-                    <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'ips', this.value); updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner text-slate-700 dark:text-slate-300" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
+                    <div class="relative">
+                        <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'ips', this.value); updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner text-slate-700 dark:text-slate-300" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
+                    </div>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', cardHtml);
             }
@@ -696,23 +755,32 @@
 
         async function addNewPlatform() {
             const name = document.getElementById('newPlatName').value.trim().toUpperCase();
-            if(!name || PLATFORMS.includes(name)) return alert("Invalid name");
+            if(!name || PLATFORMS.includes(name)) return alert("Invalid or existing name");
+            
             PLATFORMS.push(name);
             boitesConfig[name] = 0;
             platVisibility[name] = true;
-            platformsData[name] = { deploys: [], stats: {}, filter: "" };
+            platformsData[name] = { deploys: [], stats: {}, filter: "" }; // Init
+
+            // Save new state
             await Promise.all([
                 db.ref('emsw/config/platforms_list').set(PLATFORMS),
                 db.ref('emsw/config/boites').set(boitesConfig),
                 db.ref('emsw/config/visibility').set(platVisibility)
             ]);
+
             location.reload();
         }
 
         async function deletePlatform(name) {
-            if(confirm(`Delete ${name}?`)) {
+            if(confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) {
                 PLATFORMS = PLATFORMS.filter(p => p !== name);
-                await Promise.all([db.ref('emsw/config/platforms_list').set(PLATFORMS), db.ref(`emsw/plans/${name}`).remove()]);
+                
+                await Promise.all([
+                    db.ref('emsw/config/platforms_list').set(PLATFORMS),
+                    db.ref(`emsw/plans/${name}`).remove() // Clean data
+                ]);
+                
                 location.reload();
             }
         }
@@ -721,222 +789,448 @@
             if(userRole !== 'super') return;
             boitesConfig[plat] = parseInt(val) || 0;
             await db.ref('emsw/config/boites').set(boitesConfig);
-            renderPlatformDeploys(plat);
-            checkChanges(plat, 'Boites');
+            renderPlatformDeploys(plat); // Re-calc division
+            checkChanges();
         }
 
         function addDeploy(plat) {
-            platformsData[plat].deploys.push({ id: '', batch: '10/3000 P', rules: 'SELECT ALL IPS', ips: '' });
+            platformsData[plat].deploys.push({ id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' });
             renderPlatformDeploys(plat);
             updateDistributorCounts();
             renderAllSelectors();
-            checkChanges(plat, 'Added Deploy');
+            renderDistSelectors(); // Update distributor checkboxes
+            checkChanges();
         }
 
         function removeDeploy(plat, index) {
-            if(confirm('Delete deploy?')) {
+            if(confirm('Delete this deploy?')) {
                 platformsData[plat].deploys.splice(index, 1);
                 renderPlatformDeploys(plat);
                 updateDistributorCounts();
                 renderAllSelectors();
-                checkChanges(plat, 'Removed Deploy');
+                renderDistSelectors(); // Update distributor checkboxes
+                checkChanges();
             }
         }
         
         function updateDistributorCounts() {
             PLATFORMS.forEach(plat => {
-                const count = (platformsData[plat]?.deploys) ? platformsData[plat].deploys.length : 0;
+                const count = (platformsData[plat] && platformsData[plat].deploys) ? platformsData[plat].deploys.length : 0;
                 const el = document.getElementById(`dist-count-${plat}`);
-                if(el) el.innerText = `(${count})`;
+                if(el) el.innerText = `(${count} deploys)`;
             });
         }
 
         function updateDeployData(plat, index, field, value) {
             platformsData[plat].deploys[index][field] = value;
-            checkChanges(plat, field === 'rules' ? 'RULES' : field.toUpperCase(), index);
+            checkChanges();
         }
 
+        // --- ID / BATCH / RULES MANAGERS ---
         function renderAllSelectors() {
-            renderGenericSelectors('id'); renderGenericSelectors('batch'); renderGenericSelectors('rules');
+            renderGenericSelectors('id');
+            renderGenericSelectors('batch');
+            renderGenericSelectors('rules');
         }
 
         function renderGenericSelectors(type) {
             PLATFORMS.forEach(plat => {
                 const container = document.getElementById(`${type}-list-${plat}`);
                 if(!container) return;
+                
+                let color = 'blue';
+                if(type === 'batch') color = 'orange';
+                if(type === 'rules') color = 'pink';
+                
                 const deploys = platformsData[plat].deploys || [];
                 container.innerHTML = '';
-                if (deploys.length === 0) { container.innerHTML = '<span class="text-[9px] text-slate-400 italic pl-1">Empty</span>'; return; }
+                
+                if (deploys.length === 0) {
+                     container.innerHTML = '<span class="text-[9px] text-slate-400 italic pl-1 col-span-4 text-center">No Deploys</span>';
+                     return;
+                }
+
                 deploys.forEach((d, i) => {
-                     const html = `<label class="flex items-center gap-2 cursor-pointer hover:bg-white/20 p-1 rounded"><input type="checkbox" class="w-3.5 h-3.5 rounded focus:ring-0 border-gray-300 ${type}-chk-target-${plat}" value="${i}"><span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">D${i+1}</span></label>`;
+                     const html = `
+                     <label class="flex items-center gap-1 cursor-pointer p-0.5 rounded hover:bg-white/20">
+                         <input type="checkbox" class="w-3 h-3 rounded text-${color}-500 focus:ring-0 border-gray-300 ${type}-chk-target-${plat}" value="${i}">
+                         <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300">D${i+1}</span>
+                     </label>`;
                      container.insertAdjacentHTML('beforeend', html);
                 });
             });
+        }
+        
+        // --- NEW: DISTRIBUTOR SPECIFIC SELECTORS ---
+        function renderDistSelectors() {
+            PLATFORMS.forEach(plat => {
+                const container = document.getElementById(`dist-list-${plat}`);
+                if(!container) return;
+                
+                const deploys = platformsData[plat].deploys || [];
+                container.innerHTML = '';
+                
+                if (deploys.length === 0) {
+                     container.innerHTML = '<span class="text-[9px] text-slate-400 italic col-span-4 text-center opacity-50">No Deploys Available</span>';
+                     return;
+                }
+                
+                // Add ALL Checkbox
+                const allHtml = `
+                     <label class="flex items-center gap-1 cursor-pointer p-0.5 rounded hover:bg-emerald-500/10 bg-emerald-500/5 border border-emerald-500/20">
+                         <input type="checkbox" id="dist-all-${plat}" onchange="toggleAllDistItems('${plat}', this)" class="w-3 h-3 rounded text-emerald-500 focus:ring-emerald-500 border-emerald-300" checked>
+                         <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-300">ALL</span>
+                     </label>`;
+                container.insertAdjacentHTML('beforeend', allHtml);
+
+                deploys.forEach((d, i) => {
+                     const html = `
+                     <label class="flex items-center gap-1 cursor-pointer p-0.5 rounded hover:bg-emerald-500/10">
+                         <input type="checkbox" class="w-3 h-3 rounded text-emerald-500 focus:ring-emerald-500 border-emerald-300 dist-chk-target-${plat}" value="${i}" checked>
+                         <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-300">D${i+1}</span>
+                     </label>`;
+                     container.insertAdjacentHTML('beforeend', html);
+                });
+            });
+        }
+        
+        function toggleAllDistItems(plat, source) {
+            const list = document.getElementById(`dist-list-${plat}`);
+            const boxes = list.querySelectorAll(`.dist-chk-target-${plat}`);
+            boxes.forEach(b => b.checked = source.checked);
+        }
+        
+        function toggleDistPlatform(plat) {
+            const chk = document.getElementById('chk-'+plat);
+            const list = document.getElementById('dist-list-'+plat);
+            
+            if(chk.checked) {
+                list.classList.remove('hidden');
+                // Select all specific deploys by default when parent is checked
+                const boxes = list.querySelectorAll(`input[type="checkbox"]`);
+                boxes.forEach(b => b.checked = true);
+            } else {
+                list.classList.add('hidden');
+                // Unselect all
+                const boxes = list.querySelectorAll(`input[type="checkbox"]`);
+                boxes.forEach(b => b.checked = false);
+            }
+        }
+
+        // Generic toggle for Platform List
+        function toggleIdPlatform(plat) { toggleGenericPlatform('id', plat); }
+        function toggleBatchPlatform(plat) { toggleGenericPlatform('batch', plat); }
+        function toggleRulesPlatform(plat) { toggleGenericPlatform('rules', plat); }
+        
+        // Mode toggle for distributor
+        function toggleDistMode(enable) {
+             const container = document.getElementById('logicContainer');
+             if(enable) {
+                 container.classList.remove('opacity-50', 'pointer-events-none');
+             } else {
+                 container.classList.add('opacity-50', 'pointer-events-none');
+             }
         }
 
         function toggleGenericPlatform(type, plat) {
             const list = document.getElementById(`${type}-list-${plat}`);
             const selectAll = document.getElementById(`${type}-select-all-${plat}-container`);
             const isChecked = document.getElementById(`${type}-chk-${plat}`).checked;
-            if(isChecked) { list.classList.remove('hidden'); selectAll.classList.remove('hidden'); }
-            else { list.classList.add('hidden'); selectAll.classList.add('hidden'); }
+            
+            if(isChecked) {
+                list.classList.remove('hidden');
+                selectAll.classList.remove('hidden');
+            } else {
+                list.classList.add('hidden');
+                selectAll.classList.add('hidden');
+            }
         }
+
+        // Generic toggle All
+        function toggleAllIds(plat, masterChk) { toggleAllGeneric('id', plat, masterChk); }
+        function toggleAllBatch(plat, masterChk) { toggleAllGeneric('batch', plat, masterChk); }
+        function toggleAllRules(plat, masterChk) { toggleAllGeneric('rules', plat, masterChk); }
 
         function toggleAllGeneric(type, plat, masterChk) {
             const container = document.getElementById(`${type}-list-${plat}`);
-            container.querySelectorAll(`input[type="checkbox"]`).forEach(b => b.checked = masterChk.checked);
+            const boxes = container.querySelectorAll(`input[type="checkbox"]`);
+            boxes.forEach(b => b.checked = masterChk.checked);
         }
 
-        function applyBulkId() { applyBulkGeneric('id', document.getElementById('bulkIdInput').value.trim()); }
-        function applyBulkBatch() { applyBulkGeneric('batch', document.getElementById('bulkBatchInput').value); }
-        function applyBulkRules() { applyBulkGeneric('rules', document.getElementById('bulkRulesInput').value); }
+        // Apply Functions
+        function applyBulkId() {
+            const val = document.getElementById('bulkIdInput').value.trim();
+            if(!val) return alert("Please enter an ID");
+            applyBulkGeneric('id', val);
+        }
+        function applyBulkBatch() {
+            const val = document.getElementById('bulkBatchInput').value;
+            applyBulkGeneric('batch', val);
+        }
+        function applyBulkRules() {
+            const val = document.getElementById('bulkRulesInput').value;
+            applyBulkGeneric('rules', val);
+        }
 
         function applyBulkGeneric(field, value) {
-            let count = 0;
+            let appliedCount = 0;
             PLATFORMS.forEach(plat => {
                  const chk = document.getElementById(`${field}-chk-${plat}`);
                  if(chk && chk.checked) {
-                     document.querySelectorAll(`.${field}-chk-target-${plat}:checked`).forEach(chk => {
+                     const checkboxes = document.querySelectorAll(`.${field}-chk-target-${plat}:checked`);
+                     checkboxes.forEach(chk => {
                          const idx = parseInt(chk.value);
-                         if(platformsData[plat].deploys[idx]) { 
-                             platformsData[plat].deploys[idx][field] = value; 
-                             count++; 
-                             checkChanges(plat, field === 'rules' ? 'RULES' : field.toUpperCase(), idx);
+                         if(platformsData[plat].deploys[idx]) {
+                             platformsData[plat].deploys[idx][field] = value;
+                             appliedCount++;
                          }
                      });
-                     if(count > 0) renderPlatformDeploys(plat);
+                     if(checkboxes.length > 0) renderPlatformDeploys(plat);
                  }
             });
-            if(count > 0) alert("Applied!");
+
+            if(appliedCount > 0) {
+                checkChanges();
+                alert(`${field.toUpperCase()} applied to ${appliedCount} deploys!`);
+            } else {
+                alert("No deploys selected.");
+            }
         }
 
+        // --- DISTRIBUTOR LOGIC ---
         function distributeMasterIPs() {
             const text = document.getElementById('masterIpList').value;
             let ips = text.split('\n').map(s => s.trim()).filter(s => s);
+
             const targets = [];
             PLATFORMS.forEach(p => {
-                if(document.getElementById('chk-'+p).checked) {
-                    platformsData[p].deploys.forEach((d, i) => { d.ips = ""; targets.push({plat: p, index: i}); });
+                const chk = document.getElementById('chk-'+p);
+                if(chk && chk.checked) {
+                    if(platformsData[p] && platformsData[p].deploys) {
+                        // NEW LOGIC: Check specific checkboxes instead of all
+                        const specificChks = document.querySelectorAll(`.dist-chk-target-${p}:checked`);
+                        
+                        if (specificChks.length > 0) {
+                            specificChks.forEach(c => {
+                                const idx = parseInt(c.value);
+                                platformsData[p].deploys[idx].ips = ""; // Clear specific target
+                                targets.push({plat: p, index: idx});
+                            });
+                        } else {
+                           // If Platform is checked but no children (should not happen due to auto-select, but fallback)
+                           // Do nothing or user intended to clear? 
+                           // For safety, if no specific targets are checked, we don't distribute to this platform.
+                        }
+                    }
                 }
             });
-            if(targets.length === 0 || ips.length === 0) return alert("Select target and IPs.");
+
+            if(targets.length === 0) return alert("Select at least one platform/deploy.");
+            if(ips.length === 0) return alert("No IPs to distribute.");
+
             const method = document.querySelector('input[name="distMethod"]:checked').value;
+
             if (method === 'same') {
-                const list = ips.join('\n');
-                targets.forEach(t => { platformsData[t.plat].deploys[t.index].ips = list; checkChanges(t.plat, 'IPs', t.index); });
+                // SAME LIST MODE: Copy full list to everyone
+                const fullList = ips.join('\n');
+                targets.forEach(t => {
+                    platformsData[t.plat].deploys[t.index].ips = fullList;
+                });
             } else {
-                if(document.querySelector('input[name="distMode"]:checked').value === 'random') ips.sort(() => Math.random() - 0.5);
+                // DIVISION MODE: Split list
+                const isRandom = document.querySelector('input[name="distMode"]:checked').value === 'random';
+                if(isRandom) {
+                    for (let i = ips.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [ips[i], ips[j]] = [ips[j], ips[i]];
+                    }
+                }
+
                 ips.forEach((ip, i) => {
-                    const t = targets[i % targets.length];
-                    platformsData[t.plat].deploys[t.index].ips = platformsData[t.plat].deploys[t.index].ips ? platformsData[t.plat].deploys[t.index].ips + "\n" + ip : ip;
-                    checkChanges(t.plat, 'IPs', t.index);
+                    const target = targets[i % targets.length];
+                    const currentContent = platformsData[target.plat].deploys[target.index].ips;
+                    platformsData[target.plat].deploys[target.index].ips = currentContent ? currentContent + "\n" + ip : ip;
                 });
             }
-            PLATFORMS.forEach(p => { if(document.getElementById('chk-'+p).checked) renderPlatformDeploys(p); });
-            alert("Done!");
+
+            PLATFORMS.forEach(p => {
+                 const chk = document.getElementById('chk-'+p);
+                 if(chk && chk.checked) renderPlatformDeploys(p);
+            });
+            checkChanges();
+            alert("Distribution Done!");
         }
 
         function updateCount(plat, index) {
             const txt = document.getElementById(`ips-${plat}-${index}`).value;
-            const count = txt.trim() ? txt.trim().split(/\n/).filter(l => l.trim() !== "").length : 0;
+            const count = txt.trim() ? txt.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
             document.querySelector(`.count-${plat}-${index}`).innerText = `${count} IPS`;
-            checkChanges(plat, 'IPs', index);
         }
 
-        function checkChanges(plat, type, deployIndex) {
+        function checkChanges() {
             if(userRole === 'viewer') return;
-            if(plat && type) {
-                if(!platformChanges[plat]) platformChanges[plat] = { global: new Set(), deploys: {} };
-                if(deployIndex !== undefined) {
-                    if(!platformChanges[plat].deploys[deployIndex]) platformChanges[plat].deploys[deployIndex] = new Set();
-                    platformChanges[plat].deploys[deployIndex].add(type);
-                } else {
-                    platformChanges[plat].global.add(type);
-                }
-            }
             document.getElementById('saveBtn').disabled = false;
             document.getElementById('actionToolbar').classList.remove('hidden');
         }
 
         async function saveAll() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
+           document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Save Global Stats first
             if(userRole === 'super') {
-                await db.ref('emsw/global_stats').set({
+                const newGlobal = {
                     rdps: document.getElementById('glb_rdps').value,
                     seeds: document.getElementById('glb_seeds').value,
                     qual: document.getElementById('glb_qual').value,
                     pause: document.getElementById('glb_pause').value,
                     proxy: document.getElementById('glb_proxy').value
-                });
+                };
+                await db.ref('emsw/global_stats').set(newGlobal);
             }
-            const editor = document.getElementById('globalEditor').value;
-            const publicUrl = window.location.origin + window.location.pathname;
             
-            const platsToSave = Array.from(new Set([...Object.keys(platformsData).filter(p => platformChanges[p] && (platformChanges[p].global.size > 0 || Object.keys(platformChanges[p].deploys).length > 0))]));
-            
-            if(platsToSave.length === 0) {
-                 PLATFORMS.filter(p => platVisibility[p]).forEach(p => platsToSave.push(p));
-            }
+            // Loop through all platforms to save changes and send notifications per platform
+            for (const plat of PLATFORMS) {
+                const currentPlatform = plat;
+                const wrapper = document.getElementById(`wrapper-${plat}`);
+                
+                // If platform is not in DOM (hidden), skip unless we are super admin doing global save
+                // But for now, we only save what is visible or active in platformsData
+                if(userRole !== 'super' && !platVisibility[plat]) continue;
 
-            for (const plat of platsToSave) {
-                const data = platformsData[plat];
-                const filter = document.getElementById(`filter-${plat}`)?.value.trim() || "";
-                await db.ref(`emsw/plans/${plat}/current`).set({ 
-                    deploys: data.deploys || [], filter, stats: data.stats || {}, editor, updatedAt: new Date().toLocaleString() 
-                });
+                // Prepare Data
+                const editorName = document.getElementById('globalEditor').value;
+                const platformData = platformsData[plat];
+                const deploys = platformData.deploys || [];
+                
+                // Get filter from DOM
+                const filterInput = document.getElementById(`filter-${plat}`);
+                const filter = filterInput ? filterInput.value.trim() : "";
+                
+                // Get Stats from Memory (since modal inputs are shared, we rely on loaded data + modal edits)
+                const stats = platformData.stats || {};
+                
+                // --- TELEGRAM NOTIFICATION LOGIC ---
+                let logChanges = [];
+                let forceTelegram = false;
 
-                // FORMAT CHANGE STRING GRANULARLY
-                let lines = [];
-                if(platformChanges[plat]) {
-                    if(platformChanges[plat].global.size > 0) {
-                        lines.push(`• Global: ${Array.from(platformChanges[plat].global).join(', ')}`);
-                    }
-                    const sortedIndices = Object.keys(platformChanges[plat].deploys).sort((a,b) => a-b);
-                    sortedIndices.forEach(idx => {
-                        const fields = Array.from(platformChanges[plat].deploys[idx]).join(', ');
-                        lines.push(`• D${parseInt(idx)+1} : ${fields} updated`);
-                    });
+                if (deploys.length === 0) {
+                     forceTelegram = true; // Stopped
+                } else {
+                     logChanges.push("Data updated via Dashboard");
                 }
                 
-                const changesStr = lines.length > 0 ? lines.join('\n') : 'Plan Saved';
-                const viewLink = `${publicUrl}?mode=view&plat=${plat}`;
-                const telegramMsg = `🔄 <b>${plat} UPDATE</b>\n👤 <b>BY: ${editor}</b>\n📝 <b>CHANGES:</b>\n${changesStr}\n━━━━━━━━━━━━━━━\n🔗 <b>${plat} : </b> <a href="${viewLink}">VIEW MODIFICATIONS</a>`;
-				
-                try {
-                    await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' })
-                    });
-                } catch (e) { console.error(e); }
-                if(platformChanges[plat]) {
-                    platformChanges[plat].global.clear();
-                    platformChanges[plat].deploys = {};
+                // Specific Telegram Link for this Platform
+                const publicUrl = "https://emsw.pages.dev/";
+                const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
+
+                // Save to Firebase
+                await db.ref(`emsw/plans/${currentPlatform}/current`).set({ 
+                    deploys, 
+                    filter, 
+                    stats, 
+                    editor: editorName, 
+                    updatedAt: new Date().toLocaleString() 
+                });
+
+                // Send Telegram
+                if(forceTelegram) {
+                    const telegramMsg = `⚠️ <b>STOPPED: #${currentPlatform}</b>\n` + `👤 <b>BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
+                    try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
+                }
+                else {
+                    const telegramMsg = `🔄 <b>UPDATE: #${currentPlatform}</b>\n` + `👤 <b>BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `📝 <b>CHANGES:</b>\n` + `• Saved by user\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW MODIFICATIONS</b></a>`;
+                    try { await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); } catch (e) { console.error("Telegram Error:", e); }
                 }
             }
-            setTimeout(() => location.reload(), 500);
+            
+            setTimeout(() => { location.reload(); }, 500);
         }
         
-        async function superQuickSave() { saveAll(); }
+        async function superQuickSave() {
+             saveAll(); 
+        }
+
+        async function sendTelegramMsg(text) {
+             try {
+                await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: text, parse_mode: 'HTML' })
+                });
+             } catch(e) { console.error(e); }
+        }
+
+        // --- Helper Functions ---
         function checkAccess() {
+            const k = document.getElementById('accessKey').value;
             fetch(CONFIG.authUrl, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: document.getElementById('accessKey').value })
+                body: JSON.stringify({ password: k })
             }).then(r=>r.json()).then(d=>{
-                if(d.success) { localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role); location.reload(); }
-                else alert('Denied');
-            });
+                if(d.success) {
+                    localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role);
+                    location.reload();
+                } else alert('Access Denied');
+            }).catch(()=>alert('Auth Error'));
         }
         function logout() { localStorage.clear(); location.reload(); }
-        function downloadOneIPs(plat, index) { downloadFile(document.getElementById(`ips-${plat}-${index}`).value.trim(), `ips${index+1}${plat.toLowerCase()}.txt`); }
-        function copyOneIPs(plat, index, btn) { navigator.clipboard.writeText(document.getElementById(`ips-${plat}-${index}`).value).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="📋", 1500); }); }
-        function downloadAllIPs(plat, btn) { document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-ips').forEach((ta, i) => { if(ta.value.trim()) downloadFile(ta.value.trim(), `ips${i+1}${plat.toLowerCase()}.txt`); }); }
-        function downloadFile(content, filename) { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = filename; a.click(); }
-        function copyAllIDs(plat, btn) { const ids = Array.from(document.getElementById(`wrapper-${plat}`).querySelectorAll('.inp-id')).map(i=>i.value.trim()).filter(v=>v).join('\n'); if(ids) navigator.clipboard.writeText(ids).then(() => { btn.innerText = "✅"; setTimeout(()=>btn.innerText="IDs 📋", 1500); }); }
+        
+        function downloadOneIPs(plat, index) {
+            const txt = document.getElementById(`ips-${plat}-${index}`).value.trim();
+            if(!txt) return alert('Empty!');
+            downloadFile(txt, `ips${index+1}${plat.toLowerCase()}emsw.txt`);
+        }
+        
+        function copyOneIPs(plat, index, btn) {
+            const txt = document.getElementById(`ips-${plat}-${index}`).value;
+            navigator.clipboard.writeText(txt).then(() => {
+                const old = btn.innerText; btn.innerText = "✅"; setTimeout(()=>btn.innerText=old, 1500);
+            });
+        }
+
+        function downloadAllIPs(plat, btn) {
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            const textareas = wrapper.querySelectorAll('.inp-ips');
+            let count = 0;
+            textareas.forEach((ta, i) => {
+                const txt = ta.value.trim();
+                if(txt) {
+                    setTimeout(() => downloadFile(txt, `ips${i+1}${plat.toLowerCase()}emsw.txt`), count*300);
+                    count++;
+                }
+            });
+            if(count === 0) alert("No IPs found.");
+        }
+
+        function downloadFile(content, filename) {
+            const a = document.createElement('a');
+            a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        function copyAllIDs(plat, btn) {
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            const inputs = wrapper.querySelectorAll('.inp-id');
+            const ids = Array.from(inputs).map(i=>i.value.trim()).filter(v=>v).join('\n');
+            if(ids) navigator.clipboard.writeText(ids).then(() => {
+                const old = btn.innerText; btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText=old, 1500);
+            });
+        }
+        
+        // VISIBILITY TOGGLE (Super Admin)
         async function toggleVisibility(plat) {
             platVisibility[plat] = !platVisibility[plat];
             await db.ref('emsw/config/visibility').set(platVisibility);
-            location.reload();
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            if(platVisibility[plat]) wrapper.classList.remove('opacity-50', 'grayscale');
+            else wrapper.classList.add('opacity-50', 'grayscale');
         }
+
+        // PLATFORM DETAILS MODAL
         function openPlatformDetails(plat) {
             activeDetailsPlat = plat;
             document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`;
@@ -956,21 +1250,40 @@
             document.getElementById('modal-rotMax').value = stats.rotMax || '';
             document.getElementById('rotDetailText').value = stats.rotDetails || '';
         }
-        function closeDetails() { document.getElementById('platformDetailModal').classList.add('hidden'); activeDetailsPlat = null; }
+
+        function closeDetails() {
+            document.getElementById('platformDetailModal').classList.add('hidden');
+            activeDetailsPlat = null;
+        }
+
         function saveDetails() {
             if(!activeDetailsPlat) return;
-            const p = activeDetailsPlat, s = platformsData[p].stats = platformsData[p].stats || {};
-            s.seeds = document.getElementById('modal-seeds').value; s.rdps = document.getElementById('modal-rdps').value;
-            s.sessions = document.getElementById('modal-sessions').value; s.nbrseploysperday = document.getElementById('modal-deploysday').value;
-            s.nbrseedsperhour = document.getElementById('modal-seedsh').value; s.nbrseedsperday = document.getElementById('modal-seedsday').value;
-            s.nbrlancement = document.getElementById('modal-lancement').value; s.quality = document.getElementById('modal-quality').value;
-            s.paused = document.getElementById('modal-paused').value; s.period = document.getElementById('modal-period').value;
-            s.rotMin = document.getElementById('modal-rotMin').value; s.rotMax = document.getElementById('modal-rotMax').value;
-            s.rotDetails = document.getElementById('rotDetailText').value;
-            checkChanges(p, 'Details'); closeDetails();
+            const p = activeDetailsPlat;
+            if(!platformsData[p].stats) platformsData[p].stats = {};
+            platformsData[p].stats.seeds = document.getElementById('modal-seeds').value;
+            platformsData[p].stats.rdps = document.getElementById('modal-rdps').value;
+            platformsData[p].stats.sessions = document.getElementById('modal-sessions').value;
+            platformsData[p].stats.nbrseploysperday = document.getElementById('modal-deploysday').value;
+            platformsData[p].stats.nbrseedsperhour = document.getElementById('modal-seedsh').value;
+            platformsData[p].stats.nbrseedsperday = document.getElementById('modal-seedsday').value;
+            platformsData[p].stats.nbrlancement = document.getElementById('modal-lancement').value;
+            platformsData[p].stats.quality = document.getElementById('modal-quality').value;
+            platformsData[p].stats.paused = document.getElementById('modal-paused').value;
+            platformsData[p].stats.period = document.getElementById('modal-period').value;
+            platformsData[p].stats.rotMin = document.getElementById('modal-rotMin').value;
+            platformsData[p].stats.rotMax = document.getElementById('modal-rotMax').value;
+            platformsData[p].stats.rotDetails = document.getElementById('rotDetailText').value;
+
+            checkChanges();
+            closeDetails();
         }
-        function quickRemoveLastDeploy(plat) { if(platformsData[plat]?.deploys.length > 0) removeDeploy(plat, platformsData[plat].deploys.length - 1); }
-        function toggleDistMode(enable) { const c = document.getElementById('logicContainer'); if(enable) c.classList.remove('opacity-50', 'pointer-events-none'); else c.classList.add('opacity-50', 'pointer-events-none'); }
+
+        // NEW FUNCTION to handle (-) click
+        function quickRemoveLastDeploy(plat) {
+            if(platformsData[plat] && platformsData[plat].deploys.length > 0) {
+                removeDeploy(plat, platformsData[plat].deploys.length - 1);
+            }
+        }
     </script>
 </body>
 </html>
