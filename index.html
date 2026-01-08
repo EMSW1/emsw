@@ -636,7 +636,7 @@
                     <div class="flex items-center gap-4 mb-4">
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
-                        <button onclick="openPlatformDetails('${plat}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
+                        <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
 
                     <!-- Controls Card -->
@@ -1190,7 +1190,7 @@
                     } else {
                         // Update Case
                         const changesText = logChanges.length > 0 ? logChanges.join('\n') : "• Saved by user";
-                        telegramMsg = `🔄 <b>${currentPlatform} UPDATE</b>\n` + `👤 <b>BY: ${editorName}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b>${currentPlatform} :  <a href="${viewLink}">VIEW MODIFICATIONS</a></b>`;
+                        telegramMsg = `🔄 <b>${currentPlatform} UPDATE</b>\n` + `👤 <b>BY: ${editorName}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b>${currentPlatform} : VIEW MODIFICATIONS</b> (<a href="${viewLink}">LINK</a>)`;
                     }
                     
                     try { 
