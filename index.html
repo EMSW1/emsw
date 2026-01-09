@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -747,7 +748,7 @@
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
+                                ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
@@ -1138,7 +1139,10 @@
                 let hasRealChanges = false;
                 
                 // Track internal changes
-                if((originalData.filter || "") !== filter) logChanges.push("• Global Filter updated");
+                if((originalData.filter || "") !== filter) {
+                    logChanges.push("• KEYWORD FILTER updated");
+                    hasRealChanges = true;
+                }
                 if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) logChanges.push("• Performance Stats updated");
 
                 if (deploys.length === 0) {
@@ -1184,6 +1188,7 @@
                 // Send Telegram (ONLY if sendNotif is true AND actual Deploy changes detected)
                 if (sendNotif && hasRealChanges) {
                     // Dynamic URL Logic: first letter + lowercased (WEB -> emsw)
+                    const platKey = currentPlatform.charAt(0).toLowerCase();
                     const platformUrl = `https://emsw.pages.dev/`;
                     const viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(currentPlatform)}&target=true`;
                     
