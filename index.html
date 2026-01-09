@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMSW | TEST</title>
+    <title>EMSW | PLAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -203,7 +204,7 @@
                  </div>
              </div>
              <div class="flex flex-col">
-                 <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Rotation Log</h4>
+                 <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Rotation Seeds</h4>
                  <textarea id="rotDetailText" class="flex-1 p-4 border-none rounded-2xl font-mono text-xs uppercase outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-slate-100 dark:bg-slate-900 super-locked"></textarea>
              </div>
         </div>
@@ -262,10 +263,9 @@
                 <div class="w-full">
                     <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITING BY</label>
                     <select id="globalEditor" onchange="checkChanges()" class="w-full p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
-                        <option value="MOUAD LAHCRECH">MOUAD LAHCRECH</option>
-                        <option value="ADNANE EL ASSAM">ADNANE EL ASSAM</option>
-                        <option value="AYOUB BEN CHAAYAB">AYOUB BEN CHAAYAB</option>
-                        <option value="AZIZ BOULEHJOUR">AZIZ BOULEHJOUR</option>
+						<option value="YOUNESS EL ATTARY">YOUNESS EL ATTARY</option>
+						<option value="ZAKARIA BOUABID">ZAKARIA BOUABID</option>
+						<option value="OSAMA AZIZ">OSAMA AZIZ</option>
                     </select>
                 </div>
             </div>
@@ -396,14 +396,14 @@
 
         <!-- Sticky Action Bar -->
         <div id="actionToolbar" class="admin-only hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 flex gap-3 z-50">
-            <button id="saveBtn" disabled onclick="saveAll()" class="w-full text-white py-4 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95 backdrop-blur-md">Save Changes</button>
+            <button id="saveBtn" disabled onclick="saveAll(true)" class="w-full text-white py-4 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic border-b-4 border-blue-900 flex items-center justify-center gap-3 active:scale-95 backdrop-blur-md">Save Changes</button>
             <button id="superSaveBtn" onclick="superQuickSave()" class="super-only hidden bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-[2rem] font-black text-xs shadow-2xl border-b-4 border-purple-900 uppercase italic active:scale-95 backdrop-blur-md">⚡ Global</button>
         </div>
     </div>
 
     <script>
         const CONFIG = {
-            authUrl: "https://emsw-test.alamiuness.workers.dev",
+            authUrl: "https://ems1-plan.alamiuness.workers.dev",
             firebase: { 
                 apiKey: "AIzaSyCNCE95bWA5E5oB6sOIxxAY1bIutAGak9A", 
                 authDomain: "emsw-test.firebaseapp.com", 
@@ -415,8 +415,8 @@
                 measurementId: "G-MENKNY554P"
             },
             telegram: { 
-                token: '8340032430:AAHs6z-XPoA4ADGmpAISTSVxkHwsIo-cg0I', 
-                chatId: '-5224398844' 
+                token: '8484063065:AAELilK4oWpkDYqW_RA1D3zCza3d-U6hVSU', 
+                chatId: '-5173755412' 
             }
         };
 
@@ -528,6 +528,9 @@
             const distContainer = document.getElementById('distributor-targets');
             distContainer.innerHTML = '';
             PLATFORMS.forEach(plat => {
+                // SKIP IF PLATFORM IS HIDDEN (DISABLED)
+                if (platVisibility[plat] === false) return;
+
                 // Modified structure to include deploy list container
                 const html = `
                 <div class="flex flex-col bg-white/5 rounded-lg mb-1">
@@ -554,6 +557,9 @@
                 container.innerHTML = '';
                 
                 PLATFORMS.forEach(plat => {
+                    // SKIP IF PLATFORM IS HIDDEN (DISABLED)
+                    if (platVisibility[plat] === false) return;
+
                     // Define colors
                     let color = 'blue';
                     if(type === 'batch') color = 'orange';
@@ -652,7 +658,13 @@
                                 <div class="flex gap-2">
                                     <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DONWLOAD ALL IPS ⬇</button>
-                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY ALL IDs</button>
+                                    <div class="flex items-center gap-1 viewer-only-btn hidden">
+                                        <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
+                                        <div class="flex flex-col gap-0.5 ml-1">
+                                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="copy_fmt_${plat}" value="vertical" checked class="w-2 h-2 text-blue-600"><span class="text-[8px] font-bold text-blue-600">VERT</span></label>
+                                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="copy_fmt_${plat}" value="horizontal" class="w-2 h-2 text-blue-600"><span class="text-[8px] font-bold text-blue-600">HORI</span></label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -857,7 +869,7 @@
                 deploys.forEach((d, i) => {
                      const html = `
                      <label class="flex items-center gap-1 cursor-pointer p-0.5 rounded hover:bg-white/20">
-                         <input type="checkbox" class="w-3 h-3 rounded text-${color}-500 focus:ring-0 border-gray-300 ${type}-chk-target-${plat}" value="${i}">
+                         <input type="checkbox" class="w-3 h-3 rounded text-${color}-500 focus:ring-0 border-gray-300 generic-chk-target" data-plat="${plat}" value="${i}">
                          <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300">D${i+1}</span>
                      </label>`;
                      container.insertAdjacentHTML('beforeend', html);
@@ -890,7 +902,7 @@
                 deploys.forEach((d, i) => {
                      const html = `
                      <label class="flex items-center gap-1 cursor-pointer p-0.5 rounded hover:bg-emerald-500/10">
-                         <input type="checkbox" class="w-3 h-3 rounded text-emerald-500 focus:ring-emerald-500 border-emerald-300 dist-chk-target-${plat}" value="${i}" checked>
+                         <input type="checkbox" class="w-3 h-3 rounded text-emerald-500 focus:ring-emerald-500 border-emerald-300 dist-deploy-chk" data-plat="${plat}" value="${i}" checked>
                          <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-300">D${i+1}</span>
                      </label>`;
                      container.insertAdjacentHTML('beforeend', html);
@@ -900,7 +912,8 @@
         
         function toggleAllDistItems(plat, source) {
             const list = document.getElementById(`dist-list-${plat}`);
-            const boxes = list.querySelectorAll(`.dist-chk-target-${plat}`);
+            if(!list) return;
+            const boxes = list.querySelectorAll(`.dist-deploy-chk`);
             boxes.forEach(b => b.checked = source.checked);
         }
         
@@ -980,8 +993,11 @@
             let appliedCount = 0;
             PLATFORMS.forEach(plat => {
                  const chk = document.getElementById(`${field}-chk-${plat}`);
-                 if(chk && chk.checked) {
-                     const checkboxes = document.querySelectorAll(`.${field}-chk-target-${plat}:checked`);
+                 const list = document.getElementById(`${field}-list-${plat}`);
+                 
+                 if(chk && chk.checked && list) {
+                     // Updated selector to use class and container instead of class-with-plat-name
+                     const checkboxes = list.querySelectorAll(`.generic-chk-target:checked`);
                      checkboxes.forEach(chk => {
                          const idx = parseInt(chk.value);
                          if(platformsData[plat].deploys[idx]) {
@@ -1009,10 +1025,12 @@
             const targets = [];
             PLATFORMS.forEach(p => {
                 const chk = document.getElementById('chk-'+p);
-                if(chk && chk.checked) {
+                const list = document.getElementById('dist-list-'+p);
+                
+                if(chk && chk.checked && list) {
                     if(platformsData[p] && platformsData[p].deploys) {
-                        // NEW LOGIC: Check specific checkboxes instead of all
-                        const specificChks = document.querySelectorAll(`.dist-chk-target-${p}:checked`);
+                        // NEW LOGIC: Select using the common class within the container
+                        const specificChks = list.querySelectorAll(`.dist-deploy-chk:checked`);
                         
                         if (specificChks.length > 0) {
                             specificChks.forEach(c => {
@@ -1020,10 +1038,6 @@
                                 platformsData[p].deploys[idx].ips = ""; // Clear specific target
                                 targets.push({plat: p, index: idx});
                             });
-                        } else {
-                           // If Platform is checked but no children (should not happen due to auto-select, but fallback)
-                           // Do nothing or user intended to clear? 
-                           // For safety, if no specific targets are checked, we don't distribute to this platform.
                         }
                     }
                 }
@@ -1077,7 +1091,17 @@
             document.getElementById('actionToolbar').classList.remove('hidden');
         }
 
-        async function saveAll() {
+        function escapeHtml(text) {
+          if (!text) return text;
+          return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        async function saveAll(sendNotif = true) {
             document.getElementById('loadingOverlay').style.display = 'flex';
             
             // Save Global Stats first
@@ -1093,17 +1117,15 @@
             }
             
             const editorName = document.getElementById('globalEditor').value;
-            const publicUrl = "https://emsw.pages.dev/";
             
-            // Identify visible platforms (Super admin sees all, others see visible only)
+            // Identify visible platforms
             const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
             
-            // Loop through all platforms to save changes and send notifications per platform
+            // Loop through all platforms
             for (const plat of platsToSave) {
                 const currentPlatform = plat;
                 const platformData = platformsData[plat];
                 
-                // Safety check if platform data is loaded
                 if(!platformData) continue;
 
                 // Prepare Data
@@ -1112,33 +1134,20 @@
                 const stats = platformData.stats || {};
                 
                 // --- DIFF LOGIC ---
-                // We compare current memory state (platformsData) vs initial snapshot (originalPlatformsData)
-                // This handles both manual and bulk changes because applyBulk updates platformsData
                 const originalData = originalPlatformsData[plat] || { deploys: [], stats: {}, filter: "" };
                 const oldDeploys = originalData.deploys || [];
                 
                 let logChanges = [];
                 let hasRealChanges = false;
                 
-                // Check Global Filter Change
-                if((originalData.filter || "") !== filter) {
-                    logChanges.push("• Global Filter updated");
-                    hasRealChanges = true;
-                }
-
-                // Check Stats Change
-                if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) {
-                    logChanges.push("• Performance Stats updated");
-                    hasRealChanges = true;
-                }
+                // Track internal changes
+                if((originalData.filter || "") !== filter) logChanges.push("• Global Filter updated");
+                if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) logChanges.push("• Performance Stats updated");
 
                 if (deploys.length === 0) {
-                     // If all deploys removed, treat as STOPPED
                      if(oldDeploys.length > 0) hasRealChanges = true;
                 } else {
-                     // Check each deploy
                      const maxLen = Math.max(deploys.length, oldDeploys.length);
-                     
                      for(let i=0; i<maxLen; i++) {
                          const dNew = deploys[i];
                          const dOld = oldDeploys[i];
@@ -1146,13 +1155,10 @@
 
                          if (!dOld && dNew) {
                              mods.push("Created");
-                         } else if (dOld && !dNew) {
-                             // Removed deploy, handled by length check usually, but good to note
                          } else if (dOld && dNew) {
                              if ((dNew.id||"").trim() !== (dOld.id||"").trim()) mods.push("ID");
                              if (dNew.batch !== dOld.batch) mods.push("BATCH");
                              if (dNew.rules !== dOld.rules) mods.push("RULES");
-                             
                              const ipsNew = (dNew.ips||"").trim();
                              const ipsOld = (dOld.ips||"").trim();
                              if (ipsNew !== ipsOld) mods.push("IPs");
@@ -1163,14 +1169,13 @@
                              hasRealChanges = true;
                          }
                      }
-                     
                      if(oldDeploys.length > deploys.length) {
                          logChanges.push(`• ${oldDeploys.length - deploys.length} Deploys Removed`);
                          hasRealChanges = true;
                      }
                 }
                 
-                // Save to Firebase (Always save to ensure DB matches UI)
+                // Save to Firebase
                 await db.ref(`emsw/plans/${currentPlatform}/current`).set({ 
                     deploys, 
                     filter, 
@@ -1179,26 +1184,40 @@
                     updatedAt: new Date().toLocaleString() 
                 });
 
-                // Send Telegram (Only if changes detected or force)
-                if (hasRealChanges) {
-                    const viewLink = `${publicUrl}?mode=view&plat=${currentPlatform}&target=true`;
-                    let telegramMsg = "";
+                // Send Telegram (ONLY if sendNotif is true AND actual Deploy changes detected)
+                if (sendNotif && hasRealChanges) {
+                    // Dynamic URL Logic: first letter + lowercased (WEB -> emsw)
+                    const platformUrl = `https://emsw.pages.dev/`;
+                    const viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(currentPlatform)}&target=true`;
+                    
+                    const safePlat = escapeHtml(currentPlatform);
+                    const safeEditor = escapeHtml(editorName);
 
+                    let telegramMsg = "";
                     if (deploys.length === 0 && oldDeploys.length > 0) {
-                        // Stopped Case
-                        telegramMsg = `⚠️ <b>STOPPED: #${currentPlatform}</b>\n` + `👤 <b>BY : ${editorName}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
+                        telegramMsg = `⚠️ <b>STOPPED: #${safePlat}</b>\n` + `👤 <b>BY : ${safeEditor}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
                     } else {
-                        // Update Case
-                        const changesText = logChanges.length > 0 ? logChanges.join('\n') : "• Saved by user";
-                        telegramMsg = `🔄 <b>#${currentPlatform} UPDATE</b>\n` + `👤 <b>BY: ${editorName}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b><a href="${viewLink}">VIEW PLAN</a></b>`;
+                        const changesText = logChanges.length > 0 ? logChanges.map(c => escapeHtml(c)).join('\n') : "• Saved by user";
+                        telegramMsg = `🔄 <b>#${safePlat} UPDATE</b>\n` + `👤 <b>BY: ${safeEditor}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b><a href="${viewLink}">VIEW PLAN</a></b>`;
                     }
                     
                     try { 
-                        await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) }); 
-                    } catch (e) { console.error("Telegram Error:", e); }
+                        const resp = await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) 
+                        });
+                        if(!resp.ok) {
+                            const errData = await resp.json();
+                            console.error('Telegram Error', errData);
+                            alert('Telegram Error: ' + (errData.description || 'Unknown'));
+                        }
+                    } catch (e) { 
+                        console.error("Telegram Error:", e);
+                        alert("Telegram Connection Error: " + e.message);
+                    }
                 }
                 
-                // Update Original Snapshot immediately so next save doesn't re-report old changes
                 originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, editor: editorName }));
             }
             
@@ -1206,7 +1225,8 @@
         }
         
         async function superQuickSave() {
-             saveAll(); 
+             // Explicitly passing false to ensure no Telegram notifications are sent
+             saveAll(false); 
         }
 
         async function sendTelegramMsg(text) {
@@ -1274,12 +1294,20 @@
         function copyAllIDs(plat, btn) {
             const wrapper = document.getElementById(`wrapper-${plat}`);
             const inputs = wrapper.querySelectorAll('.inp-id');
-            const ids = Array.from(inputs).map((inp, i) => {
-                 const v = inp.value.trim();
-                 return v ? `D${i+1} : ${v}` : null;
-            }).filter(v => v).join('\n');
             
-            if(ids) navigator.clipboard.writeText(ids).then(() => {
+            // Get format (horizontal or vertical) from radio buttons
+            const fmt = document.querySelector(`input[name="copy_fmt_${plat}"]:checked`)?.value || 'vertical';
+            
+            const ids = Array.from(inputs).map((inp) => inp.value.trim());
+            
+            let result = "";
+            if (fmt === 'horizontal') {
+                result = ids.filter(v => v).join(',');
+            } else {
+                result = ids.map((v, i) => v ? `D${i+1} : ${v}` : null).filter(v => v).join('\n');
+            }
+            
+            if(result) navigator.clipboard.writeText(result).then(() => {
                 const old = btn.innerText; btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText=old, 1500);
             });
         }
@@ -1291,6 +1319,9 @@
             const wrapper = document.getElementById(`wrapper-${plat}`);
             if(platVisibility[plat]) wrapper.classList.remove('opacity-50', 'grayscale');
             else wrapper.classList.add('opacity-50', 'grayscale');
+            
+            // Refresh admin tools to hide/show platform immediately
+            generateDynamicAdminTools();
         }
 
         // PLATFORM DETAILS MODAL
@@ -1341,7 +1372,6 @@
             closeDetails();
         }
 
-        // NEW FUNCTION to handle (-) click
         function quickRemoveLastDeploy(plat) {
             if(platformsData[plat] && platformsData[plat].deploys.length > 0) {
                 removeDeploy(plat, platformsData[plat].deploys.length - 1);
