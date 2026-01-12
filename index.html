@@ -123,10 +123,10 @@
 
         /* CHANGED HIGHLIGHT STYLE (Viewer Only) */
         .changed-highlight {
-           border: 5px solid #991b1b !important; /*(Red-600) */
-			box-shadow: 0 0 15px rgba(220, 38, 38, 0.7) !important; /* Glow rouge */
-			border-radius: 0.5rem;
-			animation: pulse-change 2s infinite;
+            border: 2px solid #f59e0b !important; /* Amber-500 */
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5) !important;
+            border-radius: 0.5rem;
+            animation: pulse-change 2s infinite;
         }
         @keyframes pulse-change {
             0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
@@ -601,10 +601,10 @@
         function getViewerChanges(plat, currentData) {
             const storageKey = `emsw_last_view_${plat}`;
             const lastViewedStr = localStorage.getItem(storageKey);
-            let changes = { deploys: {}, filter: false };
+            let changes = { deploys: {}, filter: false, hasChanges: false }; // Added hasChanges flag
 
             if (!lastViewedStr) {
-                // First visit ever: save state, no highlights
+                // First visit ever: save state immediately so they don't see everything as changed
                 localStorage.setItem(storageKey, JSON.stringify(currentData));
                 return changes;
             }
@@ -614,29 +614,45 @@
             // Check Filter Change
             if((currentData.filter || "").trim() !== (lastViewed.filter || "").trim()) {
                 changes.filter = true;
+                changes.hasChanges = true;
             }
 
             // Check Deploy Changes
             const currentDeploys = currentData.deploys || [];
             const lastDeploys = lastViewed.deploys || [];
             
+            // If length differs, we have changes (deletion or addition)
+            if (currentDeploys.length !== lastDeploys.length) changes.hasChanges = true;
+
             currentDeploys.forEach((d, index) => {
                 changes.deploys[index] = {};
                 if (!lastDeploys[index]) {
                     // New deploy entirely
                     changes.deploys[index].all = true;
+                    changes.hasChanges = true;
                 } else {
                     const old = lastDeploys[index];
-                    if ((d.id || "").trim() !== (old.id || "").trim()) changes.deploys[index].id = true;
-                    if (d.batch !== old.batch) changes.deploys[index].batch = true;
-                    if (d.rules !== old.rules) changes.deploys[index].rules = true;
-                    if ((d.ips || '').trim() !== (old.ips || '').trim()) changes.deploys[index].ips = true;
+                    if ((d.id || "").trim() !== (old.id || "").trim()) { changes.deploys[index].id = true; changes.hasChanges = true; }
+                    if (d.batch !== old.batch) { changes.deploys[index].batch = true; changes.hasChanges = true; }
+                    if (d.rules !== old.rules) { changes.deploys[index].rules = true; changes.hasChanges = true; }
+                    if ((d.ips || '').trim() !== (old.ips || '').trim()) { changes.deploys[index].ips = true; changes.hasChanges = true; }
                 }
             });
 
-            // Save new state for next reload
-            localStorage.setItem(storageKey, JSON.stringify(currentData));
+            // DO NOT SAVE HERE automatically. 
+            // This ensures changes persist on refresh until manually acknowledged.
+            
             return changes;
+        }
+
+        // New function to manually acknowledge changes
+        function markAsSeen(plat) {
+             const data = platformsData[plat];
+             if(data) {
+                 localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(data));
+                 // Reload to clear highlights
+                 renderAllPlatforms();
+             }
         }
 
         async function renderAllPlatforms() {
@@ -709,7 +725,7 @@
                 }
 
                 // --- Calculate Changes for Viewer Highlighting ---
-                let viewerChanges = { deploys: {}, filter: false };
+                let viewerChanges = { deploys: {}, filter: false, hasChanges: false };
                 if (userRole === 'viewer') {
                     viewerChanges = getViewerChanges(plat, data);
                 }
@@ -722,6 +738,12 @@
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
                         ${lastUpdate ? `<div class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-black border border-slate-300/50 dark:border-slate-700/50 flex items-center gap-1 shadow-sm"><span>🕒</span>LAST UPDATE : ${lastUpdate}</div>` : ''}
+                        
+                        ${ (viewerChanges.hasChanges && userRole === 'viewer') ? 
+                            `<button onclick="markAsSeen('${plat}')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-lg animate-pulse transition-all">👁️ MARK SEEN</button>` 
+                            : '' 
+                        }
+
                         <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
 
