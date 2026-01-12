@@ -1263,14 +1263,6 @@
         function checkAccess() {
             const k = document.getElementById('accessKey').value;
             
-            // Hardcoded bypass for the specific password mentioned
-            if (k === "emsw@2026") {
-                localStorage.setItem('emsw_key', 'valid'); 
-                localStorage.setItem('emsw_role', 'super');
-                location.reload();
-                return;
-            }
-
             // Fix URL if missing protocol
             let url = CONFIG.authUrl;
             if (!url.startsWith('http')) url = 'https://' + url;
