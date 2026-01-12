@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -117,6 +116,10 @@
         .viewer-only-btn { display: none !important; }
         .viewer-mode .viewer-only-btn { display: flex !important; }
         .viewer-mode .delete-btn { display: none !important; }
+        
+        /* New Styles for Filter Preview */
+        .viewer-only-box { display: none !important; }
+        .viewer-mode .viewer-only-box { display: block !important; }
 
         #darkToggle { transition: all 0.3s; }
         #darkToggle:active { transform: scale(0.9); }
@@ -401,7 +404,7 @@
 
     <script>
         const CONFIG = {
-            authUrl: "https://emsw-test.alamiuness.workers.dev",
+            authUrl: "emsw-test.alamiuness.workers.dev",
             firebase: { 
                 apiKey: "AIzaSyCNCE95bWA5E5oB6sOIxxAY1bIutAGak9A", 
                 authDomain: "emsw-test.firebaseapp.com", 
@@ -636,6 +639,20 @@
 
                 const lastUpdate = data.updatedAt || '';
 
+                // NEW: Viewer Only Filter Preview Logic
+                let filterPreviewHtml = '';
+                if (['AUTOMAT', 'SELENIUM'].includes(plat)) {
+                    filterPreviewHtml = `
+                    <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
+                        <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
+                            <strong>spam :</strong> <span id="preview-spam-${plat}">${data.filter || ''}</span>
+                        </div>
+                        <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200 mt-1">
+                            <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${data.filter || ''}</span>
+                        </div>
+                    </div>`;
+                }
+
                 const html = `
                 <div id="wrapper-${plat}" class="platform-section relative ${opacityClass} transition-all duration-300">
                     ${visibilityToggle}
@@ -657,7 +674,7 @@
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges()" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DONWLOAD ALL IPS ⬇</button>
                                     <div class="flex items-center gap-1 viewer-only-btn hidden">
                                         <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
@@ -667,6 +684,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                ${filterPreviewHtml}
                             </div>
                         </div>
                         <div class="text-center bg-slate-500/5 p-3 rounded-[1.5rem] border border-dashed border-slate-500/30">
@@ -1404,6 +1422,13 @@
             if(platformsData[plat] && platformsData[plat].deploys.length > 0) {
                 removeDeploy(plat, platformsData[plat].deploys.length - 1);
             }
+        }
+
+        function updateFilterPreviews(plat, val) {
+            const spamEl = document.getElementById(`preview-spam-${plat}`);
+            const inboxEl = document.getElementById(`preview-inbox-${plat}`);
+            if(spamEl) spamEl.innerText = val;
+            if(inboxEl) inboxEl.innerText = val;
         }
     </script>
 </body>
