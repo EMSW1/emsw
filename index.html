@@ -659,7 +659,7 @@
                     <div class="flex flex-wrap items-center gap-4 mb-4">
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
-                        ${lastUpdate ? `<div class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-black border border-slate-300/50 dark:border-slate-700/50 flex items-center gap-1 shadow-sm"><span>🕒</span> ${lastUpdate}</div>` : ''}
+                        ${lastUpdate ? `<div class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-black border border-slate-300/50 dark:border-slate-700/50 flex items-center gap-1 shadow-sm"><span>🕒</span>LAST UPDATE : ${lastUpdate}</div>` : ''}
                         <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
 
@@ -675,7 +675,7 @@
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
                                     <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
-                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DONWLOAD ALL IPS ⬇</button>
+                                    <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPS</button>
                                     <div class="flex items-center gap-1 viewer-only-btn hidden">
                                         <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
                                         <div class="flex flex-col gap-0.5 ml-1">
