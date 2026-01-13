@@ -195,6 +195,21 @@
         <button id="saveSeedsBtn" onclick="saveSeedsBreakdown()" class="hidden w-full bg-emerald-600 text-white py-3 rounded-xl font-black uppercase shadow-lg hover:shadow-emerald-500/30">UPDATE SEEDS</button>
     </div>
 
+    <!-- History Modal (NEW) -->
+    <div id="historyModal" class="glass-card p-6 rounded-[2rem] border-t-8 border-violet-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[350] w-[95%] max-w-2xl hidden shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h3 class="text-xl font-black uppercase italic text-violet-800 dark:text-violet-400">HISTORIQUE</h3>
+                <p class="text-[10px] text-slate-500 font-bold">LAST 24 HOURS ONLY</p>
+            </div>
+            <button onclick="closeHistory()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
+        </div>
+        <div id="historyList" class="flex-1 overflow-y-auto space-y-3 pr-2">
+            <!-- Dynamic History Items -->
+            <div class="text-center text-slate-400 py-10 font-bold italic">Loading history...</div>
+        </div>
+    </div>
+
     <!-- Platform Details Modal -->
     <div id="platformDetailModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-4xl hidden shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
@@ -244,6 +259,9 @@
                 <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">REPORTING</p>
             </div>
             <div class="flex items-center gap-3 relative z-10">
+                <button onclick="openHistory()" class="admin-only flex items-center gap-1 p-2.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 rounded-xl hover:bg-violet-200 hover:scale-105 transition-all shadow-sm font-bold text-xs uppercase tracking-wider">
+                    <span>🕒</span> History
+                </button>
                 <button id="darkToggle" onclick="toggleDarkMode()" class="p-2.5 bg-white dark:bg-slate-800/80 rounded-xl hover:scale-110 transition-all shadow-md text-slate-800 dark:text-white">
                     <span class="dark:hidden text-lg">🌙</span><span class="hidden dark:inline text-lg">☀️</span>
                 </button>
@@ -545,6 +563,9 @@
 
             renderAllPlatforms();
             generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
+            
+            // Clean old history on init if Admin
+            if(userRole !== 'viewer') cleanOldHistory();
         }
 
         function generateDynamicAdminTools() {
@@ -621,14 +642,24 @@
 
             // 1. First Pass: Fetch Data and Calculate Totals (Including Hidden)
             for (const plat of PLATFORMS) {
-                // Fetch data for ALL platforms, even hidden ones
-                const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
-                const data = snap.val() || { deploys: [], stats: {}, filter: "" };
+                // Fetch data for ALL platforms, even hidden ones - UNLESS we have local modification
+                // If platformsData[plat].deploys is populated (e.g. from history load), don't fetch from DB again
+                // BUT initApp calls this, so initially it's empty.
                 
-                // Fix missing fields to prevent errors
-                if(!data.deploys) data.deploys = [];
-                if(!data.stats) data.stats = {};
-                platformsData[plat] = data;
+                let data = platformsData[plat];
+                
+                // If data is "empty" (init state), fetch it. 
+                // We check if it has properties other than stats/deploys init
+                if (!data.updatedAt && !data.fromHistory) {
+                    const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
+                    const dbData = snap.val() || { deploys: [], stats: {}, filter: "" };
+                    
+                    data = dbData;
+                    // Fix missing fields
+                    if(!data.deploys) data.deploys = [];
+                    if(!data.stats) data.stats = {};
+                    platformsData[plat] = data;
+                }
                 
                 // --- SNAPSHOT FOR COMPARISON ---
                 if (!originalPlatformsData[plat]) {
@@ -1170,6 +1201,14 @@
             // Identify visible platforms
             const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
             
+            // --- HISTORY LOGIC PREPARATION ---
+            // We want to capture the "Snapshot" of modifications made at this time
+            // Only for platforms that actually changed.
+            let historySnapshot = {}; 
+            let fullGlobalChangesLog = [];
+            let anyRealChanges = false;
+            // ---------------------------------
+
             // Loop through all platforms
             for (const plat of platsToSave) {
                 const currentPlatform = plat;
@@ -1242,6 +1281,20 @@
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const formattedDate = `${day}/${month}/${year} ${hours}h${minutes}`;
 
+                // --- ADD TO HISTORY SNAPSHOT IF CHANGED ---
+                if (hasRealChanges) {
+                    anyRealChanges = true;
+                    // We save the NEW state as a snapshot for this platform
+                    historySnapshot[plat] = {
+                        deploys: JSON.parse(JSON.stringify(deploys)),
+                        filter: filter,
+                        stats: JSON.parse(JSON.stringify(stats)),
+                        editor: editorName
+                    };
+                    fullGlobalChangesLog.push({ plat: plat, changes: logChanges });
+                }
+                // -----------------------------------------
+
                 // Save to Firebase
                 await db.ref(`emsw/plans/${currentPlatform}/current`).set({ 
                     deploys, 
@@ -1289,9 +1342,141 @@
                 originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, editor: editorName }));
             }
             
+            // --- SAVE TO HISTORY (LAST 24h) ---
+            if (anyRealChanges) {
+                const now = new Date();
+                const historyEntry = {
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    dateString: now.toLocaleString('en-GB', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }),
+                    editor: editorName,
+                    summary: fullGlobalChangesLog,
+                    snapshot: historySnapshot // Only save Modified Platforms
+                };
+                await db.ref('emsw/history').push(historyEntry);
+                cleanOldHistory(); // Clean up old entries
+            }
+            // ----------------------------------
+            
             setTimeout(() => { location.reload(); }, 500);
         }
         
+        // --- HISTORY FUNCTIONS ---
+        
+        async function cleanOldHistory() {
+            // Remove entries older than 24 hours (86400000 ms)
+            const cutoff = Date.now() - 86400000;
+            const ref = db.ref('emsw/history');
+            
+            try {
+                const snap = await ref.orderByChild('timestamp').endAt(cutoff).once('value');
+                if (snap.exists()) {
+                    const updates = {};
+                    snap.forEach(child => {
+                        updates[child.key] = null;
+                    });
+                    await ref.update(updates);
+                    console.log("Old history cleaned");
+                }
+            } catch(e) { console.error("History cleanup error", e); }
+        }
+
+        async function openHistory() {
+            document.getElementById('historyModal').classList.remove('hidden');
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic animate-pulse">Loading modifications...</div>';
+            
+            try {
+                // Fetch last 50 entries (should cover 24h usually)
+                const snap = await db.ref('emsw/history').orderByChild('timestamp').limitToLast(50).once('value');
+                
+                list.innerHTML = '';
+                if(!snap.exists()) {
+                    list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic">No history found for last 24h.</div>';
+                    return;
+                }
+
+                let entries = [];
+                snap.forEach(child => {
+                    entries.unshift({ key: child.key, ...child.val() }); // Descending order
+                });
+
+                entries.forEach(entry => {
+                    const changesHtml = (entry.summary || []).map(s => {
+                        const items = s.changes.map(c => `<div>${c}</div>`).join('');
+                        return `<div class="mb-1"><strong class="text-xs text-blue-600 dark:text-blue-400">${s.plat}:</strong>${items}</div>`;
+                    }).join('');
+
+                    const row = `
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-start gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-md text-[10px] font-black">${entry.dateString || 'Unknown Date'}</span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">BY ${entry.editor}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono leading-relaxed pl-2 border-l-2 border-slate-300 dark:border-slate-700">
+                                ${changesHtml || 'No specific details'}
+                            </div>
+                        </div>
+                        <button onclick="loadHistoryState('${entry.key}')" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md active:scale-95 transition-all whitespace-nowrap">
+                            LOAD
+                        </button>
+                    </div>`;
+                    list.insertAdjacentHTML('beforeend', row);
+                });
+            } catch(e) {
+                list.innerHTML = '<div class="text-center text-red-400 py-10 font-bold italic">Error loading history.</div>';
+                console.error(e);
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        async function loadHistoryState(key) {
+            if(!confirm("LOAD this state?\nThis will overwrite your current screen with the modifications from that time.\nYou must click SAVE manually if you want to keep this state.")) return;
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            closeHistory();
+
+            try {
+                const snap = await db.ref(`emsw/history/${key}`).once('value');
+                if(!snap.exists()) {
+                    alert("History entry not found.");
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    return;
+                }
+
+                const data = snap.val();
+                const snapshot = data.snapshot || {};
+
+                // Restore logic: Merge snapshot into platformsData
+                let restoredCount = 0;
+                for (const plat in snapshot) {
+                    if (platformsData[plat]) {
+                        // We replace the current local data with the snapshot data
+                        platformsData[plat] = snapshot[plat];
+                        platformsData[plat].fromHistory = true; // Flag to prevent re-fetch in render
+                        restoredCount++;
+                    }
+                }
+
+                // Re-render UI
+                await renderAllPlatforms();
+                
+                // Enable save button because we modified state
+                checkChanges();
+                
+                alert(`Successfully loaded modifications for ${restoredCount} platform(s).\nReview and click 'SAVE CHANGES' to persist.`);
+
+            } catch(e) {
+                console.error(e);
+                alert("Error restoring history.");
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
         async function superQuickSave() {
              // Explicitly passing false to ensure no Telegram notifications are sent
              saveAll(false); 
