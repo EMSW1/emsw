@@ -144,7 +144,7 @@
         }
         .dark .plat-title { background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; }
         
-        .global-stat-box { text-align: center; padding: 0.5rem; border-right: 1px solid rgba(128,128,128,0.2); }
+        .global-stat-box { text-align: center; padding: 0.5rem; border-right: 1px solid rgba(128,128,128,0.2); position: relative; }
         .global-stat-box:last-child { border-right: none; }
         .global-stat-val { font-size: 1.2rem; font-weight: 900; width: 100%; text-align: center; background: transparent !important; border: none !important; outline: none; }
         .dark .global-stat-val { text-shadow: 0 0 10px currentColor; }
@@ -175,6 +175,24 @@
                 <button onclick="checkAccess()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white p-4 rounded-2xl font-black uppercase shadow-lg transform hover:scale-105 transition-all">Unlock</button>
             </div>
         </div>
+    </div>
+
+    <!-- Seeds Breakdown Modal (NEW) -->
+    <div id="seedsBreakdownModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-emerald-500 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-md hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black uppercase italic text-emerald-800 dark:text-emerald-400">TOTAL SEEDS</h3>
+            <button onclick="closeSeedsBreakdown()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
+        </div>
+        <div class="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4">
+             <div class="flex justify-between items-center mb-4 border-b border-dashed border-slate-300 dark:border-slate-600 pb-2">
+                 <span class="font-bold text-xs uppercase text-slate-500">Global Total</span>
+                 <span id="modal-total-seeds-display" class="font-black text-xl text-emerald-600">0</span>
+             </div>
+             <div id="seeds-breakdown-list" class="space-y-3">
+                 <!-- Dynamic Content -->
+             </div>
+        </div>
+        <button id="saveSeedsBtn" onclick="saveSeedsBreakdown()" class="hidden w-full bg-emerald-600 text-white py-3 rounded-xl font-black uppercase shadow-lg hover:shadow-emerald-500/30">UPDATE SEEDS</button>
     </div>
 
     <!-- Platform Details Modal -->
@@ -242,9 +260,14 @@
                 <div class="global-stat-label text-blue-700 font-bold dark:text-blue-400">TOTAL RDPs</div>
                 <input type="text" id="glb_rdps" oninput="checkChanges()" class="global-stat-val text-blue-700 dark:text-blue-500 super-locked" placeholder="-">
             </div>
-            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
+            <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl relative group">
                 <div class="global-stat-label text-emerald-700 font-bold dark:text-emerald-400">TOTAL SEEDS</div>
-                <input type="text" id="glb_seeds" readonly class="global-stat-val text-emerald-700 dark:text-emerald-500 auto-calc" placeholder="0">
+                <div class="relative flex items-center justify-center w-full">
+                    <input type="text" id="glb_seeds" readonly class="global-stat-val text-emerald-700 dark:text-emerald-500 auto-calc" placeholder="0">
+                    <button onclick="openSeedsBreakdown()" class="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 transition-colors" title="View Details">
+                        🔎
+                    </button>
+                </div>
             </div>
             <div class="global-stat-box hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-xl">
                 <div class="global-stat-label text-purple-700 font-bold dark:text-purple-400">QUALITÉ</div>
@@ -596,14 +619,12 @@
             const params = new URLSearchParams(window.location.search);
             const targetPlat = params.get('plat');
 
+            // 1. First Pass: Fetch Data and Calculate Totals (Including Hidden)
             for (const plat of PLATFORMS) {
-                // Visibility Logic
-                if (userRole !== 'super' && platVisibility[plat] === false) continue;
-                if (targetPlat && plat !== targetPlat) continue;
-
-                // Fetch data for this platform
+                // Fetch data for ALL platforms, even hidden ones
                 const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                 const data = snap.val() || { deploys: [], stats: {}, filter: "" };
+                
                 // Fix missing fields to prevent errors
                 if(!data.deploys) data.deploys = [];
                 if(!data.stats) data.stats = {};
@@ -616,10 +637,19 @@
                 
                 if(!firstEditor && data.editor) firstEditor = data.editor;
 
-                // Accumulate Globals
+                // Accumulate Globals (From ALL platforms)
                 totalSeeds += parseInt(data.stats.seeds || 0);
                 totalQuality += parseInt(data.stats.quality || 0);
                 totalPaused += parseInt(data.stats.paused || 0);
+            }
+
+            // 2. Second Pass: Render Only Visible Platforms
+            for (const plat of PLATFORMS) {
+                const data = platformsData[plat];
+                
+                // Visibility Logic for UI Rendering Only
+                if (userRole !== 'super' && platVisibility[plat] === false) continue;
+                if (targetPlat && plat !== targetPlat) continue;
 
                 // Build HTML Structure for Platform
                 const isHidden = !platVisibility[plat];
@@ -1429,6 +1459,95 @@
             const inboxEl = document.getElementById(`preview-inbox-${plat}`);
             if(spamEl) spamEl.innerText = val;
             if(inboxEl) inboxEl.innerText = val;
+        }
+
+        // --- NEW: Global Seeds Breakdown Logic ---
+        function openSeedsBreakdown() {
+            const modal = document.getElementById('seedsBreakdownModal');
+            const list = document.getElementById('seeds-breakdown-list');
+            const totalDisplay = document.getElementById('modal-total-seeds-display');
+            const saveBtn = document.getElementById('saveSeedsBtn');
+            
+            list.innerHTML = '';
+            let total = 0;
+            
+            const isSuper = (userRole === 'super');
+            
+            if(isSuper) saveBtn.classList.remove('hidden');
+            else saveBtn.classList.add('hidden');
+
+            PLATFORMS.forEach(plat => {
+                const data = platformsData[plat] || { stats: {} };
+                const seedVal = parseInt(data.stats.seeds || 0);
+                total += seedVal;
+                
+                // --- MODIFICATION: Skip platform if seeds are 0 ---
+                if (seedVal === 0) return;
+                // -------------------------------------------------
+
+                const hiddenClass = (platVisibility[plat] === false) ? 'opacity-50 grayscale bg-red-50 dark:bg-red-900/20' : 'bg-white/50 dark:bg-slate-900/50';
+                
+                const row = `
+                <div class="flex items-center gap-2 ${hiddenClass} p-2 rounded-lg transition-colors">
+                    <span class="w-1/3 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">${plat}</span>
+                    <input type="number" 
+                        id="breakdown-seed-${plat}" 
+                        value="${seedVal}" 
+                        ${isSuper ? '' : 'readonly'} 
+                        class="w-full p-2 rounded-lg text-xs font-black border-none bg-white dark:bg-slate-900 text-right outline-none focus:ring-1 focus:ring-emerald-500 ${isSuper ? '' : 'pointer-events-none'}"
+                        oninput="updateBreakdownTotal()">
+                </div>`;
+                list.insertAdjacentHTML('beforeend', row);
+            });
+            
+            totalDisplay.innerText = total;
+            modal.classList.remove('hidden');
+        }
+
+        function updateBreakdownTotal() {
+            let total = 0;
+            PLATFORMS.forEach(plat => {
+                const el = document.getElementById(`breakdown-seed-${plat}`);
+                if(el) total += parseInt(el.value || 0);
+            });
+            document.getElementById('modal-total-seeds-display').innerText = total;
+        }
+
+        async function saveSeedsBreakdown() {
+            if(userRole !== 'super') return;
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            const updates = [];
+            
+            for(const plat of PLATFORMS) {
+                const el = document.getElementById(`breakdown-seed-${plat}`);
+                if(el) {
+                    const newVal = parseInt(el.value || 0);
+                    // Update local data
+                    if(!platformsData[plat].stats) platformsData[plat].stats = {};
+                    platformsData[plat].stats.seeds = newVal;
+                    
+                    // Push to Firebase (Specific Path to avoid overwriting deploys)
+                    updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds`).set(newVal));
+                }
+            }
+            
+            await Promise.all(updates);
+            
+            // Recalculate Total on UI immediately
+            let total = 0;
+            for(const plat of PLATFORMS) {
+                total += parseInt(platformsData[plat].stats.seeds || 0);
+            }
+            document.getElementById('glb_seeds').value = total;
+            
+            document.getElementById('loadingOverlay').style.display = 'none';
+            closeSeedsBreakdown();
+        }
+
+        function closeSeedsBreakdown() {
+            document.getElementById('seedsBreakdownModal').classList.add('hidden');
         }
     </script>
 </body>
