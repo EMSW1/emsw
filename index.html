@@ -502,10 +502,9 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
-            // Load Configs
-            const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
+            // Load Configs Once
+            const [confSnap, visibilitySnap, platListSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
-                db.ref('emsw/global_stats').once('value'),
                 db.ref('emsw/config/visibility').once('value'),
                 db.ref('emsw/config/platforms_list').once('value')
             ]);
@@ -518,14 +517,6 @@
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
             else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; // Default
 
-            if(globalSnap.exists()) {
-                globalStatsData = globalSnap.val();
-                ['rdps','proxy'].forEach(k => {
-                    const el = document.getElementById('glb_'+k);
-                    if(el) el.value = globalStatsData[k] || '';
-                });
-            }
-
             // Initialize Data Structures for new platforms if any
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
@@ -533,8 +524,57 @@
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
             });
 
-            renderAllPlatforms();
+            // Start Real-Time Listeners
+            connectRealtimeListeners();
+            
             generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
+        }
+        
+        function connectRealtimeListeners() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Global Stats Listener
+            db.ref('emsw/global_stats').on('value', (snap) => {
+                if(snap.exists()) {
+                    globalStatsData = snap.val();
+                    ['rdps','proxy'].forEach(k => {
+                        const el = document.getElementById('glb_'+k);
+                        if(el && document.activeElement !== el) el.value = globalStatsData[k] || '';
+                    });
+                    renderAllPlatforms(); // Re-render to update global sums if needed
+                }
+            });
+
+            // Platform Listeners
+            PLATFORMS.forEach(plat => {
+                db.ref(`emsw/plans/${plat}/current`).on('value', (snap) => {
+                    const newData = snap.val() || { deploys: [], stats: {}, filter: "" };
+                    
+                    // --- ROLLING HIGHLIGHT LOGIC ---
+                    // If we already have data in memory (platformsData[plat]), it means the user 
+                    // is currently viewing the page. This new data is a "New Modification".
+                    // To ensure "Old modifications don't show", we update the LocalStorage (Baseline)
+                    // to match the state *just before* this new update arrived.
+                    if (platformsData[plat] && platformsData[plat].deploys && platformsData[plat].deploys.length > 0) {
+                         // Update "Last View" to current state before overwriting with new state
+                         // This effectively "marks as seen" everything that was already on screen.
+                         localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(platformsData[plat]));
+                    }
+                    
+                    // Update in-memory data
+                    platformsData[plat] = newData;
+                    
+                    // Update original reference for Admin Save comparison logic
+                    originalPlatformsData[plat] = JSON.parse(JSON.stringify(newData));
+                    
+                    // Render (Synchronous now)
+                    renderAllPlatforms();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+            });
+            
+            // Fallback if no platforms
+             if(PLATFORMS.length === 0) document.getElementById('loadingOverlay').style.display = 'none';
         }
 
         function generateDynamicAdminTools() {
@@ -640,7 +680,7 @@
             });
 
             // DO NOT SAVE HERE automatically. 
-            // This ensures changes persist on refresh until manually acknowledged.
+            // We only save in the listener when a NEW update comes.
             
             return changes;
         }
@@ -656,8 +696,19 @@
         }
 
         async function renderAllPlatforms() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
             const container = document.getElementById('platformsContainer');
+            if (!container) return; // Guard
+            
+            // Don't wipe innerHTML completely if we want to be smarter, but provided code structure uses full redraw.
+            // We will stick to full redraw but try to preserve focus if possible (tricky with this structure).
+            // For now, strict re-render.
+            
+            // We do NOT wipe if we are editing text (simple check)
+            const activeEl = document.activeElement;
+            const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+            // If admin is typing, we might skip render? No, user wants real time.
+            // We will proceed. 
+
             container.innerHTML = '';
 
             let firstEditor = "";
@@ -672,18 +723,11 @@
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
                 if (targetPlat && plat !== targetPlat) continue;
 
-                // Fetch data for this platform
-                const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
-                const data = snap.val() || { deploys: [], stats: {}, filter: "" };
+                // Use Cached Data
+                const data = platformsData[plat] || { deploys: [], stats: {}, filter: "" };
                 // Fix missing fields to prevent errors
                 if(!data.deploys) data.deploys = [];
                 if(!data.stats) data.stats = {};
-                platformsData[plat] = data;
-                
-                // --- SNAPSHOT FOR COMPARISON ---
-                if (!originalPlatformsData[plat]) {
-                    originalPlatformsData[plat] = JSON.parse(JSON.stringify(data));
-                }
                 
                 if(!firstEditor && data.editor) firstEditor = data.editor;
 
@@ -725,6 +769,7 @@
                 }
 
                 // --- Calculate Changes for Viewer Highlighting ---
+                // Only calculate if user is viewer or we want to see diffs
                 let viewerChanges = { deploys: {}, filter: false, hasChanges: false };
                 if (userRole === 'viewer') {
                     viewerChanges = getViewerChanges(plat, data);
@@ -784,7 +829,9 @@
                 container.insertAdjacentHTML('beforeend', html);
                 
                 // Set Editor value
-                if(data.editor) document.getElementById('globalEditor').value = data.editor;
+                if(data.editor && document.activeElement !== document.getElementById('globalEditor')) {
+                    document.getElementById('globalEditor').value = data.editor;
+                }
 
                 // Render Deploys for this platform with changes passed
                 renderPlatformDeploys(plat, viewerChanges.deploys);
@@ -796,14 +843,18 @@
             document.getElementById('glb_pause').value = totalPaused;
             
             // Set Global Editor
-            if(firstEditor) document.getElementById('globalEditor').value = firstEditor;
+            if(firstEditor && document.activeElement !== document.getElementById('globalEditor')) {
+                document.getElementById('globalEditor').value = firstEditor;
+            }
             
             // Update Distributor Counts & ID/Batch/Rules Selectors
             updateDistributorCounts();
             renderAllSelectors();
             renderDistSelectors(); // Added call for new distributor selectors
 
-            document.getElementById('loadingOverlay').style.display = 'none';
+            // Restore focus if possible (Basic implementation)
+            // Note: Since we replaced innerHTML, exact cursor position is lost. 
+            // This is acceptable given the constraints "don't change structure" vs "real time updates".
         }
 
         function renderPlatformDeploys(plat, changes = {}) {
@@ -1347,10 +1398,13 @@
                     }
                 }
                 
+                // Update Local state immediately (though Listener will do it too)
                 originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, editor: editorName }));
             }
             
-            setTimeout(() => { location.reload(); }, 500);
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('actionToolbar').classList.add('hidden');
         }
         
         async function superQuickSave() {
