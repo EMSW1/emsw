@@ -121,6 +121,19 @@
         .viewer-only-box { display: none !important; }
         .viewer-mode .viewer-only-box { display: block !important; }
 
+        /* CHANGED HIGHLIGHT STYLE (Viewer Only) */
+        .changed-highlight {
+            border: 5px solid #991b1b !important; /* Rouge majhad (Red-600) */
+			box-shadow: 0 0 15px rgba(220, 38, 38, 0.7) !important; /* Glow rouge */
+			border-radius: 0.5rem;
+			animation: pulse-change 2s infinite;
+        }
+        @keyframes pulse-change {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
         #darkToggle { transition: all 0.3s; }
         #darkToggle:active { transform: scale(0.9); }
 
@@ -489,10 +502,9 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
-            // Load Configs
-            const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
+            // Load Configs Once
+            const [confSnap, visibilitySnap, platListSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
-                db.ref('emsw/global_stats').once('value'),
                 db.ref('emsw/config/visibility').once('value'),
                 db.ref('emsw/config/platforms_list').once('value')
             ]);
@@ -505,14 +517,6 @@
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
             else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; // Default
 
-            if(globalSnap.exists()) {
-                globalStatsData = globalSnap.val();
-                ['rdps','proxy'].forEach(k => {
-                    const el = document.getElementById('glb_'+k);
-                    if(el) el.value = globalStatsData[k] || '';
-                });
-            }
-
             // Initialize Data Structures for new platforms if any
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
@@ -520,8 +524,57 @@
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
             });
 
-            renderAllPlatforms();
+            // Start Real-Time Listeners
+            connectRealtimeListeners();
+            
             generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
+        }
+        
+        function connectRealtimeListeners() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Global Stats Listener
+            db.ref('emsw/global_stats').on('value', (snap) => {
+                if(snap.exists()) {
+                    globalStatsData = snap.val();
+                    ['rdps','proxy'].forEach(k => {
+                        const el = document.getElementById('glb_'+k);
+                        if(el && document.activeElement !== el) el.value = globalStatsData[k] || '';
+                    });
+                    renderAllPlatforms(); // Re-render to update global sums if needed
+                }
+            });
+
+            // Platform Listeners
+            PLATFORMS.forEach(plat => {
+                db.ref(`emsw/plans/${plat}/current`).on('value', (snap) => {
+                    const newData = snap.val() || { deploys: [], stats: {}, filter: "" };
+                    
+                    // --- ROLLING HIGHLIGHT LOGIC ---
+                    // If we already have data in memory (platformsData[plat]), it means the user 
+                    // is currently viewing the page. This new data is a "New Modification".
+                    // To ensure "Old modifications don't show", we update the LocalStorage (Baseline)
+                    // to match the state *just before* this new update arrived.
+                    if (platformsData[plat] && platformsData[plat].deploys && platformsData[plat].deploys.length > 0) {
+                         // Update "Last View" to current state before overwriting with new state
+                         // This effectively "marks as seen" everything that was already on screen.
+                         localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(platformsData[plat]));
+                    }
+                    
+                    // Update in-memory data
+                    platformsData[plat] = newData;
+                    
+                    // Update original reference for Admin Save comparison logic
+                    originalPlatformsData[plat] = JSON.parse(JSON.stringify(newData));
+                    
+                    // Render (Synchronous now)
+                    renderAllPlatforms();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+            });
+            
+            // Fallback if no platforms
+             if(PLATFORMS.length === 0) document.getElementById('loadingOverlay').style.display = 'none';
         }
 
         function generateDynamicAdminTools() {
@@ -584,9 +637,78 @@
             });
         }
 
+        // --- NEW: Calculate Diff for Viewer ---
+        function getViewerChanges(plat, currentData) {
+            const storageKey = `emsw_last_view_${plat}`;
+            const lastViewedStr = localStorage.getItem(storageKey);
+            let changes = { deploys: {}, filter: false, hasChanges: false }; // Added hasChanges flag
+
+            if (!lastViewedStr) {
+                // First visit ever: save state immediately so they don't see everything as changed
+                localStorage.setItem(storageKey, JSON.stringify(currentData));
+                return changes;
+            }
+
+            const lastViewed = JSON.parse(lastViewedStr);
+            
+            // Check Filter Change
+            if((currentData.filter || "").trim() !== (lastViewed.filter || "").trim()) {
+                changes.filter = true;
+                changes.hasChanges = true;
+            }
+
+            // Check Deploy Changes
+            const currentDeploys = currentData.deploys || [];
+            const lastDeploys = lastViewed.deploys || [];
+            
+            // If length differs, we have changes (deletion or addition)
+            if (currentDeploys.length !== lastDeploys.length) changes.hasChanges = true;
+
+            currentDeploys.forEach((d, index) => {
+                changes.deploys[index] = {};
+                if (!lastDeploys[index]) {
+                    // New deploy entirely
+                    changes.deploys[index].all = true;
+                    changes.hasChanges = true;
+                } else {
+                    const old = lastDeploys[index];
+                    if ((d.id || "").trim() !== (old.id || "").trim()) { changes.deploys[index].id = true; changes.hasChanges = true; }
+                    if (d.batch !== old.batch) { changes.deploys[index].batch = true; changes.hasChanges = true; }
+                    if (d.rules !== old.rules) { changes.deploys[index].rules = true; changes.hasChanges = true; }
+                    if ((d.ips || '').trim() !== (old.ips || '').trim()) { changes.deploys[index].ips = true; changes.hasChanges = true; }
+                }
+            });
+
+            // DO NOT SAVE HERE automatically. 
+            // We only save in the listener when a NEW update comes.
+            
+            return changes;
+        }
+
+        // New function to manually acknowledge changes
+        function markAsSeen(plat) {
+             const data = platformsData[plat];
+             if(data) {
+                 localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(data));
+                 // Reload to clear highlights
+                 renderAllPlatforms();
+             }
+        }
+
         async function renderAllPlatforms() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
             const container = document.getElementById('platformsContainer');
+            if (!container) return; // Guard
+            
+            // Don't wipe innerHTML completely if we want to be smarter, but provided code structure uses full redraw.
+            // We will stick to full redraw but try to preserve focus if possible (tricky with this structure).
+            // For now, strict re-render.
+            
+            // We do NOT wipe if we are editing text (simple check)
+            const activeEl = document.activeElement;
+            const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+            // If admin is typing, we might skip render? No, user wants real time.
+            // We will proceed. 
+
             container.innerHTML = '';
 
             let firstEditor = "";
@@ -601,18 +723,11 @@
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
                 if (targetPlat && plat !== targetPlat) continue;
 
-                // Fetch data for this platform
-                const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
-                const data = snap.val() || { deploys: [], stats: {}, filter: "" };
+                // Use Cached Data
+                const data = platformsData[plat] || { deploys: [], stats: {}, filter: "" };
                 // Fix missing fields to prevent errors
                 if(!data.deploys) data.deploys = [];
                 if(!data.stats) data.stats = {};
-                platformsData[plat] = data;
-                
-                // --- SNAPSHOT FOR COMPARISON ---
-                if (!originalPlatformsData[plat]) {
-                    originalPlatformsData[plat] = JSON.parse(JSON.stringify(data));
-                }
                 
                 if(!firstEditor && data.editor) firstEditor = data.editor;
 
@@ -653,6 +768,14 @@
                     </div>`;
                 }
 
+                // --- Calculate Changes for Viewer Highlighting ---
+                // Only calculate if user is viewer or we want to see diffs
+                let viewerChanges = { deploys: {}, filter: false, hasChanges: false };
+                if (userRole === 'viewer') {
+                    viewerChanges = getViewerChanges(plat, data);
+                }
+                const filterHighlight = viewerChanges.filter ? 'changed-highlight' : '';
+
                 const html = `
                 <div id="wrapper-${plat}" class="platform-section relative ${opacityClass} transition-all duration-300">
                     ${visibilityToggle}
@@ -660,6 +783,12 @@
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
                         ${lastUpdate ? `<div class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-black border border-slate-300/50 dark:border-slate-700/50 flex items-center gap-1 shadow-sm"><span>🕒</span>LAST UPDATE : ${lastUpdate}</div>` : ''}
+                        
+                        ${ (viewerChanges.hasChanges && userRole === 'viewer') ? 
+                            `<button onclick="markAsSeen('${plat}')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-lg animate-pulse transition-all">👁️ MARK SEEN</button>` 
+                            : '' 
+                        }
+
                         <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
 
@@ -674,7 +803,7 @@
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none ${filterHighlight}" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPS</button>
                                     <div class="flex items-center gap-1 viewer-only-btn hidden">
                                         <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
@@ -700,10 +829,12 @@
                 container.insertAdjacentHTML('beforeend', html);
                 
                 // Set Editor value
-                if(data.editor) document.getElementById('globalEditor').value = data.editor;
+                if(data.editor && document.activeElement !== document.getElementById('globalEditor')) {
+                    document.getElementById('globalEditor').value = data.editor;
+                }
 
-                // Render Deploys for this platform
-                renderPlatformDeploys(plat);
+                // Render Deploys for this platform with changes passed
+                renderPlatformDeploys(plat, viewerChanges.deploys);
             }
             
             // Update Global Stats in DOM
@@ -712,17 +843,21 @@
             document.getElementById('glb_pause').value = totalPaused;
             
             // Set Global Editor
-            if(firstEditor) document.getElementById('globalEditor').value = firstEditor;
+            if(firstEditor && document.activeElement !== document.getElementById('globalEditor')) {
+                document.getElementById('globalEditor').value = firstEditor;
+            }
             
             // Update Distributor Counts & ID/Batch/Rules Selectors
             updateDistributorCounts();
             renderAllSelectors();
             renderDistSelectors(); // Added call for new distributor selectors
 
-            document.getElementById('loadingOverlay').style.display = 'none';
+            // Restore focus if possible (Basic implementation)
+            // Note: Since we replaced innerHTML, exact cursor position is lost. 
+            // This is acceptable given the constraints "don't change structure" vs "real time updates".
         }
 
-        function renderPlatformDeploys(plat) {
+        function renderPlatformDeploys(plat, changes = {}) {
             const container = document.getElementById(`grid-${plat}`);
             const distDisplay = document.getElementById(`dist-${plat}`);
             const savedDeploys = platformsData[plat].deploys || [];
@@ -748,6 +883,13 @@
                 const d = savedDeploys[i] || { id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
 
+                // Highlight Logic
+                const ch = changes[i] || {};
+                const hId = (ch.all || ch.id) ? 'changed-highlight' : '';
+                const hBatch = (ch.all || ch.batch) ? 'changed-highlight' : '';
+                const hRules = (ch.all || ch.rules) ? 'changed-highlight' : '';
+                const hIps = (ch.all || ch.ips) ? 'changed-highlight' : '';
+
                 const cardHtml = `
                 <div class="deploy-card glass-card p-4 rounded-[1.5rem] relative group/card">
                     <button onclick="removeDeploy('${plat}', ${i})" class="delete-btn admin-only absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md font-bold z-10 scale-0 group-hover/card:scale-100 transition-transform">-</button>
@@ -764,23 +906,23 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">ID</label>
-                            <input type="text" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'id', this.value)" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 uppercase outline-none" value="${d.id||''}">
+                            <input type="text" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'id', this.value)" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 uppercase outline-none ${hId}" value="${d.id||''}">
                         </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
-                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer ${hBatch}">
                                 ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Rules</label>
-                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer ${hRules}">
                                 ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div class="relative">
-                        <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'ips', this.value); updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner text-slate-700 dark:text-slate-300" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
+                        <textarea id="ips-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'ips', this.value); updateCount('${plat}', ${i})" class="inp-ips w-full p-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl font-mono text-[9px] uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner text-slate-700 dark:text-slate-300 ${hIps}" rows="${userRole==='viewer'?6:2}">${d.ips||''}</textarea>
                     </div>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', cardHtml);
@@ -1256,10 +1398,13 @@
                     }
                 }
                 
+                // Update Local state immediately (though Listener will do it too)
                 originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, editor: editorName }));
             }
             
-            setTimeout(() => { location.reload(); }, 500);
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('actionToolbar').classList.add('hidden');
         }
         
         async function superQuickSave() {
