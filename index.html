@@ -121,17 +121,18 @@
         .viewer-only-box { display: none !important; }
         .viewer-mode .viewer-only-box { display: block !important; }
 
-        /* CHANGED HIGHLIGHT STYLE (Viewer Only) */
+        /* CHANGED HIGHLIGHT STYLE (Viewer Only) - MODIFIED FOR VISIBILITY */
         .changed-highlight {
-            border: 5px solid #991b1b !important; /* Rouge majhad (Red-600) */
-			box-shadow: 0 0 15px rgba(220, 38, 38, 0.7) !important; /* Glow rouge */
+            background-color: rgba(251, 191, 36, 0.3) !important; /* Gold Background */
+            border: 2px solid #ef4444 !important; /* Red Border */
+			box-shadow: 0 0 20px rgba(251, 191, 36, 0.5) !important;
 			border-radius: 0.5rem;
 			animation: pulse-change 2s infinite;
         }
         @keyframes pulse-change {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
-            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
         #darkToggle { transition: all 0.3s; }
@@ -445,7 +446,9 @@
         let globalEditor = "";
         let platVisibility = {};
         let activeDetailsPlat = null;
-        let currentPlatform = null; // Defined explicitly for logic
+        
+        // NEW: Store calculated diffs for real-time highlighting
+        let platformDiffs = {}; 
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -530,6 +533,45 @@
             generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
         }
         
+        // --- REAL TIME DIFF CALCULATION ---
+        function calculateExactDiff(oldData, newData) {
+            const diff = { deploys: {}, filter: false, hasChanges: false };
+            
+            if (!oldData) oldData = { deploys: [], filter: "" };
+            if (!newData) newData = { deploys: [], filter: "" };
+
+            // Check Filter
+            if ((oldData.filter || "").trim() !== (newData.filter || "").trim()) {
+                diff.filter = true;
+                diff.hasChanges = true;
+            }
+
+            // Check Deploys
+            const oldDeploys = oldData.deploys || [];
+            const newDeploys = newData.deploys || [];
+
+            // If a deploy was added, mark the whole thing
+            if (newDeploys.length > oldDeploys.length) {
+                diff.hasChanges = true;
+            }
+
+            newDeploys.forEach((d, index) => {
+                diff.deploys[index] = {};
+                const old = oldDeploys[index];
+
+                if (!old) {
+                    diff.deploys[index].all = true; // New deploy created
+                } else {
+                    if ((d.id || "").trim() !== (old.id || "").trim()) diff.deploys[index].id = true;
+                    if (d.batch !== old.batch) diff.deploys[index].batch = true;
+                    if (d.rules !== old.rules) diff.deploys[index].rules = true;
+                    if ((d.ips || "").trim() !== (old.ips || "").trim()) diff.deploys[index].ips = true;
+                }
+            });
+
+            return diff;
+        }
+
         function connectRealtimeListeners() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             
@@ -550,25 +592,36 @@
                 db.ref(`emsw/plans/${plat}/current`).on('value', (snap) => {
                     const newData = snap.val() || { deploys: [], stats: {}, filter: "" };
                     
-                    // --- ROLLING HIGHLIGHT LOGIC ---
-                    // If we already have data in memory (platformsData[plat]), it means the user 
-                    // is currently viewing the page. This new data is a "New Modification".
-                    // To ensure "Old modifications don't show", we update the LocalStorage (Baseline)
-                    // to match the state *just before* this new update arrived.
-                    if (platformsData[plat] && platformsData[plat].deploys && platformsData[plat].deploys.length > 0) {
-                         // Update "Last View" to current state before overwriting with new state
-                         // This effectively "marks as seen" everything that was already on screen.
-                         localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(platformsData[plat]));
-                    }
+                    // --- REAL-TIME DIFF LOGIC ---
+                    // 1. Get the Previous State (from Memory first, then LocalStorage)
+                    let previousState = platformsData[plat]; 
                     
-                    // Update in-memory data
+                    // If Memory is empty (First Load), try LocalStorage
+                    if (!previousState || !previousState.deploys) {
+                         const stored = localStorage.getItem(`emsw_prev_state_${plat}`);
+                         if(stored) previousState = JSON.parse(stored);
+                    }
+
+                    // 2. Calculate Diff between New Data and Previous State
+                    // This ensures that "Change 2" overwrites "Change 1" highlights because 
+                    // Change 1 is now in 'previousState'.
+                    const diff = calculateExactDiff(previousState, newData);
+                    platformDiffs[plat] = diff;
+
+                    // 3. Update Memory
                     platformsData[plat] = newData;
                     
-                    // Update original reference for Admin Save comparison logic
+                    // 4. Update Reference for Admin logic
                     originalPlatformsData[plat] = JSON.parse(JSON.stringify(newData));
                     
-                    // Render (Synchronous now)
+                    // 5. Render with Highlights
                     renderAllPlatforms();
+                    
+                    // 6. UPDATE STORAGE IMMEDIATELY after rendering
+                    // This ensures the NEXT update will compare against THIS state.
+                    // Meaning: Old modifications are "forgotten" (merged) once viewed.
+                    localStorage.setItem(`emsw_prev_state_${plat}`, JSON.stringify(newData));
+
                     document.getElementById('loadingOverlay').style.display = 'none';
                 });
             });
@@ -637,77 +690,9 @@
             });
         }
 
-        // --- NEW: Calculate Diff for Viewer ---
-        function getViewerChanges(plat, currentData) {
-            const storageKey = `emsw_last_view_${plat}`;
-            const lastViewedStr = localStorage.getItem(storageKey);
-            let changes = { deploys: {}, filter: false, hasChanges: false }; // Added hasChanges flag
-
-            if (!lastViewedStr) {
-                // First visit ever: save state immediately so they don't see everything as changed
-                localStorage.setItem(storageKey, JSON.stringify(currentData));
-                return changes;
-            }
-
-            const lastViewed = JSON.parse(lastViewedStr);
-            
-            // Check Filter Change
-            if((currentData.filter || "").trim() !== (lastViewed.filter || "").trim()) {
-                changes.filter = true;
-                changes.hasChanges = true;
-            }
-
-            // Check Deploy Changes
-            const currentDeploys = currentData.deploys || [];
-            const lastDeploys = lastViewed.deploys || [];
-            
-            // If length differs, we have changes (deletion or addition)
-            if (currentDeploys.length !== lastDeploys.length) changes.hasChanges = true;
-
-            currentDeploys.forEach((d, index) => {
-                changes.deploys[index] = {};
-                if (!lastDeploys[index]) {
-                    // New deploy entirely
-                    changes.deploys[index].all = true;
-                    changes.hasChanges = true;
-                } else {
-                    const old = lastDeploys[index];
-                    if ((d.id || "").trim() !== (old.id || "").trim()) { changes.deploys[index].id = true; changes.hasChanges = true; }
-                    if (d.batch !== old.batch) { changes.deploys[index].batch = true; changes.hasChanges = true; }
-                    if (d.rules !== old.rules) { changes.deploys[index].rules = true; changes.hasChanges = true; }
-                    if ((d.ips || '').trim() !== (old.ips || '').trim()) { changes.deploys[index].ips = true; changes.hasChanges = true; }
-                }
-            });
-
-            // DO NOT SAVE HERE automatically. 
-            // We only save in the listener when a NEW update comes.
-            
-            return changes;
-        }
-
-        // New function to manually acknowledge changes
-        function markAsSeen(plat) {
-             const data = platformsData[plat];
-             if(data) {
-                 localStorage.setItem(`emsw_last_view_${plat}`, JSON.stringify(data));
-                 // Reload to clear highlights
-                 renderAllPlatforms();
-             }
-        }
-
         async function renderAllPlatforms() {
             const container = document.getElementById('platformsContainer');
             if (!container) return; // Guard
-            
-            // Don't wipe innerHTML completely if we want to be smarter, but provided code structure uses full redraw.
-            // We will stick to full redraw but try to preserve focus if possible (tricky with this structure).
-            // For now, strict re-render.
-            
-            // We do NOT wipe if we are editing text (simple check)
-            const activeEl = document.activeElement;
-            const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
-            // If admin is typing, we might skip render? No, user wants real time.
-            // We will proceed. 
 
             container.innerHTML = '';
 
@@ -769,12 +754,10 @@
                 }
 
                 // --- Calculate Changes for Viewer Highlighting ---
-                // Only calculate if user is viewer or we want to see diffs
-                let viewerChanges = { deploys: {}, filter: false, hasChanges: false };
-                if (userRole === 'viewer') {
-                    viewerChanges = getViewerChanges(plat, data);
-                }
-                const filterHighlight = viewerChanges.filter ? 'changed-highlight' : '';
+                let diff = platformDiffs[plat] || { deploys: {}, filter: false };
+                if (userRole !== 'viewer') diff = { deploys: {}, filter: false }; // Admins see raw
+                
+                const filterHighlight = diff.filter ? 'changed-highlight' : '';
 
                 const html = `
                 <div id="wrapper-${plat}" class="platform-section relative ${opacityClass} transition-all duration-300">
@@ -783,12 +766,6 @@
                         <h2 class="plat-title text-4xl">${plat}</h2>
                         ${boxInput} <span class="text-xs font-bold text-slate-500">BOITES</span>
                         ${lastUpdate ? `<div class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-black border border-slate-300/50 dark:border-slate-700/50 flex items-center gap-1 shadow-sm"><span>🕒</span>LAST UPDATE : ${lastUpdate}</div>` : ''}
-                        
-                        ${ (viewerChanges.hasChanges && userRole === 'viewer') ? 
-                            `<button onclick="markAsSeen('${plat}')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-lg animate-pulse transition-all">👁️ MARK SEEN</button>` 
-                            : '' 
-                        }
-
                         <button onclick="openPlatformDetails('${plat}')" class="admin-only bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow transition-all">DETAILS</button>
                     </div>
 
@@ -834,7 +811,7 @@
                 }
 
                 // Render Deploys for this platform with changes passed
-                renderPlatformDeploys(plat, viewerChanges.deploys);
+                renderPlatformDeploys(plat, diff.deploys || {});
             }
             
             // Update Global Stats in DOM
@@ -851,10 +828,6 @@
             updateDistributorCounts();
             renderAllSelectors();
             renderDistSelectors(); // Added call for new distributor selectors
-
-            // Restore focus if possible (Basic implementation)
-            // Note: Since we replaced innerHTML, exact cursor position is lost. 
-            // This is acceptable given the constraints "don't change structure" vs "real time updates".
         }
 
         function renderPlatformDeploys(plat, changes = {}) {
@@ -883,7 +856,7 @@
                 const d = savedDeploys[i] || { id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
 
-                // Highlight Logic
+                // Highlight Logic - Only highlight fields marked in changes
                 const ch = changes[i] || {};
                 const hId = (ch.all || ch.id) ? 'changed-highlight' : '';
                 const hBatch = (ch.all || ch.batch) ? 'changed-highlight' : '';
