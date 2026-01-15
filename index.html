@@ -216,6 +216,12 @@
             <h3 class="text-xl font-black uppercase italic text-slate-800 dark:text-white" id="detailModalTitle">DETAILS</h3>
             <button onclick="closeDetails()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
         </div>
+
+        <!-- Dynamic Platform Specific Details (WEB / SELENIUM) -->
+        <div id="dynamicPlatformDetails" class="mb-6">
+            <!-- Injected via JS -->
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
              <div class="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
                  <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Performance Stats</h4>
@@ -434,6 +440,11 @@
         <!-- PLATFORMS CONTAINER -->
         <div id="platformsContainer" class="space-y-12">
             <!-- Content Injected via JS -->
+        </div>
+
+        <!-- NEW: VIEWER TABLE CONTAINER -->
+        <div id="viewerTableContainer" class="viewer-only-box mt-12 mb-24 hidden space-y-12">
+             <!-- Dynamic Table Content -->
         </div>
 
         <!-- Sticky Action Bar -->
@@ -658,6 +669,7 @@
                     // Fix missing fields
                     if(!data.deploys) data.deploys = [];
                     if(!data.stats) data.stats = {};
+                    if(!data.detailsConfig) data.detailsConfig = {}; // Ensure detailsConfig exists
                     platformsData[plat] = data;
                 }
                 
@@ -780,6 +792,9 @@
             renderAllSelectors();
             renderDistSelectors(); // Added call for new distributor selectors
 
+            // NEW: Render the Viewer Table at bottom
+            if(userRole === 'viewer') renderViewerTable();
+
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
@@ -847,6 +862,78 @@
                 container.insertAdjacentHTML('beforeend', cardHtml);
             }
             distDisplay.innerText = dist.join(' | ');
+        }
+        
+        // --- NEW FUNCTION: RENDER VIEWER TABLE ---
+        function renderViewerTable() {
+            const container = document.getElementById('viewerTableContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const params = new URLSearchParams(window.location.search);
+            const targetPlat = params.get('plat');
+            
+            let html = '';
+            
+            PLATFORMS.forEach(plat => {
+                 if (platVisibility[plat] === false) return;
+                 if (targetPlat && plat !== targetPlat) return;
+                 
+                 const deploys = platformsData[plat].deploys || [];
+                 if(deploys.length === 0) return;
+                 
+                 // Recalculate Boites per deploy
+                 const total = boitesConfig[plat] || 100;
+                 const num = deploys.length;
+                 const base = Math.floor(total / num);
+                 const rem = total % num;
+
+                 html += `
+                 <div class="glass-card p-6 rounded-[2rem] border-t-8 border-blue-500 relative overflow-hidden">
+                     <h3 class="text-2xl font-black uppercase italic text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                        <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
+                        ${plat} DEPLOYS
+                     </h3>
+                     <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase text-slate-500 border-b border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-white/5">
+                                    <th class="p-3 rounded-tl-xl">ID</th>
+                                    <th class="p-3">NBR BOITES</th>
+                                    <th class="p-3">BATCH</th>
+                                    <th class="p-3">RULES</th>
+                                    <th class="p-3">NBR IPs</th>
+                                    <th class="p-3 rounded-tr-xl">LES IPS</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-xs font-bold text-slate-700 dark:text-slate-300">`;
+                 
+                 deploys.forEach((d, i) => {
+                     const bCount = base + (i < rem ? 1 : 0);
+                     const ips = d.ips || "";
+                     const ipList = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).join('<br>');
+                     const ipCount = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).length;
+                     
+                     html += `
+                     <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+                         <td class="p-3 align-top font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">${d.id || '-'}</td>
+                         <td class="p-3 align-top text-center">${bCount}</td>
+                         <td class="p-3 align-top whitespace-nowrap">${d.batch}</td>
+                         <td class="p-3 align-top whitespace-nowrap text-[10px]">${d.rules}</td>
+                         <td class="p-3 align-top text-center">${ipCount}</td>
+                         <td class="p-3 align-top font-mono text-[10px] leading-tight text-slate-600 dark:text-slate-400">${ipList}</td>
+                     </tr>`;
+                 });
+                 
+                 html += `
+                            </tbody>
+                        </table>
+                     </div>
+                 </div>`;
+            });
+            
+            if(html) container.innerHTML = html;
+            else container.innerHTML = '<div class="text-center text-slate-400 font-bold italic p-10">No Deploys to display</div>';
         }
 
         async function addNewPlatform() {
@@ -1221,9 +1308,10 @@
                 const filterInput = document.getElementById(`filter-${plat}`);
                 const filter = filterInput ? filterInput.value.trim() : "";
                 const stats = platformData.stats || {};
+                const detailsConfig = platformData.detailsConfig || {}; // Get config
                 
                 // --- DIFF LOGIC ---
-                const originalData = originalPlatformsData[plat] || { deploys: [], stats: {}, filter: "" };
+                const originalData = originalPlatformsData[plat] || { deploys: [], stats: {}, filter: "", detailsConfig: {} };
                 const oldDeploys = originalData.deploys || [];
                 
                 let logChanges = [];
@@ -1238,6 +1326,11 @@
                 
                 if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) {
                     logChanges.push("• Performance Stats updated");
+                    hasRealChanges = true;
+                }
+
+                if(JSON.stringify(detailsConfig) !== JSON.stringify(originalData.detailsConfig || {})) {
+                    logChanges.push("• Details Config updated");
                     hasRealChanges = true;
                 }
 
@@ -1289,6 +1382,7 @@
                         deploys: JSON.parse(JSON.stringify(deploys)),
                         filter: filter,
                         stats: JSON.parse(JSON.stringify(stats)),
+                        detailsConfig: JSON.parse(JSON.stringify(detailsConfig)),
                         editor: editorName
                     };
                     fullGlobalChangesLog.push({ plat: plat, changes: logChanges });
@@ -1300,6 +1394,7 @@
                     deploys, 
                     filter, 
                     stats, 
+                    detailsConfig,
                     editor: editorName, 
                     updatedAt: formattedDate 
                 });
@@ -1339,11 +1434,11 @@
                     }
                 }
                 
-                originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, editor: editorName }));
+                originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, detailsConfig, editor: editorName }));
             }
             
             // --- SAVE TO HISTORY (LAST 24h) ---
-            if (anyRealChanges) {
+            if (anyRealChanges && sendNotif) {
                 const now = new Date();
                 const historyEntry = {
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -1585,12 +1680,14 @@
             generateDynamicAdminTools();
         }
 
-        // PLATFORM DETAILS MODAL
+        // PLATFORM DETAILS MODAL (Updated for Dynamic Actions)
         function openPlatformDetails(plat) {
             activeDetailsPlat = plat;
             document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`;
             document.getElementById('platformDetailModal').classList.remove('hidden');
             const stats = platformsData[plat].stats || {};
+            
+            // Standard Stats
             document.getElementById('modal-seeds').value = stats.seeds || '';
             document.getElementById('modal-rdps').value = stats.rdps || '';
             document.getElementById('modal-sessions').value = stats.sessions || '';
@@ -1604,6 +1701,170 @@
             document.getElementById('modal-rotMin').value = stats.rotMin || '';
             document.getElementById('modal-rotMax').value = stats.rotMax || '';
             document.getElementById('rotDetailText').value = stats.rotDetails || '';
+
+            // --- DATA MIGRATION LOGIC (Preserve Old Data) ---
+            const conf = platformsData[plat].detailsConfig || {};
+            
+            // Migration for WEB/Type A
+            if (!conf.spamActions && (conf.spamReport !== undefined || !conf.lastMigration)) {
+                conf.spamActions = [];
+                if(conf.spamReport) conf.spamActions.push({name: 'REPORT NOT SPAM', active: true});
+                
+                conf.inboxActions = [];
+                if(conf.inboxRead) conf.inboxActions.push({name: 'READ', active: true});
+                if(conf.inboxClick) conf.inboxActions.push({name: 'CLICK', active: true});
+                if(conf.inboxImportant) conf.inboxActions.push({name: 'IMPORTANT', active: true});
+                if(conf.inboxStarred) conf.inboxActions.push({name: 'STARRED', active: true});
+                if(conf.inboxArchive) conf.inboxActions.push({name: 'ARCHIVE', active: true});
+                
+                // Defaults if completely empty
+                if(conf.spamActions.length === 0 && !conf.spamVal) conf.spamActions = [{name: 'REPORT NOT SPAM', active: true}];
+                if(conf.inboxActions.length === 0 && !conf.inboxVal) conf.inboxActions = [
+                    {name: 'READ', active: true}, {name: 'CLICK', active: true}, 
+                    {name: 'IMPORTANT', active: true}, {name: 'STARRED', active: true}, 
+                    {name: 'ARCHIVE', active: true}
+                ];
+            }
+
+            // Migration for SELENIUM
+            if (!conf.seleniumActions && plat === 'SELENIUM' && !conf.lastMigration) {
+                 conf.seleniumActions = [];
+                 const map = {
+                     'Report not spam': conf.notSpam,
+                     'Read Inbox': conf.read,
+                     'Click links': conf.click,
+                     'Forward': conf.forward,
+                     'Mark as important': conf.important,
+                     'Archive': conf.archive
+                 };
+                 for(let k in map) {
+                     if(map[k]) conf.seleniumActions.push({name: k, val: map[k], active: true});
+                 }
+                 if(conf.seleniumActions.length === 0) {
+                     conf.seleniumActions = [
+                        {name:'Report not spam', val:'7', active:true},
+                        {name:'Read Inbox', val:'30', active:true},
+                        {name:'Click links', val:'5', active:true},
+                        {name:'Forward', val:'6', active:true},
+                        {name:'Mark as important', val:'8', active:true},
+                        {name:'Archive', val:'10', active:true}
+                     ];
+                 }
+            }
+            conf.lastMigration = true; 
+            platformsData[plat].detailsConfig = conf;
+            // ------------------------------------------------
+
+            const dynamicContainer = document.getElementById('dynamicPlatformDetails');
+            dynamicContainer.innerHTML = ''; 
+
+            const isSuper = (userRole === 'super');
+
+            if (plat === 'SELENIUM') {
+                // --- SELENIUM (Type B: Scenario + Numeric Actions) ---
+                const html = `
+                <div class="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-700">
+                    <h4 class="font-black text-xs uppercase text-emerald-600 dark:text-emerald-400 mb-3 border-b border-emerald-200 dark:border-emerald-700 pb-2">SELENIUM CONFIG</h4>
+                    
+                    <div class="mb-4">
+                        <label class="text-[10px] block mb-1">SCÉNARIO</label>
+                        <input type="text" id="sel-scenario" class="w-full p-2 rounded-lg text-xs font-bold border super-locked" value="${conf.scenario || 'EMSW_V1'}">
+                    </div>
+
+                    <div class="bg-white/50 dark:bg-slate-900/30 p-2 rounded-xl">
+                        <div class="flex justify-between items-center mb-2">
+                             <label class="text-[10px] uppercase font-bold text-slate-500">Actions (Value & Active)</label>
+                             <button onclick="addDetailAction('selenium-actions-container', 'numeric')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
+                        </div>
+                        <div id="selenium-actions-container" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                             ${renderDetailActionsList('selenium-actions-container', conf.seleniumActions || [], 'numeric', isSuper)}
+                        </div>
+                    </div>
+                </div>`;
+                dynamicContainer.innerHTML = html;
+
+            } else {
+                // --- WEB/AUTOMAT/DEFAULT (Type A: SPAM/INBOX + Boolean Actions) ---
+                const html = `
+                <div class="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-200 dark:border-blue-700">
+                    <h4 class="font-black text-xs uppercase text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-700 pb-2">ACTIONS</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- SPAM -->
+                        <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
+                            <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-[10px]">SPAM</label>
+                                    <input type="text" id="web-spam-val" class="w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.spamVal || '7'}">
+                                </div>
+                                <button onclick="addDetailAction('spam-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
+                            </div>
+                            <div id="spam-actions-container" class="flex flex-col gap-1">
+                                ${renderDetailActionsList('spam-actions-container', conf.spamActions || [], 'bool', isSuper)}
+                            </div>
+                        </div>
+
+                        <!-- INBOX -->
+                        <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
+                            <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-[10px]">INBOX</label>
+                                    <input type="text" id="web-inbox-val" class="w-24 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.inboxVal || '50 RANDOM'}">
+                                </div>
+                                <button onclick="addDetailAction('inbox-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
+                            </div>
+                            <div id="inbox-actions-container" class="grid grid-cols-2 gap-1">
+                                ${renderDetailActionsList('inbox-actions-container', conf.inboxActions || [], 'bool', isSuper)}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                dynamicContainer.innerHTML = html;
+            }
+        }
+
+        function renderDetailActionsList(containerId, actions, type, isSuper) {
+            // type = 'bool' or 'numeric'
+            return actions.map(act => {
+                const name = act.name || act.label; // handle legacy key
+                const val = act.val || act.value || ''; 
+                const active = act.active !== false; // default true
+                
+                if(type === 'numeric') {
+                     return `
+                     <div class="flex items-center justify-between p-1 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded group action-row" data-name="${name}">
+                        <div class="flex items-center gap-2 flex-1">
+                            <input type="checkbox" class="action-active w-3 h-3 text-emerald-500 rounded super-locked" ${active?'checked':''}>
+                            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-1/2 break-words">${name}</span>
+                            <input type="text" class="action-val w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked bg-white dark:bg-slate-800" value="${val}">
+                        </div>
+                        <button onclick="this.closest('.action-row').remove()" class="super-only ${isSuper?'':'hidden'} text-red-500 font-bold text-xs opacity-0 group-hover:opacity-100 ml-2">×</button>
+                    </div>`;
+                } else {
+                     return `
+                     <div class="flex items-center justify-between p-1 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded group action-row" data-name="${name}">
+                        <label class="flex items-center gap-2 cursor-pointer flex-1">
+                            <input type="checkbox" class="action-active w-3 h-3 text-blue-500 rounded super-locked" ${active?'checked':''}>
+                            <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 break-words">${name}</span>
+                        </label>
+                        <button onclick="this.closest('.action-row').remove()" class="super-only ${isSuper?'':'hidden'} text-red-500 font-bold text-xs opacity-0 group-hover:opacity-100">×</button>
+                    </div>`;
+                }
+            }).join('');
+        }
+
+        function addDetailAction(containerId, type) {
+            if(userRole !== 'super') return;
+            const name = prompt("Enter Action Name:");
+            if(!name) return;
+            
+            const container = document.getElementById(containerId);
+            const isNumeric = type === 'numeric';
+            const mockAction = { name: name.toUpperCase(), val: '', active: false }; // Default inactive
+            
+            // Re-use render function for a single item (wrap in array)
+            const html = renderDetailActionsList(containerId, [mockAction], type, true);
+            container.insertAdjacentHTML('beforeend', html);
         }
 
         function closeDetails() {
@@ -1615,6 +1876,8 @@
             if(!activeDetailsPlat) return;
             const p = activeDetailsPlat;
             if(!platformsData[p].stats) platformsData[p].stats = {};
+            
+            // Save Standard Stats (unchanged)
             platformsData[p].stats.seeds = document.getElementById('modal-seeds').value;
             platformsData[p].stats.rdps = document.getElementById('modal-rdps').value;
             platformsData[p].stats.sessions = document.getElementById('modal-sessions').value;
@@ -1629,8 +1892,47 @@
             platformsData[p].stats.rotMax = document.getElementById('modal-rotMax').value;
             platformsData[p].stats.rotDetails = document.getElementById('rotDetailText').value;
 
+            // --- SAVE DYNAMIC CONFIGS ---
+            const newConf = platformsData[p].detailsConfig || {};
+            newConf.lastMigration = true;
+
+            if (p === 'SELENIUM') {
+                newConf.scenario = document.getElementById('sel-scenario').value;
+                newConf.seleniumActions = scrapeDetailActions('selenium-actions-container', 'numeric');
+                
+                // Clear old legacy keys to keep DB clean (optional)
+                // delete newConf.notSpam; delete newConf.read; etc.
+            } else {
+                newConf.spamVal = document.getElementById('web-spam-val').value;
+                newConf.inboxVal = document.getElementById('web-inbox-val').value;
+                newConf.spamActions = scrapeDetailActions('spam-actions-container', 'bool');
+                newConf.inboxActions = scrapeDetailActions('inbox-actions-container', 'bool');
+            }
+            platformsData[p].detailsConfig = newConf;
+            // -----------------------------
+
             checkChanges();
             closeDetails();
+        }
+
+        function scrapeDetailActions(containerId, type) {
+            const container = document.getElementById(containerId);
+            if(!container) return [];
+            const rows = container.querySelectorAll('.action-row');
+            const actions = [];
+            
+            rows.forEach(row => {
+                const name = row.dataset.name;
+                const active = row.querySelector('.action-active').checked;
+                
+                if(type === 'numeric') {
+                    const val = row.querySelector('.action-val').value;
+                    actions.push({ name, val, active });
+                } else {
+                    actions.push({ name, active });
+                }
+            });
+            return actions;
         }
 
         function quickRemoveLastDeploy(plat) {
