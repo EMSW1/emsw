@@ -312,9 +312,13 @@
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="w-full">
                     <label class="block text-xs font-black uppercase mb-2 italic text-purple-600 dark:text-purple-400 tracking-wider">EDITING BY</label>
-                    <select id="globalEditor" onchange="checkChanges()" class="w-full p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
-						<option value="YOUNOUS ALAMI CHENTOUFI">YOUNOUS ALAMI CHENTOUFI</option>
-                    </select>
+                    <div class="flex gap-2">
+                        <select id="globalEditor" onchange="checkChanges()" class="flex-1 p-4 border-none rounded-xl font-black text-sm outline-none bg-purple-50/50 dark:bg-purple-900/20 cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all">
+                            <!-- Dynamic Options -->
+                        </select>
+                        <button onclick="addNewEditor()" class="super-only bg-purple-600 hover:bg-purple-700 text-white w-12 rounded-xl font-black text-xl shadow-lg active:scale-95 transition-all flex items-center justify-center" title="Add New Editor">+</button>
+                        <button onclick="removeEditor()" class="super-only bg-red-500 hover:bg-red-600 text-white w-12 rounded-xl font-black text-xl shadow-lg active:scale-95 transition-all flex items-center justify-center" title="Remove Selected Editor">-</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -482,6 +486,7 @@
         let boitesConfig = {};
         let globalStatsData = { rdps:"", seeds:"", qual:"", pause:"", proxy:"" };
         let globalEditor = "";
+        let EDITOR_NAMES = []; // For storing dynamic editors list
         let platVisibility = {};
         let activeDetailsPlat = null;
         let currentPlatform = null; // Defined explicitly for logic
@@ -541,12 +546,13 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
-            // Load Configs
-            const [confSnap, globalSnap, visibilitySnap, platListSnap] = await Promise.all([
+            // Load Configs including Editors
+            const [confSnap, globalSnap, visibilitySnap, platListSnap, editorsSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
                 db.ref('emsw/global_stats').once('value'),
                 db.ref('emsw/config/visibility').once('value'),
-                db.ref('emsw/config/platforms_list').once('value')
+                db.ref('emsw/config/platforms_list').once('value'),
+                db.ref('emsw/config/editors').once('value')
             ]);
             
             if(confSnap.exists()) boitesConfig = confSnap.val();
@@ -556,6 +562,11 @@
             
             if(platListSnap.exists()) PLATFORMS = platListSnap.val();
             else PLATFORMS = ['WEB', 'SELENIUM', 'AUTOMAT']; // Default
+
+            // Initialize Editors List
+            if(editorsSnap.exists()) EDITOR_NAMES = editorsSnap.val();
+            else EDITOR_NAMES = ['YOUNOUS ALAMI CHENTOUFI']; // Default
+            renderEditorsList();
 
             if(globalSnap.exists()) {
                 globalStatsData = globalSnap.val();
@@ -577,6 +588,51 @@
             
             // Clean old history on init if Admin
             if(userRole !== 'viewer') cleanOldHistory();
+        }
+
+        function renderEditorsList() {
+            const el = document.getElementById('globalEditor');
+            const currentVal = el.value;
+            if(!el) return;
+            el.innerHTML = EDITOR_NAMES.map(name => `<option value="${name}">${name}</option>`).join('');
+            // Try to restore selection or default to globalEditor variable if set
+            if(currentVal && EDITOR_NAMES.includes(currentVal)) el.value = currentVal;
+            else if(globalEditor && EDITOR_NAMES.includes(globalEditor)) el.value = globalEditor;
+        }
+
+        async function addNewEditor() {
+            const name = prompt("ENTER NEW EDITOR NAME:");
+            if(!name) return;
+            const cleanName = name.trim().toUpperCase();
+            if(EDITOR_NAMES.includes(cleanName)) return alert("Name already exists!");
+            
+            EDITOR_NAMES.push(cleanName);
+            await db.ref('emsw/config/editors').set(EDITOR_NAMES);
+            renderEditorsList();
+            
+            // Auto select new one
+            document.getElementById('globalEditor').value = cleanName;
+            checkChanges();
+        }
+
+        async function removeEditor() {
+            const el = document.getElementById('globalEditor');
+            const name = el.value;
+            if(!name) return;
+            
+            if(EDITOR_NAMES.length <= 1) return alert("Cannot delete the last editor. Add another one first.");
+
+            if(confirm(`Are you sure you want to PERMANENTLY remove "${name}" from the list?`)) {
+                EDITOR_NAMES = EDITOR_NAMES.filter(n => n !== name);
+                await db.ref('emsw/config/editors').set(EDITOR_NAMES);
+                renderEditorsList();
+                
+                // Select first available or keep selection valid
+                if(EDITOR_NAMES.length > 0) {
+                    document.getElementById('globalEditor').value = EDITOR_NAMES[0];
+                }
+                checkChanges();
+            }
         }
 
         function generateDynamicAdminTools() {
@@ -785,7 +841,10 @@
             document.getElementById('glb_pause').value = totalPaused;
             
             // Set Global Editor
-            if(firstEditor) document.getElementById('globalEditor').value = firstEditor;
+            if(firstEditor) {
+                document.getElementById('globalEditor').value = firstEditor;
+                globalEditor = firstEditor; // Update global var for consistency
+            }
             
             // Update Distributor Counts & ID/Batch/Rules Selectors
             updateDistributorCounts();
