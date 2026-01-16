@@ -1836,6 +1836,11 @@
 
         function renderDetailActionsList(containerId, actions, type, isSuper) {
             // type = 'bool' or 'numeric'
+            // MODIFICATION: Add disabled logic if not super admin
+            const disabledAttr = isSuper ? '' : 'disabled';
+            const cursorClass = isSuper ? 'cursor-pointer' : 'cursor-default';
+            const valReadOnly = isSuper ? '' : 'readonly';
+
             return actions.map(act => {
                 const name = act.name || act.label; // handle legacy key
                 const val = act.val || act.value || ''; 
@@ -1845,17 +1850,17 @@
                      return `
                      <div class="flex items-center justify-between p-1 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded group action-row" data-name="${name}">
                         <div class="flex items-center gap-2 flex-1">
-                            <input type="checkbox" class="action-active w-3 h-3 text-emerald-500 rounded super-locked" ${active?'checked':''}>
+                            <input type="checkbox" class="action-active w-3 h-3 text-emerald-500 rounded super-locked" ${active?'checked':''} ${disabledAttr}>
                             <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-1/2 break-words">${name}</span>
-                            <input type="text" class="action-val w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked bg-white dark:bg-slate-800" value="${val}">
+                            <input type="text" class="action-val w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked bg-white dark:bg-slate-800" value="${val}" ${valReadOnly}>
                         </div>
                         <button onclick="this.closest('.action-row').remove()" class="super-only ${isSuper?'':'hidden'} text-red-500 font-bold text-xs opacity-0 group-hover:opacity-100 ml-2">×</button>
                     </div>`;
                 } else {
                      return `
                      <div class="flex items-center justify-between p-1 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded group action-row" data-name="${name}">
-                        <label class="flex items-center gap-2 cursor-pointer flex-1">
-                            <input type="checkbox" class="action-active w-3 h-3 text-blue-500 rounded super-locked" ${active?'checked':''}>
+                        <label class="flex items-center gap-2 ${cursorClass} flex-1">
+                            <input type="checkbox" class="action-active w-3 h-3 text-blue-500 rounded super-locked" ${active?'checked':''} ${disabledAttr}>
                             <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 break-words">${name}</span>
                         </label>
                         <button onclick="this.closest('.action-row').remove()" class="super-only ${isSuper?'':'hidden'} text-red-500 font-bold text-xs opacity-0 group-hover:opacity-100">×</button>
