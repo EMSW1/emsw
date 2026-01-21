@@ -1805,29 +1805,43 @@
         
         function getDeployUrl(plat, id) {
             if (!id) return null;
+            const strId = String(id).trim();
+            if (!strId) return null;
+
             if (['WEB', 'AUTOMAT'].includes(plat)) {
-                return `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${id}`;
+                return `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${strId}`;
             } else if (plat === 'SELENIUM') {
-                return `http://95.216.72.6:90/deployment/deploy?action=test&id=${id}`;
+                return `http://95.216.72.6:90/deployment/deploy?action=test&id=${strId}`;
             }
             return null;
         }
 
         function openAllDeploys(plat) {
             const deploys = platformsData[plat].deploys || [];
-            let count = 0;
+            const validUrls = [];
+
+            // 1. Gather all URLs first
+            for(const d of deploys) {
+                const u = getDeployUrl(plat, d.id);
+                if(u) validUrls.push(u);
+            }
+
+            if(validUrls.length === 0) {
+                alert("No valid Deploy IDs found to open.");
+                return;
+            }
+
+            // 2. Open all in a synchronous loop
+            // Note: Users must allow popups for this site if > 1 tab
+            let opened = 0;
+            for(let i = 0; i < validUrls.length; i++) {
+                const w = window.open(validUrls[i], '_blank');
+                if(w) opened++;
+            }
             
-            // Filter valid URLs first
-            const validDeploys = deploys.filter(d => getDeployUrl(plat, d.id));
-
-            if (validDeploys.length === 0) return alert("No valid IDs found to open.");
-
-            // Use synchronous loop to keep context of user gesture
-            // This is critical for allowing multiple popups (if browser allows site)
-            validDeploys.forEach(d => {
-                const url = getDeployUrl(plat, d.id);
-                window.open(url, '_blank');
-            });
+            if(opened < validUrls.length) {
+                alert("⚠️ Some tabs were blocked by your browser.\n\nPlease click the lock/popup icon in your URL bar and select 'Always allow popups' for this site to open all links at once.");
+            }
         }
 
         function downloadFile(content, filename) {
