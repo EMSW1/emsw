@@ -926,6 +926,8 @@
                 globalEditor = firstEditor; // Update global var for consistency
             }
             
+            generateDynamicAdminTools(); // Added: Refresh admin tools to show updated Seeds/Day
+            
             // Update Distributor Counts & ID/Batch/Rules Selectors
             updateDistributorCounts();
             renderAllSelectors();
@@ -1842,7 +1844,7 @@
             if (!strId) return null;
 
             if (['WEB', 'AUTOMAT'].includes(plat)) {
-                return `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${strId}`;
+                return `http://95.216.72.6:90/deploy/reporting?action=test&id=${strId}`;
             } else if (plat === 'SELENIUM') {
                 return `http://95.216.72.6:90/deployment/deploy?action=test&id=${strId}`;
             }
