@@ -152,6 +152,18 @@
         /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #10B981; }
         .toggle-checkbox:checked + .toggle-label { background-color: #10B981; }
+
+        /* Snapshot Banner */
+        .snapshot-banner {
+            background: repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px);
+            color: #451a03;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+        .dark .snapshot-banner {
+            background: repeating-linear-gradient(45deg, #7c2d12, #7c2d12 10px, #9a3412 10px, #9a3412 20px);
+            color: #ffedd5;
+            text-shadow: none;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -258,6 +270,11 @@
     </div>
 
     <div id="appContent" class="hidden max-w-[95%] mx-auto space-y-8 pb-24">
+        <!-- Snapshot Alert -->
+        <div id="snapshotBanner" class="hidden snapshot-banner w-full p-4 rounded-xl text-center font-black uppercase tracking-widest text-sm shadow-xl border-4 border-white/20">
+            ⚠️ Viewing Historical Snapshot <span id="snapshotDate" class="underline ml-2"></span> ⚠️
+        </div>
+
         <!-- Header -->
         <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center relative overflow-hidden group">
             <div class="relative z-10">
@@ -509,11 +526,12 @@
             const params = new URLSearchParams(window.location.search);
             const savedRole = localStorage.getItem('emsw_role');
             const isViewMode = params.get('mode') === 'view';
+            const historyId = params.get('historyId'); // NEW: Check for History ID
 
             if (isViewMode) {
                 userRole = "viewer";
                 document.body.classList.add('viewer-mode');
-                await initApp();
+                await initApp(historyId);
             } else if(savedRole === 'admin' || savedRole === 'super') {
                 userRole = savedRole;
                 document.body.classList.add(userRole + '-mode');
@@ -539,7 +557,7 @@
             }
         }
 
-        async function initApp() {
+        async function initApp(historyId = null) {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('roleBadge').innerText = userRole.toUpperCase();
@@ -552,7 +570,7 @@
                 document.getElementById('roleBadge').classList.add(userRole === 'admin' ? 'bg-blue-600' : 'bg-slate-400');
             }
 
-            // Load Configs including Editors
+            // Load Global Configs
             const [confSnap, globalSnap, visibilitySnap, platListSnap, editorsSnap] = await Promise.all([
                 db.ref('emsw/config/boites').once('value'),
                 db.ref('emsw/global_stats').once('value'),
@@ -582,17 +600,45 @@
                 });
             }
 
-            // Initialize Data Structures for new platforms if any
+            // Initialize Data Structures
             PLATFORMS.forEach(p => {
                 if(!platformsData[p]) platformsData[p] = {};
-                if(!boitesConfig[p]) boitesConfig[p] = 100; // Default count
+                if(!boitesConfig[p]) boitesConfig[p] = 100;
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
             });
 
+            // NEW: Handle History Snapshot if ID present
+            if (historyId) {
+                try {
+                    const snap = await db.ref(`emsw/history/${historyId}`).once('value');
+                    if (snap.exists()) {
+                        const historyData = snap.val();
+                        const snapshot = historyData.snapshot || {};
+                        
+                        // Override platformsData with history
+                        for (const plat of PLATFORMS) {
+                            if (snapshot[plat]) {
+                                platformsData[plat] = snapshot[plat];
+                                platformsData[plat].fromHistory = true; // Flag
+                            }
+                        }
+                        
+                        // Show Banner
+                        document.getElementById('snapshotBanner').classList.remove('hidden');
+                        document.getElementById('snapshotDate').innerText = historyData.dateString || 'Unknown Date';
+                        
+                        // Disable interactions further (handled by CSS generally, but double check)
+                    } else {
+                        alert("Historical snapshot not found. Loading current data.");
+                    }
+                } catch (e) {
+                    console.error("Error loading history snapshot", e);
+                }
+            }
+
             renderAllPlatforms();
-            generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
+            generateDynamicAdminTools();
             
-            // Clean old history on init if Admin
             if(userRole !== 'viewer') cleanOldHistory();
         }
 
@@ -721,14 +767,9 @@
 
             // 1. First Pass: Fetch Data and Calculate Totals (Including Hidden)
             for (const plat of PLATFORMS) {
-                // Fetch data for ALL platforms, even hidden ones - UNLESS we have local modification
-                // If platformsData[plat].deploys is populated (e.g. from history load), don't fetch from DB again
-                // BUT initApp calls this, so initially it's empty.
-                
                 let data = platformsData[plat];
                 
-                // If data is "empty" (init state), fetch it. 
-                // We check if it has properties other than stats/deploys init
+                // If data is "empty" (init state) AND not from history snapshot, fetch it. 
                 if (!data.updatedAt && !data.fromHistory) {
                     const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                     const dbData = snap.val() || { deploys: [], stats: {}, filter: "" };
@@ -939,7 +980,6 @@
             distDisplay.innerText = dist.join(' | ');
         }
         
-        // --- NEW FUNCTION: RENDER VIEWER TABLE ---
         function renderViewerTable() {
             const container = document.getElementById('viewerTableContainer');
             if(!container) return;
@@ -957,7 +997,6 @@
                  const deploys = platformsData[plat].deploys || [];
                  if(deploys.length === 0) return;
                  
-                 // Recalculate Boites per deploy
                  const total = boitesConfig[plat] || 100;
                  const num = deploys.length;
                  const base = Math.floor(total / num);
@@ -969,18 +1008,14 @@
                         <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
                         ${plat} DEPLOYS
                      </h3>
-                     <!-- UPDATED: Flex container with horizontal scrolling, nowrap -->
                      <div class="flex overflow-x-auto gap-4 pb-4">`;
                  
                  deploys.forEach((d, i) => {
                      const bCount = base + (i < rem ? 1 : 0);
                      const ips = d.ips || "";
                      const ipCount = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).length;
-                     
-                     // Requirement: Open Deploys Button Link construction
                      const deployUrl = getDeployUrl(plat, d.id);
 
-                     // Added min-width to ensure cards don't shrink and force scroll
                      html += `
                      <div class="min-w-[300px] w-[300px] bg-white/50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600 opacity-50"></div>
@@ -1424,14 +1459,11 @@
             // Identify visible platforms
             const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
             
-            // --- HISTORY LOGIC PREPARATION ---
-            // We want to capture the "Snapshot" of modifications made at this time
-            // Only for platforms that actually changed.
+            // --- HISTORY LOGIC ---
             let historySnapshot = {}; 
             let fullGlobalChangesLog = [];
             let anyRealChanges = false;
-            // ---------------------------------
-
+            
             // Loop through all platforms
             for (const plat of platsToSave) {
                 const currentPlatform = plat;
@@ -1501,7 +1533,17 @@
                      }
                 }
                 
-                // Create formatted date: DD/MM/YYYY HHhMM
+                // --- FULL SNAPSHOT LOGIC ---
+                // We save the state of ALL visible platforms if ANY change occurred in this batch.
+                // This ensures the snapshot is complete for the "time travel" link.
+                historySnapshot[plat] = {
+                    deploys: JSON.parse(JSON.stringify(deploys)),
+                    filter: filter,
+                    stats: JSON.parse(JSON.stringify(stats)),
+                    detailsConfig: JSON.parse(JSON.stringify(detailsConfig)),
+                    editor: editorName
+                };
+
                 const now = new Date();
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1510,22 +1552,13 @@
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const formattedDate = `${day}/${month}/${year} ${hours}h${minutes}`;
 
-                // --- ADD TO HISTORY SNAPSHOT IF CHANGED ---
+                // --- ADD TO LOG IF CHANGED ---
                 if (hasRealChanges) {
                     anyRealChanges = true;
-                    // We save the NEW state as a snapshot for this platform
-                    historySnapshot[plat] = {
-                        deploys: JSON.parse(JSON.stringify(deploys)),
-                        filter: filter,
-                        stats: JSON.parse(JSON.stringify(stats)),
-                        detailsConfig: JSON.parse(JSON.stringify(detailsConfig)),
-                        editor: editorName
-                    };
                     fullGlobalChangesLog.push({ plat: plat, changes: logChanges });
                 }
-                // -----------------------------------------
 
-                // Save to Firebase
+                // Save to Firebase (Current State)
                 await db.ref(`emsw/plans/${currentPlatform}/current`).set({ 
                     deploys, 
                     filter, 
@@ -1534,22 +1567,52 @@
                     editor: editorName, 
                     updatedAt: formattedDate 
                 });
+            }
+            
+            // --- SAVE TO HISTORY FIRST TO GET ID ---
+            let historyId = null;
+            if (anyRealChanges && sendNotif) {
+                const now = new Date();
+                const historyRef = db.ref('emsw/history').push(); // Generate ID first
+                historyId = historyRef.key;
+                
+                const historyEntry = {
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    dateString: now.toLocaleString('en-GB', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }),
+                    editor: editorName,
+                    summary: fullGlobalChangesLog,
+                    snapshot: historySnapshot // Save Full Snapshot
+                };
+                await historyRef.set(historyEntry);
+                cleanOldHistory();
+            }
 
-                // Send Telegram (ONLY if sendNotif is true AND actual Deploy changes detected)
-                if (sendNotif && hasRealChanges) {
-                    // Dynamic URL Logic: first letter + lowercased (WEB -> emsw)
-                    const platKey = currentPlatform.charAt(0).toLowerCase();
+            // --- SEND TELEGRAM (LOOP AGAIN) ---
+            if (sendNotif && anyRealChanges) {
+                for (const plat of platsToSave) {
+                    const changesForPlat = fullGlobalChangesLog.find(x => x.plat === plat);
+                    if (!changesForPlat) continue;
+
+                    // Dynamic URL Logic:
                     const platformUrl = `https://emsw.pages.dev/`;
-                    const viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(currentPlatform)}&target=true`;
+                    let viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(plat)}&target=true`;
                     
-                    const safePlat = escapeHtml(currentPlatform);
+                    // NEW: Append History ID for Time Travel
+                    if (historyId) {
+                        viewLink += `&historyId=${historyId}`;
+                    }
+
+                    const safePlat = escapeHtml(plat);
                     const safeEditor = escapeHtml(editorName);
+                    
+                    const deploys = platformsData[plat].deploys || [];
+                    const originalDeploys = originalPlatformsData[plat].deploys || [];
 
                     let telegramMsg = "";
-                    if (deploys.length === 0 && oldDeploys.length > 0) {
+                    if (deploys.length === 0 && originalDeploys.length > 0) {
                         telegramMsg = `⚠️ <b>STOPPED: #${safePlat}</b>\n` + `👤 <b>BY : ${safeEditor}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
                     } else {
-                        const changesText = logChanges.length > 0 ? logChanges.map(c => escapeHtml(c)).join('\n') : "• Saved by user";
+                        const changesText = changesForPlat.changes.length > 0 ? changesForPlat.changes.map(c => escapeHtml(c)).join('\n') : "• Saved by user";
                         telegramMsg = `🔄 <b>#${safePlat} UPDATE</b>\n` + `👤 <b>BY: ${safeEditor}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b><a href="${viewLink}">VIEW PLAN</a></b>`;
                     }
                     
@@ -1559,34 +1622,10 @@
                             headers: { 'Content-Type': 'application/json' }, 
                             body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) 
                         });
-                        if(!resp.ok) {
-                            const errData = await resp.json();
-                            console.error('Telegram Error', errData);
-                            alert('Telegram Error: ' + (errData.description || 'Unknown'));
-                        }
-                    } catch (e) { 
-                        console.error("Telegram Error:", e);
-                        alert("Telegram Connection Error: " + e.message);
-                    }
+                        if(!resp.ok) console.error('Telegram Error', await resp.json());
+                    } catch (e) { console.error("Telegram Error:", e); }
                 }
-                
-                originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, detailsConfig, editor: editorName }));
             }
-            
-            // --- SAVE TO HISTORY (LAST 5 DAYS) ---
-            if (anyRealChanges && sendNotif) {
-                const now = new Date();
-                const historyEntry = {
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    dateString: now.toLocaleString('en-GB', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }),
-                    editor: editorName,
-                    summary: fullGlobalChangesLog,
-                    snapshot: historySnapshot // Only save Modified Platforms
-                };
-                await db.ref('emsw/history').push(historyEntry);
-                cleanOldHistory(); // Clean up old entries
-            }
-            // ----------------------------------
             
             setTimeout(() => { location.reload(); }, 500);
         }
@@ -1714,16 +1753,6 @@
              saveAll(false); 
         }
 
-        async function sendTelegramMsg(text) {
-             try {
-                await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: text, parse_mode: 'HTML' })
-                });
-             } catch(e) { console.error(e); }
-        }
-
         // --- Helper Functions ---
         function checkAccess() {
             const k = document.getElementById('accessKey').value;
@@ -1787,14 +1816,19 @@
         function openAllDeploys(plat) {
             const deploys = platformsData[plat].deploys || [];
             let count = 0;
+            let validFound = false;
+
             deploys.forEach(d => {
                 const url = getDeployUrl(plat, d.id);
                 if (url) {
-                    setTimeout(() => window.open(url, '_blank'), count * 300);
+                    validFound = true;
+                    // Note: Browsers may block multiple popups.
+                    setTimeout(() => window.open(url, '_blank'), count * 500);
                     count++;
                 }
             });
-            if (count === 0) alert("No valid IDs found to open.");
+            
+            if (!validFound) alert("No valid IDs found to open.");
         }
 
         function downloadFile(content, filename) {
@@ -1840,7 +1874,7 @@
             generateDynamicAdminTools();
         }
 
-        // PLATFORM DETAILS MODAL (Updated for Dynamic Actions)
+        // PLATFORM DETAILS MODAL
         function openPlatformDetails(plat) {
             activeDetailsPlat = plat;
             document.getElementById('detailModalTitle').innerText = `${plat} DETAILS`;
@@ -1985,7 +2019,6 @@
 
         function renderDetailActionsList(containerId, actions, type, isSuper) {
             // type = 'bool' or 'numeric'
-            // MODIFICATION: Add disabled logic if not super admin
             const disabledAttr = isSuper ? '' : 'disabled';
             const cursorClass = isSuper ? 'cursor-pointer' : 'cursor-default';
             const valReadOnly = isSuper ? '' : 'readonly';
@@ -2064,9 +2097,6 @@
             if (p === 'SELENIUM') {
                 newConf.scenario = document.getElementById('sel-scenario').value;
                 newConf.seleniumActions = scrapeDetailActions('selenium-actions-container', 'numeric');
-                
-                // Clear old legacy keys to keep DB clean (optional)
-                // delete newConf.notSpam; delete newConf.read; etc.
             } else {
                 newConf.spamVal = document.getElementById('web-spam-val').value;
                 newConf.inboxVal = document.getElementById('web-inbox-val').value;
