@@ -200,7 +200,7 @@
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h3 class="text-xl font-black uppercase italic text-violet-800 dark:text-violet-400">HISTORIQUE</h3>
-                <p class="text-[10px] text-slate-500 font-bold">LAST 24 HOURS ONLY</p>
+                <p class="text-[10px] text-slate-500 font-bold">LAST 5 DAYS</p>
             </div>
             <button onclick="closeHistory()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
         </div>
@@ -649,13 +649,19 @@
                 // SKIP IF PLATFORM IS HIDDEN (DISABLED)
                 if (platVisibility[plat] === false) return;
 
+                // Requirement: Show SEEDS/day in Distributor
+                const seedsDay = platformsData[plat]?.stats?.nbrseedsperday || '0';
+
                 // Modified structure to include deploy list container
                 const html = `
                 <div class="flex flex-col bg-white/5 rounded-lg mb-1">
                     <div class="flex items-center justify-between hover:bg-white/50 p-1 rounded transition-colors">
                         <label class="flex items-center gap-2 cursor-pointer flex-1">
                             <input type="checkbox" id="chk-${plat}" onchange="toggleDistPlatform('${plat}')" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-gray-300">
-                            <span class="font-bold text-xs">${plat} <span id="dist-count-${plat}" class="text-[9px] text-slate-400 ml-1 font-normal opacity-75">(0)</span></span>
+                            <span class="font-bold text-xs">${plat} 
+                                <span class="text-[9px] text-emerald-600 dark:text-emerald-400 ml-1 font-black">[${seedsDay}/day]</span>
+                                <span id="dist-count-${plat}" class="text-[9px] text-slate-400 ml-1 font-normal opacity-75">(0)</span>
+                            </span>
                         </label>
                         <div class="flex gap-1 ml-2">
                              <button onclick="quickRemoveLastDeploy('${plat}')" class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-md font-black shadow-sm transition-colors" title="Remove Last">-</button>
@@ -967,6 +973,15 @@
                      const ips = d.ips || "";
                      const ipCount = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).length;
                      
+                     // Requirement: Open Deploys Button Link construction
+                     let openLink = '';
+                     const deployId = d.id || '';
+                     if (['WEB', 'AUTOMAT'].includes(plat)) {
+                         openLink = `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${deployId}`;
+                     } else if (plat === 'SELENIUM') {
+                         openLink = `http://95.216.72.6:90/deployment/deploy?action=test&id=${deployId}`;
+                     }
+
                      // Added min-width to ensure cards don't shrink and force scroll
                      html += `
                      <div class="min-w-[300px] w-[300px] bg-white/50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -996,10 +1011,13 @@
                             </div>
                          </div>
                          
-                         <div class="bg-slate-100 dark:bg-black/20 rounded-xl p-3 border border-slate-200 dark:border-slate-800/50 flex-1 flex flex-col">
+                         <div class="bg-slate-100 dark:bg-black/20 rounded-xl p-3 border border-slate-200 dark:border-slate-800/50 flex-1 flex flex-col mb-3">
                             <span class="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">LES IPS</span>
-                            <div class="font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre select-all overflow-x-auto max-h-96 overflow-y-auto">${ips.trim() || '<span class="italic opacity-50">No IPs</span>'}</div>
+                            <div class="font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre select-all overflow-x-auto max-h-48 overflow-y-auto">${ips.trim() || '<span class="italic opacity-50">No IPs</span>'}</div>
                          </div>
+                         
+                         ${openLink ? `<a href="${openLink}" target="_blank" class="block w-full text-center py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[10px] uppercase shadow-lg transform active:scale-95 transition-all">OPEN DEPLOYS</a>` : ''}
+
                      </div>`;
                  });
                  
@@ -1557,7 +1575,7 @@
                 originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, detailsConfig, editor: editorName }));
             }
             
-            // --- SAVE TO HISTORY (LAST 24h) ---
+            // --- SAVE TO HISTORY (LAST 5 DAYS) ---
             if (anyRealChanges && sendNotif) {
                 const now = new Date();
                 const historyEntry = {
@@ -1578,8 +1596,9 @@
         // --- HISTORY FUNCTIONS ---
         
         async function cleanOldHistory() {
-            // Remove entries older than 24 hours (86400000 ms)
-            const cutoff = Date.now() - 86400000;
+            // Remove entries older than 5 days
+            // 5 * 24 * 60 * 60 * 1000 = 432000000 ms
+            const cutoff = Date.now() - 432000000;
             const ref = db.ref('emsw/history');
             
             try {
@@ -1601,12 +1620,12 @@
             list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic animate-pulse">Loading modifications...</div>';
             
             try {
-                // Fetch last 50 entries (should cover 24h usually)
+                // Fetch last 50 entries
                 const snap = await db.ref('emsw/history').orderByChild('timestamp').limitToLast(50).once('value');
                 
                 list.innerHTML = '';
                 if(!snap.exists()) {
-                    list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic">No history found for last 24h.</div>';
+                    list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic">No history found for last 5 days.</div>';
                     return;
                 }
 
@@ -2090,15 +2109,54 @@
 
             PLATFORMS.forEach(plat => {
                 const data = platformsData[plat] || { stats: {} };
+                const hiddenClass = (platVisibility[plat] === false) ? 'opacity-50 grayscale bg-red-50 dark:bg-red-900/20' : 'bg-white/50 dark:bg-slate-900/50';
+
+                // --- SPECIAL HANDLING FOR SELENIUM (CHROME / BRAVE) ---
+                if (plat === 'SELENIUM') {
+                    const seedsChrome = parseInt(data.stats.seeds_chrome || 0);
+                    const seedsBrave = parseInt(data.stats.seeds_brave || 0);
+                    
+                    // Show Chrome if > 0 or if super admin
+                    if (seedsChrome > 0 || isSuper) {
+                        const row = `
+                        <div class="flex items-center gap-2 ${hiddenClass} p-2 rounded-lg transition-colors">
+                            <span class="w-1/3 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">CHROME</span>
+                            <input type="number" 
+                                id="breakdown-seed-selenium-chrome" 
+                                value="${seedsChrome}" 
+                                ${isSuper ? '' : 'readonly'} 
+                                class="w-full p-2 rounded-lg text-xs font-black border-none bg-white dark:bg-slate-900 text-right outline-none focus:ring-1 focus:ring-emerald-500 ${isSuper ? '' : 'pointer-events-none'}"
+                                oninput="updateBreakdownTotal()">
+                        </div>`;
+                        list.insertAdjacentHTML('beforeend', row);
+                    }
+                    
+                    // Show Brave if > 0 or if super admin
+                    if (seedsBrave > 0 || isSuper) {
+                        const row = `
+                        <div class="flex items-center gap-2 ${hiddenClass} p-2 rounded-lg transition-colors">
+                            <span class="w-1/3 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">BRAVE</span>
+                            <input type="number" 
+                                id="breakdown-seed-selenium-brave" 
+                                value="${seedsBrave}" 
+                                ${isSuper ? '' : 'readonly'} 
+                                class="w-full p-2 rounded-lg text-xs font-black border-none bg-white dark:bg-slate-900 text-right outline-none focus:ring-1 focus:ring-emerald-500 ${isSuper ? '' : 'pointer-events-none'}"
+                                oninput="updateBreakdownTotal()">
+                        </div>`;
+                        list.insertAdjacentHTML('beforeend', row);
+                    }
+                    
+                    total += (seedsChrome + seedsBrave);
+                    return; // Skip default processing for Selenium
+                }
+
+                // --- DEFAULT HANDLING FOR OTHER PLATFORMS ---
                 const seedVal = parseInt(data.stats.seeds || 0);
                 total += seedVal;
                 
-                // --- MODIFICATION: Skip platform if seeds are 0 ---
-                if (seedVal === 0) return;
-                // -------------------------------------------------
+                // Skip platform if seeds are 0, unless user is Super Admin
+                if (seedVal === 0 && !isSuper) return;
 
-                const hiddenClass = (platVisibility[plat] === false) ? 'opacity-50 grayscale bg-red-50 dark:bg-red-900/20' : 'bg-white/50 dark:bg-slate-900/50';
-                
                 const row = `
                 <div class="flex items-center gap-2 ${hiddenClass} p-2 rounded-lg transition-colors">
                     <span class="w-1/3 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">${plat}</span>
@@ -2119,8 +2177,15 @@
         function updateBreakdownTotal() {
             let total = 0;
             PLATFORMS.forEach(plat => {
-                const el = document.getElementById(`breakdown-seed-${plat}`);
-                if(el) total += parseInt(el.value || 0);
+                if (plat === 'SELENIUM') {
+                    const elChrome = document.getElementById(`breakdown-seed-selenium-chrome`);
+                    const elBrave = document.getElementById(`breakdown-seed-selenium-brave`);
+                    if(elChrome) total += parseInt(elChrome.value || 0);
+                    if(elBrave) total += parseInt(elBrave.value || 0);
+                } else {
+                    const el = document.getElementById(`breakdown-seed-${plat}`);
+                    if(el) total += parseInt(el.value || 0);
+                }
             });
             document.getElementById('modal-total-seeds-display').innerText = total;
         }
@@ -2133,15 +2198,34 @@
             const updates = [];
             
             for(const plat of PLATFORMS) {
-                const el = document.getElementById(`breakdown-seed-${plat}`);
-                if(el) {
-                    const newVal = parseInt(el.value || 0);
-                    // Update local data
-                    if(!platformsData[plat].stats) platformsData[plat].stats = {};
-                    platformsData[plat].stats.seeds = newVal;
+                if(!platformsData[plat].stats) platformsData[plat].stats = {};
+
+                if (plat === 'SELENIUM') {
+                    const elChrome = document.getElementById(`breakdown-seed-selenium-chrome`);
+                    const elBrave = document.getElementById(`breakdown-seed-selenium-brave`);
                     
-                    // Push to Firebase (Specific Path to avoid overwriting deploys)
-                    updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds`).set(newVal));
+                    let valChrome = elChrome ? parseInt(elChrome.value || 0) : parseInt(platformsData[plat].stats.seeds_chrome || 0);
+                    let valBrave = elBrave ? parseInt(elBrave.value || 0) : parseInt(platformsData[plat].stats.seeds_brave || 0);
+
+                    // Update local object
+                    platformsData[plat].stats.seeds_chrome = valChrome;
+                    platformsData[plat].stats.seeds_brave = valBrave;
+                    
+                    // Total Seeds for Selenium is sum of both
+                    const newTotal = valChrome + valBrave;
+                    platformsData[plat].stats.seeds = newTotal;
+
+                    // Push specific paths
+                    updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds_chrome`).set(valChrome));
+                    updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds_brave`).set(valBrave));
+                    updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds`).set(newTotal));
+                } else {
+                    const el = document.getElementById(`breakdown-seed-${plat}`);
+                    if(el) {
+                        const newVal = parseInt(el.value || 0);
+                        platformsData[plat].stats.seeds = newVal;
+                        updates.push(db.ref(`emsw/plans/${plat}/current/stats/seeds`).set(newVal));
+                    }
                 }
             }
             
