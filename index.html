@@ -382,6 +382,12 @@
                     <button onclick="distributeMasterIPs()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white rounded-xl font-black uppercase shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs">
                         <span></span> Distribute
                     </button>
+
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="removeMasterIPs()" class="w-full py-3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white rounded-xl font-black uppercase shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs">
+                            <span>🗑️</span> Remove from Lists
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -774,10 +780,10 @@
                     filterPreviewHtml = `
                     <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
-                            <strong>spam :</strong> <span id="preview-spam-${plat}">${data.filter || ''}</span>
+                            <strong>spam :</strong> <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
                         </div>
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200 mt-1">
-                            <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${data.filter || ''}</span>
+                            <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${escapeHtml(data.filter || '')}</span>
                         </div>
                     </div>`;
                 }
@@ -803,7 +809,7 @@
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="filter-${plat}" value="${data.filter || ''}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
+                                    <input type="text" id="filter-${plat}" value="${escapeHtml(data.filter || '')}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPS</button>
                                     <div class="flex items-center gap-1 viewer-only-btn hidden">
                                         <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
@@ -1314,6 +1320,50 @@
             });
             checkChanges();
             alert("Distribution Done!");
+        }
+
+        function removeMasterIPs() {
+            const text = document.getElementById('masterIpList').value;
+            // Create a Set for O(1) lookup speed, normalizing input
+            let ipsToRemove = new Set(text.split('\n').map(s => s.trim()).filter(s => s));
+
+            if(ipsToRemove.size === 0) return alert("No IPs entered to remove.");
+
+            let modifiedCount = 0;
+
+            PLATFORMS.forEach(p => {
+                const chk = document.getElementById('chk-'+p);
+                const list = document.getElementById('dist-list-'+p);
+
+                if(chk && chk.checked && list) {
+                    if(platformsData[p] && platformsData[p].deploys) {
+                        const specificChks = list.querySelectorAll(`.dist-deploy-chk:checked`);
+
+                        specificChks.forEach(c => {
+                            const idx = parseInt(c.value);
+                            const deploy = platformsData[p].deploys[idx];
+                            const currentIps = (deploy.ips || "").split('\n');
+
+                            // Filter out IPs that are in the removal list
+                            const newIps = currentIps.filter(line => !ipsToRemove.has(line.trim()));
+
+                            if (newIps.length !== currentIps.length) {
+                                deploy.ips = newIps.join('\n');
+                                modifiedCount++;
+                            }
+                        });
+                        // Re-render this platform to show changes
+                        renderPlatformDeploys(p);
+                    }
+                }
+            });
+
+            if(modifiedCount > 0) {
+                checkChanges();
+                alert(`Removed IPs from ${modifiedCount} deploys.`);
+            } else {
+                alert("No matching IPs found in selected deploys.");
+            }
         }
 
         function updateCount(plat, index) {
