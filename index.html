@@ -616,12 +616,12 @@
                         const snapshot = historyData.snapshot || {};
                         
                         // Override platformsData with history
-                        for (const plat of PLATFORMS) {
-                            if (snapshot[plat]) {
-                                platformsData[plat] = snapshot[plat];
-                                platformsData[plat].fromHistory = true; // Flag
-                            }
-                        }
+                        // AND update PLATFORMS list to ensure we see what was in the snapshot
+                        Object.keys(snapshot).forEach(k => {
+                            if(!PLATFORMS.includes(k)) PLATFORMS.push(k);
+                            platformsData[k] = snapshot[k];
+                            platformsData[k].fromHistory = true;
+                        });
                         
                         // Show Banner
                         document.getElementById('snapshotBanner').classList.remove('hidden');
@@ -1816,19 +1816,18 @@
         function openAllDeploys(plat) {
             const deploys = platformsData[plat].deploys || [];
             let count = 0;
-            let validFound = false;
-
-            deploys.forEach(d => {
-                const url = getDeployUrl(plat, d.id);
-                if (url) {
-                    validFound = true;
-                    // Note: Browsers may block multiple popups.
-                    setTimeout(() => window.open(url, '_blank'), count * 500);
-                    count++;
-                }
-            });
             
-            if (!validFound) alert("No valid IDs found to open.");
+            // Filter valid URLs first
+            const validDeploys = deploys.filter(d => getDeployUrl(plat, d.id));
+
+            if (validDeploys.length === 0) return alert("No valid IDs found to open.");
+
+            // Use synchronous loop to keep context of user gesture
+            // This is critical for allowing multiple popups (if browser allows site)
+            validDeploys.forEach(d => {
+                const url = getDeployUrl(plat, d.id);
+                window.open(url, '_blank');
+            });
         }
 
         function downloadFile(content, filename) {
