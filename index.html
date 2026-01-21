@@ -152,9 +152,6 @@
         /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #10B981; }
         .toggle-checkbox:checked + .toggle-label { background-color: #10B981; }
-        
-        /* Archive Banner */
-        #archiveBanner { background: repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px); }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -165,12 +162,6 @@
         <div class="shooting_star"></div><div class="shooting_star"></div>
     </div>
     <div class="bg-animate-container"></div>
-
-    <!-- Archive Banner -->
-    <div id="archiveBanner" class="fixed top-0 left-0 w-full z-[500] text-center py-2 shadow-lg hidden">
-        <span class="bg-black/80 text-white font-black text-xs px-4 py-1 rounded-full uppercase tracking-widest border border-yellow-500">⚠️ ARCHIVE MODE - VIEWING HISTORICAL SNAPSHOT</span>
-        <button onclick="window.location.href=window.location.pathname + '?mode=view'" class="ml-4 text-[10px] font-bold underline text-blue-900 hover:text-blue-700 bg-white/50 px-2 rounded">Go to Live</button>
-    </div>
 
     <!-- Login -->
     <div id="loginOverlay">
@@ -553,16 +544,6 @@
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('roleBadge').innerText = userRole.toUpperCase();
             
-            // Check for HISTORY MODE
-            const params = new URLSearchParams(window.location.search);
-            const historyKey = params.get('history');
-
-            if(historyKey) {
-                document.getElementById('archiveBanner').classList.remove('hidden');
-                document.body.classList.add('viewer-mode'); // Force viewer style
-                userRole = 'viewer';
-            }
-            
             if(userRole === 'super') {
                 document.getElementById('roleBadge').classList.add('bg-purple-600');
                 document.querySelectorAll('.super-only').forEach(el => el.classList.remove('hidden'));
@@ -607,25 +588,6 @@
                 if(!boitesConfig[p]) boitesConfig[p] = 100; // Default count
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
             });
-            
-            // IF HISTORY MODE: Load specific snapshot
-            if (historyKey) {
-                 try {
-                    const histSnap = await db.ref(`emsw/history/${historyKey}/snapshot`).once('value');
-                    if (histSnap.exists()) {
-                        const snapshotData = histSnap.val();
-                        // Merge snapshot into platformsData
-                        for (const plat in snapshotData) {
-                            if (platformsData[plat]) {
-                                platformsData[plat] = snapshotData[plat];
-                                platformsData[plat].fromHistory = true; 
-                            }
-                        }
-                    } else {
-                        alert("Historical data not found or expired.");
-                    }
-                 } catch(e) { console.error("History Load Error", e); }
-            }
 
             renderAllPlatforms();
             generateDynamicAdminTools(); // Generate Checkboxes based on PLATFORMS
@@ -756,7 +718,6 @@
             // Filtering support
             const params = new URLSearchParams(window.location.search);
             const targetPlat = params.get('plat');
-            const historyKey = params.get('history');
 
             // 1. First Pass: Fetch Data and Calculate Totals (Including Hidden)
             for (const plat of PLATFORMS) {
@@ -768,8 +729,7 @@
                 
                 // If data is "empty" (init state), fetch it. 
                 // We check if it has properties other than stats/deploys init
-                // CRITICAL: If loading from History, do NOT fetch "current".
-                if (!data.updatedAt && !data.fromHistory && !historyKey) {
+                if (!data.updatedAt && !data.fromHistory) {
                     const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                     const dbData = snap.val() || { deploys: [], stats: {}, filter: "" };
                     
@@ -1464,25 +1424,13 @@
             // Identify visible platforms
             const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
             
-            // --- HISTORY PREPARATION ---
-            // We need to determine if changes occurred first
+            // --- HISTORY LOGIC PREPARATION ---
+            // We want to capture the "Snapshot" of modifications made at this time
+            // Only for platforms that actually changed.
             let historySnapshot = {}; 
             let fullGlobalChangesLog = [];
             let anyRealChanges = false;
-            let dbUpdates = {};
-
-            // Time config
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const formattedDate = `${day}/${month}/${year} ${hours}h${minutes}`;
-            
-            // Pre-calculate History ID (We might not use it if no changes, but we need it for links)
-            const newHistoryRef = db.ref('emsw/history').push();
-            const historyKey = newHistoryRef.key;
+            // ---------------------------------
 
             // Loop through all platforms
             for (const plat of platsToSave) {
@@ -1496,7 +1444,7 @@
                 const filterInput = document.getElementById(`filter-${plat}`);
                 const filter = filterInput ? filterInput.value.trim() : "";
                 const stats = platformData.stats || {};
-                const detailsConfig = platformData.detailsConfig || {}; 
+                const detailsConfig = platformData.detailsConfig || {}; // Get config
                 
                 // --- DIFF LOGIC ---
                 const originalData = originalPlatformsData[plat] || { deploys: [], stats: {}, filter: "", detailsConfig: {} };
@@ -1505,10 +1453,22 @@
                 let logChanges = [];
                 let hasRealChanges = false;
                 
+                // Track internal changes
                 const oldFilter = originalData.filter || "";
-                if(oldFilter !== filter) { logChanges.push(`• KEYWORD FILTER updated`); hasRealChanges = true; }
-                if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) { logChanges.push("• Performance Stats updated"); hasRealChanges = true; }
-                if(JSON.stringify(detailsConfig) !== JSON.stringify(originalData.detailsConfig || {})) { logChanges.push("• Details Config updated"); hasRealChanges = true; }
+                if(oldFilter !== filter) {
+                    logChanges.push(`• KEYWORD FILTER updated`);
+                    hasRealChanges = true;
+                }
+                
+                if(JSON.stringify(stats) !== JSON.stringify(originalData.stats || {})) {
+                    logChanges.push("• Performance Stats updated");
+                    hasRealChanges = true;
+                }
+
+                if(JSON.stringify(detailsConfig) !== JSON.stringify(originalData.detailsConfig || {})) {
+                    logChanges.push("• Details Config updated");
+                    hasRealChanges = true;
+                }
 
                 if (deploys.length === 0) {
                      if(oldDeploys.length > 0) hasRealChanges = true;
@@ -1518,22 +1478,42 @@
                          const dNew = deploys[i];
                          const dOld = oldDeploys[i];
                          let mods = [];
-                         if (!dOld && dNew) mods.push("Created");
-                         else if (dOld && dNew) {
+
+                         if (!dOld && dNew) {
+                             mods.push("Created");
+                         } else if (dOld && dNew) {
                              if ((dNew.id||"").trim() !== (dOld.id||"").trim()) mods.push("ID");
                              if (dNew.batch !== dOld.batch) mods.push("BATCH");
                              if (dNew.rules !== dOld.rules) mods.push("RULES");
-                             if ((dNew.ips||"").trim() !== (dOld.ips||"").trim()) mods.push("IPs");
+                             const ipsNew = (dNew.ips||"").trim();
+                             const ipsOld = (dOld.ips||"").trim();
+                             if (ipsNew !== ipsOld) mods.push("IPs");
                          }
-                         if (mods.length > 0) { logChanges.push(`• D${i+1} : ${mods.join(', ')} updated`); hasRealChanges = true; }
+                         
+                         if (mods.length > 0) {
+                             logChanges.push(`• D${i+1} : ${mods.join(', ')} updated`);
+                             hasRealChanges = true;
+                         }
                      }
-                     if(oldDeploys.length > deploys.length) { logChanges.push(`• ${oldDeploys.length - deploys.length} Deploys Removed`); hasRealChanges = true; }
+                     if(oldDeploys.length > deploys.length) {
+                         logChanges.push(`• ${oldDeploys.length - deploys.length} Deploys Removed`);
+                         hasRealChanges = true;
+                     }
                 }
+                
+                // Create formatted date: DD/MM/YYYY HHhMM
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const formattedDate = `${day}/${month}/${year} ${hours}h${minutes}`;
 
-                // If platform modified, add to snapshot and logs
+                // --- ADD TO HISTORY SNAPSHOT IF CHANGED ---
                 if (hasRealChanges) {
                     anyRealChanges = true;
-                    // We save the NEW state as a snapshot for this platform (FULL STATE)
+                    // We save the NEW state as a snapshot for this platform
                     historySnapshot[plat] = {
                         deploys: JSON.parse(JSON.stringify(deploys)),
                         filter: filter,
@@ -1541,66 +1521,257 @@
                         detailsConfig: JSON.parse(JSON.stringify(detailsConfig)),
                         editor: editorName
                     };
-                    fullGlobalChangesLog.push({ plat: plat, changes: logChanges, deploysCount: deploys.length, oldDeploysCount: oldDeploys.length });
+                    fullGlobalChangesLog.push({ plat: plat, changes: logChanges });
                 }
+                // -----------------------------------------
 
-                // Queue Update for Current State
-                dbUpdates[`emsw/plans/${currentPlatform}/current`] = { 
+                // Save to Firebase
+                await db.ref(`emsw/plans/${currentPlatform}/current`).set({ 
                     deploys, 
                     filter, 
                     stats, 
                     detailsConfig,
                     editor: editorName, 
                     updatedAt: formattedDate 
-                };
-                
-                // Update local 'original' for next compare without reload
-                originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, detailsConfig, editor: editorName }));
-            }
-            
-            // --- EXECUTE UPDATES & NOTIFICATIONS ---
-            
-            // 1. Save Current Data
-            await db.ref().update(dbUpdates);
+                });
 
-            // 2. Handle History & Telegram (Only if changes)
-            if (anyRealChanges && sendNotif) {
-                // Save History Entry
-                const historyEntry = {
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    dateString: formattedDate,
-                    editor: editorName,
-                    summary: fullGlobalChangesLog,
-                    snapshot: historySnapshot // Contains full data of modified platforms
-                };
-                await newHistoryRef.set(historyEntry);
-                
-                // Send Notifications
-                for (const log of fullGlobalChangesLog) {
-                    const currentPlatform = log.plat;
-                    // Dynamic URL Logic
+                // Send Telegram (ONLY if sendNotif is true AND actual Deploy changes detected)
+                if (sendNotif && hasRealChanges) {
+                    // Dynamic URL Logic: first letter + lowercased (WEB -> emsw)
+                    const platKey = currentPlatform.charAt(0).toLowerCase();
                     const platformUrl = `https://emsw.pages.dev/`;
-                    // ** CRITICAL: Link includes history ID **
-                    const viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(currentPlatform)}&target=true&history=${historyKey}`;
+                    const viewLink = `${platformUrl}?mode=view&plat=${encodeURIComponent(currentPlatform)}&target=true`;
                     
                     const safePlat = escapeHtml(currentPlatform);
                     const safeEditor = escapeHtml(editorName);
-                    const changesText = log.changes.length > 0 ? log.changes.map(c => escapeHtml(c)).join('\n') : "• Saved by user";
 
                     let telegramMsg = "";
-                    if (log.deploysCount === 0 && log.oldDeploysCount > 0) {
-                        telegramMsg = `⚠️ <b>STOPPED: #${safePlat}</b>\n` + `👤 <b>BY : ${safeEditor}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW SNAPSHOT</b></a>`;
+                    if (deploys.length === 0 && oldDeploys.length > 0) {
+                        telegramMsg = `⚠️ <b>STOPPED: #${safePlat}</b>\n` + `👤 <b>BY : ${safeEditor}</b>\n` + `━━━━━━━━━━━━━━━\n` + `🚫 <b>ALL DEPLOYS REMOVED</b>\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <a href="${viewLink}"><b>VIEW PLAN</b></a>`;
                     } else {
-                        telegramMsg = `🔄 <b>#${safePlat} UPDATE</b>\n` + `👤 <b>BY: ${safeEditor}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b><a href="${viewLink}">VIEW SNAPSHOT</a></b>`;
+                        const changesText = logChanges.length > 0 ? logChanges.map(c => escapeHtml(c)).join('\n') : "• Saved by user";
+                        telegramMsg = `🔄 <b>#${safePlat} UPDATE</b>\n` + `👤 <b>BY: ${safeEditor}</b>\n` + `📝 <b>CHANGES:</b>\n` + `${changesText}\n` + `━━━━━━━━━━━━━━━\n` + `🔗 <b><a href="${viewLink}">VIEW PLAN</a></b>`;
                     }
                     
-                    sendTelegramMsg(telegramMsg);
+                    try { 
+                        const resp = await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: telegramMsg, parse_mode: 'HTML' }) 
+                        });
+                        if(!resp.ok) {
+                            const errData = await resp.json();
+                            console.error('Telegram Error', errData);
+                            alert('Telegram Error: ' + (errData.description || 'Unknown'));
+                        }
+                    } catch (e) { 
+                        console.error("Telegram Error:", e);
+                        alert("Telegram Connection Error: " + e.message);
+                    }
                 }
                 
-                cleanOldHistory(); // Clean up old entries
+                originalPlatformsData[currentPlatform] = JSON.parse(JSON.stringify({ deploys, filter, stats, detailsConfig, editor: editorName }));
             }
             
+            // --- SAVE TO HISTORY (LAST 5 DAYS) ---
+            if (anyRealChanges && sendNotif) {
+                const now = new Date();
+                const historyEntry = {
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    dateString: now.toLocaleString('en-GB', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }),
+                    editor: editorName,
+                    summary: fullGlobalChangesLog,
+                    snapshot: historySnapshot // Only save Modified Platforms
+                };
+                await db.ref('emsw/history').push(historyEntry);
+                cleanOldHistory(); // Clean up old entries
+            }
+            // ----------------------------------
+            
             setTimeout(() => { location.reload(); }, 500);
+        }
+        
+        // --- HISTORY FUNCTIONS ---
+        
+        async function cleanOldHistory() {
+            // Remove entries older than 5 days
+            // 5 * 24 * 60 * 60 * 1000 = 432000000 ms
+            const cutoff = Date.now() - 432000000;
+            const ref = db.ref('emsw/history');
+            
+            try {
+                const snap = await ref.orderByChild('timestamp').endAt(cutoff).once('value');
+                if (snap.exists()) {
+                    const updates = {};
+                    snap.forEach(child => {
+                        updates[child.key] = null;
+                    });
+                    await ref.update(updates);
+                    console.log("Old history cleaned");
+                }
+            } catch(e) { console.error("History cleanup error", e); }
+        }
+
+        async function openHistory() {
+            document.getElementById('historyModal').classList.remove('hidden');
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic animate-pulse">Loading modifications...</div>';
+            
+            try {
+                // Fetch last 50 entries
+                const snap = await db.ref('emsw/history').orderByChild('timestamp').limitToLast(50).once('value');
+                
+                list.innerHTML = '';
+                if(!snap.exists()) {
+                    list.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold italic">No history found for last 5 days.</div>';
+                    return;
+                }
+
+                let entries = [];
+                snap.forEach(child => {
+                    entries.unshift({ key: child.key, ...child.val() }); // Descending order
+                });
+
+                entries.forEach(entry => {
+                    const changesHtml = (entry.summary || []).map(s => {
+                        const items = s.changes.map(c => `<div>${c}</div>`).join('');
+                        return `<div class="mb-1"><strong class="text-xs text-blue-600 dark:text-blue-400">${s.plat}:</strong>${items}</div>`;
+                    }).join('');
+
+                    const row = `
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-start gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-md text-[10px] font-black">${entry.dateString || 'Unknown Date'}</span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">BY ${entry.editor}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-600 dark:text-slate-300 font-mono leading-relaxed pl-2 border-l-2 border-slate-300 dark:border-slate-700">
+                                ${changesHtml || 'No specific details'}
+                            </div>
+                        </div>
+                        <button onclick="loadHistoryState('${entry.key}')" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-md active:scale-95 transition-all whitespace-nowrap">
+                            LOAD
+                        </button>
+                    </div>`;
+                    list.insertAdjacentHTML('beforeend', row);
+                });
+            } catch(e) {
+                list.innerHTML = '<div class="text-center text-red-400 py-10 font-bold italic">Error loading history.</div>';
+                console.error(e);
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        async function loadHistoryState(key) {
+            if(!confirm("LOAD this state?\nThis will overwrite your current screen with the modifications from that time.\nYou must click SAVE manually if you want to keep this state.")) return;
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            closeHistory();
+
+            try {
+                const snap = await db.ref(`emsw/history/${key}`).once('value');
+                if(!snap.exists()) {
+                    alert("History entry not found.");
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    return;
+                }
+
+                const data = snap.val();
+                const snapshot = data.snapshot || {};
+
+                // Restore logic: Merge snapshot into platformsData
+                let restoredCount = 0;
+                for (const plat in snapshot) {
+                    if (platformsData[plat]) {
+                        // We replace the current local data with the snapshot data
+                        platformsData[plat] = snapshot[plat];
+                        platformsData[plat].fromHistory = true; // Flag to prevent re-fetch in render
+                        restoredCount++;
+                    }
+                }
+
+                // Re-render UI
+                await renderAllPlatforms();
+                
+                // Enable save button because we modified state
+                checkChanges();
+                
+                alert(`Successfully loaded modifications for ${restoredCount} platform(s).\nReview and click 'SAVE CHANGES' to persist.`);
+
+            } catch(e) {
+                console.error(e);
+                alert("Error restoring history.");
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        async function superQuickSave() {
+             // Explicitly passing false to ensure no Telegram notifications are sent
+             saveAll(false); 
+        }
+
+        async function sendTelegramMsg(text) {
+             try {
+                await fetch(`https://api.telegram.org/bot${CONFIG.telegram.token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CONFIG.telegram.chatId, text: text, parse_mode: 'HTML' })
+                });
+             } catch(e) { console.error(e); }
+        }
+
+        // --- Helper Functions ---
+        function checkAccess() {
+            const k = document.getElementById('accessKey').value;
+            
+            // Fix URL if missing protocol
+            let url = CONFIG.authUrl;
+            if (!url.startsWith('http')) url = 'https://' + url;
+
+            fetch(url, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: k })
+            }).then(r=>r.json()).then(d=>{
+                if(d.success) {
+                    localStorage.setItem('emsw_key', 'valid'); localStorage.setItem('emsw_role', d.role);
+                    location.reload();
+                } else alert('Access Denied');
+            }).catch((e)=>{
+                console.error(e);
+                alert('Auth Error: ' + e.message);
+            });
+        }
+        function logout() { localStorage.clear(); location.reload(); }
+        
+        function downloadOneIPs(plat, index) {
+            const txt = document.getElementById(`ips-${plat}-${index}`).value.trim();
+            if(!txt) return alert('Empty!');
+            downloadFile(txt, `ips${index+1}${plat.toLowerCase()}emsw.txt`);
+        }
+        
+        function copyOneIPs(plat, index, btn) {
+            const txt = document.getElementById(`ips-${plat}-${index}`).value;
+            navigator.clipboard.writeText(txt).then(() => {
+                const old = btn.innerText; btn.innerText = "✅"; setTimeout(()=>btn.innerText=old, 1500);
+            });
+        }
+
+        function downloadAllIPs(plat, btn) {
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            const textareas = wrapper.querySelectorAll('.inp-ips');
+            let count = 0;
+            textareas.forEach((ta, i) => {
+                const txt = ta.value.trim();
+                if(txt) {
+                    setTimeout(() => downloadFile(txt, `ips${i+1}${plat.toLowerCase()}emsw.txt`), count*300);
+                    count++;
+                }
+            });
+            if(count === 0) alert("No IPs found.");
         }
         
         function getDeployUrl(plat, id) {
@@ -1616,27 +1787,14 @@
         function openAllDeploys(plat) {
             const deploys = platformsData[plat].deploys || [];
             let count = 0;
-            // Iterate ALL deploys
-            deploys.forEach((d, index) => {
+            deploys.forEach(d => {
                 const url = getDeployUrl(plat, d.id);
                 if (url) {
-                    // Stagger opening to prevent some popup blockers (300ms delay per tab)
-                    setTimeout(() => {
-                        const win = window.open(url, '_blank');
-                        if (!win) {
-                            console.warn("Popup blocked for " + url);
-                        }
-                    }, count * 300);
+                    setTimeout(() => window.open(url, '_blank'), count * 300);
                     count++;
                 }
             });
-            
-            if (count === 0) {
-                alert("No valid IDs found to open.");
-            } else {
-                // Warning about popup blockers
-                console.log(`Attempting to open ${count} tabs. Ensure popups are allowed.`);
-            }
+            if (count === 0) alert("No valid IDs found to open.");
         }
 
         function downloadFile(content, filename) {
