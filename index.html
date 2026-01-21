@@ -817,6 +817,7 @@
                                 <div class="flex gap-2">
                                     <input type="text" id="filter-${plat}" value="${escapeHtml(data.filter || '')}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPS</button>
+                                    <button onclick="openAllDeploys('${plat}')" class="viewer-only-btn hidden bg-emerald-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">OPEN ALL</button>
                                     <div class="flex items-center gap-1 viewer-only-btn hidden">
                                         <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
                                         <div class="flex flex-col gap-0.5 ml-1">
@@ -894,6 +895,8 @@
                 
                 const d = savedDeploys[i] || { id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' };
                 const ipCount = d.ips ? d.ips.trim().split(/\r\n|\r|\n/).filter(l => l.trim() !== "").length : 0;
+                
+                const deployUrl = getDeployUrl(plat, d.id);
 
                 const cardHtml = `
                 <div class="deploy-card glass-card p-4 rounded-[1.5rem] relative group/card">
@@ -904,6 +907,7 @@
                             <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">D${i+1}</span>
                             <button onclick="downloadOneIPs('${plat}', ${i})" class="viewer-only-btn hidden bg-purple-600 hover:bg-purple-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">DOWNLOAD IPS</button>
                             <button onclick="copyOneIPs('${plat}', ${i}, this)" class="viewer-only-btn hidden bg-blue-600 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all">COPY IPS</button>
+                            ${deployUrl ? `<a href="${deployUrl}" target="_blank" class="viewer-only-btn hidden bg-emerald-600 hover:bg-emerald-500 text-white text-[9px] px-2 py-1 rounded-full font-bold uppercase shadow-sm active:scale-95 transition-all no-underline">OPEN</a>` : ''}
                             <span class="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 count-${plat}-${i}">${ipCount} IPS</span>
                         </div>
                         <span class="text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">${bCount} Boites</span>
@@ -974,13 +978,7 @@
                      const ipCount = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).length;
                      
                      // Requirement: Open Deploys Button Link construction
-                     let openLink = '';
-                     const deployId = d.id || '';
-                     if (['WEB', 'AUTOMAT'].includes(plat)) {
-                         openLink = `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${deployId}`;
-                     } else if (plat === 'SELENIUM') {
-                         openLink = `http://95.216.72.6:90/deployment/deploy?action=test&id=${deployId}`;
-                     }
+                     const deployUrl = getDeployUrl(plat, d.id);
 
                      // Added min-width to ensure cards don't shrink and force scroll
                      html += `
@@ -1016,7 +1014,7 @@
                             <div class="font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre select-all overflow-x-auto max-h-48 overflow-y-auto">${ips.trim() || '<span class="italic opacity-50">No IPs</span>'}</div>
                          </div>
                          
-                         ${openLink ? `<a href="${openLink}" target="_blank" class="block w-full text-center py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[10px] uppercase shadow-lg transform active:scale-95 transition-all">OPEN DEPLOYS</a>` : ''}
+                         ${deployUrl ? `<a href="${deployUrl}" target="_blank" class="block w-full text-center py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[10px] uppercase shadow-lg transform active:scale-95 transition-all">OPEN DEPLOYS</a>` : ''}
 
                      </div>`;
                  });
@@ -1774,6 +1772,29 @@
                 }
             });
             if(count === 0) alert("No IPs found.");
+        }
+        
+        function getDeployUrl(plat, id) {
+            if (!id) return null;
+            if (['WEB', 'AUTOMAT'].includes(plat)) {
+                return `http://95.216.72.6:90/deploy/reporting?action=reporting_test_ips&id=${id}`;
+            } else if (plat === 'SELENIUM') {
+                return `http://95.216.72.6:90/deployment/deploy?action=test&id=${id}`;
+            }
+            return null;
+        }
+
+        function openAllDeploys(plat) {
+            const deploys = platformsData[plat].deploys || [];
+            let count = 0;
+            deploys.forEach(d => {
+                const url = getDeployUrl(plat, d.id);
+                if (url) {
+                    setTimeout(() => window.open(url, '_blank'), count * 300);
+                    count++;
+                }
+            });
+            if (count === 0) alert("No valid IDs found to open.");
         }
 
         function downloadFile(content, filename) {
