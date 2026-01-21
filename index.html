@@ -272,7 +272,7 @@
     <div id="appContent" class="hidden max-w-[95%] mx-auto space-y-8 pb-24">
         <!-- Snapshot Alert -->
         <div id="snapshotBanner" class="hidden snapshot-banner w-full p-4 rounded-xl text-center font-black uppercase tracking-widest text-sm shadow-xl border-4 border-white/20">
-            ⚠️ Viewing Historical Snapshot <span id="snapshotDate" class="underline ml-2 text-lg"></span> ⚠️
+            ⚠️ <span id="snapshotDate" class="underline ml-2 text-lg"></span> ⚠️
         </div>
 
         <!-- Header -->
@@ -630,7 +630,7 @@
                         
                         // Show Banner with TIME
                         document.getElementById('snapshotBanner').classList.remove('hidden');
-                        document.getElementById('snapshotDate').innerHTML = `SNAPSHOT TIME: <span class="font-black text-xl ml-2">${historyData.dateString || 'Unknown Date'}</span>`;
+                        document.getElementById('snapshotDate').innerHTML = `UPDATE TIME: <span class="font-black text-xl ml-2">${historyData.dateString || 'Unknown Date'}</span>`;
                         
                     } else {
                         alert("Historical snapshot not found. Loading current data.");
