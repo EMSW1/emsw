@@ -272,7 +272,7 @@
     <div id="appContent" class="hidden max-w-[95%] mx-auto space-y-8 pb-24">
         <!-- Snapshot Alert -->
         <div id="snapshotBanner" class="hidden snapshot-banner w-full p-4 rounded-xl text-center font-black uppercase tracking-widest text-sm shadow-xl border-4 border-white/20">
-            ⚠️ Viewing Historical Snapshot <span id="snapshotDate" class="underline ml-2"></span> ⚠️
+            ⚠️ Viewing Historical Snapshot <span id="snapshotDate" class="underline ml-2 text-lg"></span> ⚠️
         </div>
 
         <!-- Header -->
@@ -513,6 +513,7 @@
         let platVisibility = {};
         let activeDetailsPlat = null;
         let currentPlatform = null; // Defined explicitly for logic
+        let IS_HISTORY_VIEW = false; // Strict history mode flag
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -607,27 +608,30 @@
                 if(platVisibility[p] === undefined) platVisibility[p] = true;
             });
 
-            // NEW: Handle History Snapshot if ID present
+            // NEW: Handle History Snapshot with STRICT MODE
             if (historyId) {
                 try {
                     const snap = await db.ref(`emsw/history/${historyId}`).once('value');
                     if (snap.exists()) {
+                        IS_HISTORY_VIEW = true; // Enable strict history mode
+                        
                         const historyData = snap.val();
                         const snapshot = historyData.snapshot || {};
                         
+                        // CLEAR current data to prevent mixing
+                        platformsData = {};
+                        
                         // Override platformsData with history
-                        // AND update PLATFORMS list to ensure we see what was in the snapshot
                         Object.keys(snapshot).forEach(k => {
                             if(!PLATFORMS.includes(k)) PLATFORMS.push(k);
                             platformsData[k] = snapshot[k];
                             platformsData[k].fromHistory = true;
                         });
                         
-                        // Show Banner
+                        // Show Banner with TIME
                         document.getElementById('snapshotBanner').classList.remove('hidden');
-                        document.getElementById('snapshotDate').innerText = historyData.dateString || 'Unknown Date';
+                        document.getElementById('snapshotDate').innerHTML = `SNAPSHOT TIME: <span class="font-black text-xl ml-2">${historyData.dateString || 'Unknown Date'}</span>`;
                         
-                        // Disable interactions further (handled by CSS generally, but double check)
                     } else {
                         alert("Historical snapshot not found. Loading current data.");
                     }
@@ -769,8 +773,15 @@
             for (const plat of PLATFORMS) {
                 let data = platformsData[plat];
                 
-                // If data is "empty" (init state) AND not from history snapshot, fetch it. 
-                if (!data.updatedAt && !data.fromHistory) {
+                // --- STRICT HISTORY CHECK ---
+                // If in history mode and we have no data for this platform, DO NOT FETCH LIVE.
+                if (!data && IS_HISTORY_VIEW) {
+                    platformsData[plat] = { deploys: [], stats: {}, filter: "", isMissing: true }; // Mark as missing
+                    continue;
+                }
+
+                // If data is "empty" (init state) AND not from history snapshot AND NOT HISTORY VIEW, fetch it. 
+                if ((!data || (!data.updatedAt && !data.fromHistory)) && !IS_HISTORY_VIEW) {
                     const snap = await db.ref(`emsw/plans/${plat}/current`).once('value');
                     const dbData = snap.val() || { deploys: [], stats: {}, filter: "" };
                     
@@ -783,16 +794,18 @@
                 }
                 
                 // --- SNAPSHOT FOR COMPARISON ---
-                if (!originalPlatformsData[plat]) {
+                if (!originalPlatformsData[plat] && data) {
                     originalPlatformsData[plat] = JSON.parse(JSON.stringify(data));
                 }
                 
-                if(!firstEditor && data.editor) firstEditor = data.editor;
+                if(data && !firstEditor && data.editor) firstEditor = data.editor;
 
-                // Accumulate Globals (From ALL platforms)
-                totalSeeds += parseInt(data.stats.seeds || 0);
-                totalQuality += parseInt(data.stats.quality || 0);
-                totalPaused += parseInt(data.stats.paused || 0);
+                if (data && !data.isMissing) {
+                    // Accumulate Globals (From ALL platforms)
+                    totalSeeds += parseInt(data.stats?.seeds || 0);
+                    totalQuality += parseInt(data.stats?.quality || 0);
+                    totalPaused += parseInt(data.stats?.paused || 0);
+                }
             }
 
             // 2. Second Pass: Render Only Visible Platforms
@@ -802,6 +815,19 @@
                 // Visibility Logic for UI Rendering Only
                 if (userRole !== 'super' && platVisibility[plat] === false) continue;
                 if (targetPlat && plat !== targetPlat) continue;
+
+                // Handle Missing History Data
+                if (data && data.isMissing) {
+                     const html = `
+                     <div class="platform-section opacity-50">
+                        <h2 class="plat-title text-4xl mb-4">${plat}</h2>
+                        <div class="glass-card p-10 rounded-[2rem] text-center">
+                            <p class="text-slate-500 font-bold italic">DATA NOT AVAILABLE IN SNAPSHOT</p>
+                        </div>
+                     </div>`;
+                     container.insertAdjacentHTML('beforeend', html);
+                     continue;
+                }
 
                 // Build HTML Structure for Platform
                 const isHidden = !platVisibility[plat];
@@ -914,6 +940,10 @@
         function renderPlatformDeploys(plat) {
             const container = document.getElementById(`grid-${plat}`);
             const distDisplay = document.getElementById(`dist-${plat}`);
+            
+            // Safety check for missing data in History Mode
+            if (!platformsData[plat] || platformsData[plat].isMissing) return;
+
             const savedDeploys = platformsData[plat].deploys || [];
             const num = savedDeploys.length;
             
@@ -994,6 +1024,9 @@
                  if (platVisibility[plat] === false) return;
                  if (targetPlat && plat !== targetPlat) return;
                  
+                 // Skip missing data in history mode
+                 if (platformsData[plat] && platformsData[plat].isMissing) return;
+
                  const deploys = platformsData[plat].deploys || [];
                  if(deploys.length === 0) return;
                  
