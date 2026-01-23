@@ -448,12 +448,15 @@
                     </h3>
                     <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
                         <option value="SELECT ALL IPS">SELECT ALL IPS</option>
-                        <option value="SELECT 30 IPS MAX">SELECT 30 IPS MAX</option>
-                        <option value="SELECT 50 IPS MAX">SELECT 50 IPS MAX</option>
+                        <option value="SELECT 30 IPS RANDOM MAX">SELECT 30 IPS RANDOM MAX</option>
+						<option value="SELECT 40 IPS RANDOM MAX">SELECT 40 IPS RANDOM MAX</option>
+                        <option value="SELECT 50 IPS RANDOM MAX">SELECT 50 IPS RANDOM MAX</option>
                         <option value="RANDOM ON SELECTED">RANDOM ON SELECTED</option>
                         <option value="RANDOM ON SERVER SELECTED">RANDOM ON SERVER SELECTED</option>
                         <option value="RANDOM ON CLASS">RANDOM ON CLASS</option>
+						<option value="1 IP RANDOM ON SERVER SELECTED">1 IP RANDOM ON SERVER SELECTED</option>
                         <option value="2 IPS RANDOM ON SERVER SELECTED">2 IPS RANDOM ON SERVER SELECTED</option>
+						<option value="3 IPS RANDOM ON SERVER SELECTED">3 IPS RANDOM ON SERVER SELECTED</option>
                     </select>
                      <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="rulesManagerContainer">
                          <!-- Dynamic Platforms -->
@@ -999,7 +1002,7 @@
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Rules</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                ${['SELECT ALL IPS','SELECT 30 IPS MAX','SELECT 50 IPS MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','2 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
+                                ${['SELECT ALL IPS','SELECT 30 IPS RANDOM MAX','SELECT 40 IPS RANDOM MAX','SELECT 50 IPS RANDOM MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','1 IP RANDOM ON SERVER SELECTED','2 IPS RANDOM ON SERVER SELECTED','3 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                     </div>
