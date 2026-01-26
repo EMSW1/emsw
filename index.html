@@ -384,6 +384,17 @@
                             </label>
                         </div>
                         
+                        <div class="flex gap-2 justify-center bg-slate-50/50 dark:bg-slate-800/30 p-1 rounded-lg">
+                             <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="distAction" value="overwrite" checked class="w-3 h-3 text-purple-500 focus:ring-purple-500">
+                                <span class="text-[10px] font-bold">New Division</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="distAction" value="append" class="w-3 h-3 text-purple-500 focus:ring-purple-500">
+                                <span class="text-[10px] font-bold">Add IPs</span>
+                            </label>
+                        </div>
+                        
                         <div id="logicContainer" class="flex gap-2 justify-center">
                              <label class="flex items-center gap-1 cursor-pointer bg-white/50 p-1 rounded">
                                 <input type="radio" name="distMode" value="sequential" checked class="w-3 h-3 text-emerald-500 focus:ring-emerald-500">
@@ -1354,6 +1365,9 @@
             const text = document.getElementById('masterIpList').value;
             let ips = text.split('\n').map(s => s.trim()).filter(s => s);
 
+            // NEW: Get the action type (overwrite vs append)
+            const actionType = document.querySelector('input[name="distAction"]:checked').value;
+
             const targets = [];
             PLATFORMS.forEach(p => {
                 const chk = document.getElementById('chk-'+p);
@@ -1367,7 +1381,12 @@
                         if (specificChks.length > 0) {
                             specificChks.forEach(c => {
                                 const idx = parseInt(c.value);
-                                platformsData[p].deploys[idx].ips = ""; // Clear specific target
+                                
+                                // LOGIC UPDATE: Only clear if action is overwrite
+                                if (actionType === 'overwrite') {
+                                    platformsData[p].deploys[idx].ips = ""; 
+                                }
+                                
                                 targets.push({plat: p, index: idx});
                             });
                         }
@@ -1384,7 +1403,12 @@
                 // SAME LIST MODE: Copy full list to everyone
                 const fullList = ips.join('\n');
                 targets.forEach(t => {
-                    platformsData[t.plat].deploys[t.index].ips = fullList;
+                    const currentIPs = platformsData[t.plat].deploys[t.index].ips || "";
+                    if (actionType === 'append' && currentIPs.trim() !== "") {
+                        platformsData[t.plat].deploys[t.index].ips = currentIPs + "\n" + fullList;
+                    } else {
+                        platformsData[t.plat].deploys[t.index].ips = fullList;
+                    }
                 });
             } else {
                 // DIVISION MODE: Split list
@@ -1399,6 +1423,7 @@
                 ips.forEach((ip, i) => {
                     const target = targets[i % targets.length];
                     const currentContent = platformsData[target.plat].deploys[target.index].ips;
+                    // Append logic works for both cases here because we handled the "clear" step above for overwrite
                     platformsData[target.plat].deploys[target.index].ips = currentContent ? currentContent + "\n" + ip : ip;
                 });
             }
