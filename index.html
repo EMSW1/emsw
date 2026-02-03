@@ -189,7 +189,7 @@
         </div>
     </div>
 
-    <!-- Seeds Breakdown Modal (NEW) -->
+    <!-- Seeds Breakdown Modal -->
     <div id="seedsBreakdownModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-emerald-500 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-md hidden shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-black uppercase italic text-emerald-800 dark:text-emerald-400">TOTAL SEEDS</h3>
@@ -207,7 +207,7 @@
         <button id="saveSeedsBtn" onclick="saveSeedsBreakdown()" class="hidden w-full bg-emerald-600 text-white py-3 rounded-xl font-black uppercase shadow-lg hover:shadow-emerald-500/30">UPDATE SEEDS</button>
     </div>
 
-    <!-- History Modal (NEW) -->
+    <!-- History Modal -->
     <div id="historyModal" class="glass-card p-6 rounded-[2rem] border-t-8 border-violet-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[350] w-[95%] max-w-2xl hidden shadow-2xl max-h-[90vh] flex flex-col">
         <div class="flex justify-between items-center mb-4">
             <div>
@@ -224,9 +224,21 @@
 
     <!-- Platform Details Modal -->
     <div id="platformDetailModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-4xl hidden shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-black uppercase italic text-slate-800 dark:text-white" id="detailModalTitle">DETAILS</h3>
             <button onclick="closeDetails()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
+        </div>
+
+        <!-- NEW: Mode Toggle (Scenarios vs Script.js) -->
+        <div class="flex gap-6 mb-6 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl justify-center super-only">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="detailsMode" value="scenario" onchange="toggleDetailsMode('scenario')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                <span class="font-black text-xs uppercase text-slate-700 dark:text-slate-300">Scénarios</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="detailsMode" value="script" onchange="toggleDetailsMode('script')" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span class="font-black text-xs uppercase text-slate-700 dark:text-slate-300">Script.js</span>
+            </label>
         </div>
 
         <!-- Dynamic Platform Specific Details (WEB / SELENIUM) -->
@@ -436,7 +448,7 @@
             </div>
 
             <!-- RIGHT: BULK MANAGERS (2/3 Width) -->
-            <div class="w-full xl:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="w-full xl:w-2/3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 <!-- ID MANAGER -->
                 <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
@@ -489,6 +501,23 @@
                          <!-- Dynamic Platforms -->
                     </div>
                     <button onclick="applyBulkRules()" class="w-full py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY RULES</button>
+                </div>
+
+                <!-- NEW: EMPTY MANAGER -->
+                <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-red-500 relative flex flex-col">
+                    <h3 class="text-sm font-black uppercase italic text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                        <span class="bg-red-500 text-white rounded p-0.5 text-[10px]"></span> EMPTY
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 mb-3 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="empty-ips" class="w-3 h-3 text-red-500 rounded"> IPs</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="empty-ids" class="w-3 h-3 text-red-500 rounded"> IDs</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="empty-batch" class="w-3 h-3 text-red-500 rounded"> Batch</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="empty-rules" class="w-3 h-3 text-red-500 rounded"> Rules</label>
+                    </div>
+                    <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="emptyManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
+                    <button onclick="applyBulkEmpty()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">CLEAR SELECTED</button>
                 </div>
             </div>
 
@@ -755,8 +784,8 @@
                 distContainer.insertAdjacentHTML('beforeend', html);
             });
 
-            // 2. ID / Batch / Rules Managers
-            ['id', 'batch', 'rules'].forEach(type => {
+            // 2. ID / Batch / Rules / Empty Managers
+            ['id', 'batch', 'rules', 'empty'].forEach(type => {
                 const container = document.getElementById(`${type}ManagerContainer`);
                 container.innerHTML = '';
                 
@@ -768,6 +797,7 @@
                     let color = 'blue';
                     if(type === 'batch') color = 'orange';
                     if(type === 'rules') color = 'pink';
+                    if(type === 'empty') color = 'red';
 
                     const html = `
                     <div class="bg-slate-50/50 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-700 mb-1">
@@ -877,13 +907,13 @@
 
                 const lastUpdate = data.updatedAt || '';
 
-                // NEW: Viewer Only Filter Preview Logic
+                // NEW: Viewer Only Filter Preview Logic (UPDATED IN:SPAM)
                 let filterPreviewHtml = '';
                 if (['AUTOMAT', 'SELENIUM'].includes(plat)) {
                     filterPreviewHtml = `
                     <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
-                            <strong>spam :</strong> <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
+                            <strong>spam :</strong> in:spam newer_than:1d <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
                         </div>
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200 mt-1">
                             <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${escapeHtml(data.filter || '')}</span>
@@ -1018,17 +1048,19 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">ID</label>
-                            <input type="text" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'id', this.value)" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 uppercase outline-none" value="${d.id||''}">
+                            <input type="text" id="inp-id-${plat}-${i}" ${isReadonly} oninput="updateDeployData('${plat}', ${i}, 'id', this.value)" class="inp-id w-full p-2 border-none rounded-xl text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 uppercase outline-none" value="${d.id||''}">
                         </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
-                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                            <select id="inp-batch-${plat}-${i}" ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                <option value="">-</option>
                                 ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Rules</label>
-                            <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                            <select id="inp-rules-${plat}-${i}" ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
+                                <option value="">-</option>
                                 ${['SELECT ALL IPS','SELECT 30 IPS RANDOM MAX','SELECT 40 IPS RANDOM MAX','SELECT 50 IPS RANDOM MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','1 IP RANDOM ON SERVER SELECTED','2 IPS RANDOM ON SERVER SELECTED','3 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
@@ -1198,14 +1230,27 @@
 
         function updateDeployData(plat, index, field, value) {
             platformsData[plat].deploys[index][field] = value;
+            
+            // Remove error styling if exists
+            let prefix = '';
+            if (field === 'id') prefix = 'inp-id';
+            else if (field === 'ips') prefix = 'ips';
+            else if (field === 'batch') prefix = 'inp-batch';
+            else if (field === 'rules') prefix = 'inp-rules';
+
+            if (prefix) {
+                const el = document.getElementById(`${prefix}-${plat}-${index}`);
+                if(el) el.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+            }
             checkChanges();
         }
 
-        // --- ID / BATCH / RULES MANAGERS ---
+        // --- ID / BATCH / RULES / EMPTY MANAGERS ---
         function renderAllSelectors() {
             renderGenericSelectors('id');
             renderGenericSelectors('batch');
             renderGenericSelectors('rules');
+            renderGenericSelectors('empty');
         }
 
         function renderGenericSelectors(type) {
@@ -1216,6 +1261,7 @@
                 let color = 'blue';
                 if(type === 'batch') color = 'orange';
                 if(type === 'rules') color = 'pink';
+                if(type === 'empty') color = 'red';
                 
                 const deploys = platformsData[plat].deploys || [];
                 container.innerHTML = '';
@@ -1297,6 +1343,7 @@
         function toggleIdPlatform(plat) { toggleGenericPlatform('id', plat); }
         function toggleBatchPlatform(plat) { toggleGenericPlatform('batch', plat); }
         function toggleRulesPlatform(plat) { toggleGenericPlatform('rules', plat); }
+        function toggleEmptyPlatform(plat) { toggleGenericPlatform('empty', plat); }
         
         // Mode toggle for distributor
         function toggleDistMode(enable) {
@@ -1326,6 +1373,7 @@
         function toggleAllIds(plat, masterChk) { toggleAllGeneric('id', plat, masterChk); }
         function toggleAllBatch(plat, masterChk) { toggleAllGeneric('batch', plat, masterChk); }
         function toggleAllRules(plat, masterChk) { toggleAllGeneric('rules', plat, masterChk); }
+        function toggleAllEmpty(plat, masterChk) { toggleAllGeneric('empty', plat, masterChk); }
 
         function toggleAllGeneric(type, plat, masterChk) {
             const container = document.getElementById(`${type}-list-${plat}`);
@@ -1347,6 +1395,45 @@
             const val = document.getElementById('bulkRulesInput').value;
             applyBulkGeneric('rules', val);
         }
+        
+        // NEW: APPLY EMPTY LOGIC
+        function applyBulkEmpty() {
+            const clearIPs = document.getElementById('empty-ips').checked;
+            const clearIDs = document.getElementById('empty-ids').checked;
+            const clearBatch = document.getElementById('empty-batch').checked;
+            const clearRules = document.getElementById('empty-rules').checked;
+            
+            if (!clearIPs && !clearIDs && !clearBatch && !clearRules) return alert("Select at least one field to clear.");
+            
+            let appliedCount = 0;
+            
+            PLATFORMS.forEach(plat => {
+                 const chk = document.getElementById(`empty-chk-${plat}`);
+                 const list = document.getElementById(`empty-list-${plat}`);
+                 
+                 if(chk && chk.checked && list) {
+                     const checkboxes = list.querySelectorAll(`.generic-chk-target:checked`);
+                     checkboxes.forEach(chk => {
+                         const idx = parseInt(chk.value);
+                         if(platformsData[plat].deploys[idx]) {
+                             if(clearIPs) platformsData[plat].deploys[idx].ips = "";
+                             if(clearIDs) platformsData[plat].deploys[idx].id = "";
+                             if(clearBatch) platformsData[plat].deploys[idx].batch = ""; // Set to empty string, select will show empty
+                             if(clearRules) platformsData[plat].deploys[idx].rules = "";
+                             appliedCount++;
+                         }
+                     });
+                     if(checkboxes.length > 0) renderPlatformDeploys(plat);
+                 }
+            });
+
+            if(appliedCount > 0) {
+                checkChanges();
+                alert(`Data cleared for ${appliedCount} deploys!`);
+            } else {
+                alert("No deploys selected for clearing.");
+            }
+        }
 
         function applyBulkGeneric(field, value) {
             let appliedCount = 0;
@@ -1355,7 +1442,6 @@
                  const list = document.getElementById(`${field}-list-${plat}`);
                  
                  if(chk && chk.checked && list) {
-                     // Updated selector to use class and container instead of class-with-plat-name
                      const checkboxes = list.querySelectorAll(`.generic-chk-target:checked`);
                      checkboxes.forEach(chk => {
                          const idx = parseInt(chk.value);
@@ -1521,6 +1607,67 @@
         async function saveAll(sendNotif = true) {
             document.getElementById('loadingOverlay').style.display = 'flex';
             
+            // --- NEW: Validation Check ---
+            let validationError = false;
+            const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
+
+            for (const plat of platsToSave) {
+                if (!platformsData[plat] || !platformsData[plat].deploys) continue;
+                platformsData[plat].deploys.forEach((d, i) => {
+                    let missing = false;
+                    // Strict check for ID, IPs, BATCH, and RULES
+                    
+                    // ID Check
+                    if(!d.id || d.id.trim() === '') {
+                        const el = document.getElementById(`inp-id-${plat}-${i}`);
+                        if(el) {
+                            el.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                            el.scrollIntoView({behavior: "smooth", block: "center"});
+                        }
+                        missing = true;
+                    }
+                    
+                    // Batch Check
+                    if(!d.batch || d.batch === '') {
+                        const el = document.getElementById(`inp-batch-${plat}-${i}`);
+                        if(el) {
+                            el.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                            if(!missing) el.scrollIntoView({behavior: "smooth", block: "center"});
+                        }
+                        missing = true;
+                    }
+
+                    // Rules Check
+                    if(!d.rules || d.rules === '') {
+                        const el = document.getElementById(`inp-rules-${plat}-${i}`);
+                        if(el) {
+                            el.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                            if(!missing) el.scrollIntoView({behavior: "smooth", block: "center"});
+                        }
+                        missing = true;
+                    }
+
+                    // IPs Check
+                    if(!d.ips || d.ips.trim() === '') {
+                         const el = document.getElementById(`ips-${plat}-${i}`);
+                         if(el) {
+                            el.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                            if(!missing) el.scrollIntoView({behavior: "smooth", block: "center"}); // Scroll only if not already scrolled
+                         }
+                         missing = true;
+                    }
+                    
+                    if(missing) validationError = true;
+                });
+            }
+
+            if(validationError) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert("MISSING INFORMATION! Please fill all highlighted fields.");
+                return;
+            }
+            // -----------------------------
+            
             // Save Global Stats first
             if(userRole === 'super') {
                 const newGlobal = {
@@ -1534,9 +1681,6 @@
             }
             
             const editorName = document.getElementById('globalEditor').value;
-            
-            // Identify visible platforms
-            const platsToSave = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
             
             // --- HISTORY LOGIC ---
             let historySnapshot = {}; 
@@ -1708,7 +1852,7 @@
             
             setTimeout(() => { location.reload(); }, 500);
         }
-        
+
         // --- HISTORY FUNCTIONS ---
         
         async function cleanOldHistory() {
@@ -2039,21 +2183,43 @@
             }
             conf.lastMigration = true; 
             platformsData[plat].detailsConfig = conf;
-            // ------------------------------------------------
+            
+            // --- NEW: DETERMINE MODE (SCENARIO vs SCRIPT) ---
+            // If mode is not set, derive from platform name (old logic)
+            let currentMode = conf.mode || (plat === 'SELENIUM' ? 'scenario' : 'script');
+            
+            // Set Radio Button
+            const radios = document.getElementsByName('detailsMode');
+            radios.forEach(r => {
+                if (r.value === currentMode) r.checked = true;
+                else r.checked = false;
+            });
+            
+            renderDetailsContent(currentMode);
+        }
+        
+        function toggleDetailsMode(mode) {
+            renderDetailsContent(mode);
+        }
+        
+        function renderDetailsContent(mode) {
+             const plat = activeDetailsPlat;
+             if(!plat) return;
+             
+             const conf = platformsData[plat].detailsConfig || {};
+             const dynamicContainer = document.getElementById('dynamicPlatformDetails');
+             dynamicContainer.innerHTML = ''; 
 
-            const dynamicContainer = document.getElementById('dynamicPlatformDetails');
-            dynamicContainer.innerHTML = ''; 
+             const isSuper = (userRole === 'super');
 
-            const isSuper = (userRole === 'super');
-
-            if (plat === 'SELENIUM') {
-                // --- SELENIUM (Type B: Scenario + Numeric Actions) ---
+             if (mode === 'scenario') {
+                // --- SCENARIO MODE (Previously SELENIUM style) ---
                 const html = `
                 <div class="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-700">
-                    <h4 class="font-black text-xs uppercase text-emerald-600 dark:text-emerald-400 mb-3 border-b border-emerald-200 dark:border-emerald-700 pb-2">SELENIUM CONFIG</h4>
+                    <h4 class="font-black text-xs uppercase text-emerald-600 dark:text-emerald-400 mb-3 border-b border-emerald-200 dark:border-emerald-700 pb-2">SCÉNARIO CONFIG</h4>
                     
                     <div class="mb-4">
-                        <label class="text-[10px] block mb-1">SCÉNARIO</label>
+                        <label class="text-[10px] block mb-1">SCÉNARIO NAME</label>
                         <input type="text" id="sel-scenario" class="w-full p-2 rounded-lg text-xs font-bold border super-locked" value="${conf.scenario || 'EMSW_V1'}">
                     </div>
 
@@ -2070,17 +2236,17 @@
                 dynamicContainer.innerHTML = html;
 
             } else {
-                // --- WEB/AUTOMAT/DEFAULT (Type A: SPAM/INBOX + Boolean Actions) ---
+                // --- SCRIPT.JS MODE (Previously WEB style) ---
                 const html = `
                 <div class="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-200 dark:border-blue-700">
-                    <h4 class="font-black text-xs uppercase text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-700 pb-2">ACTIONS</h4>
+                    <h4 class="font-black text-xs uppercase text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-700 pb-2">SCRIPT.JS ACTIONS</h4>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- SPAM -->
                         <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
                             <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px]">SPAM</label>
+                                    <label class="text-[10px]">SPAM TOTAL</label>
                                     <input type="text" id="web-spam-val" class="w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.spamVal || '7'}">
                                 </div>
                                 <button onclick="addDetailAction('spam-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
@@ -2094,7 +2260,7 @@
                         <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
                             <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px]">INBOX</label>
+                                    <label class="text-[10px]">INBOX TOTAL</label>
                                     <input type="text" id="web-inbox-val" class="w-24 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.inboxVal || '50 RANDOM'}">
                                 </div>
                                 <button onclick="addDetailAction('inbox-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
@@ -2185,8 +2351,12 @@
             // --- SAVE DYNAMIC CONFIGS ---
             const newConf = platformsData[p].detailsConfig || {};
             newConf.lastMigration = true;
+            
+            // Determine selected mode
+            const selectedMode = document.querySelector('input[name="detailsMode"]:checked').value;
+            newConf.mode = selectedMode;
 
-            if (p === 'SELENIUM') {
+            if (selectedMode === 'scenario') {
                 newConf.scenario = document.getElementById('sel-scenario').value;
                 newConf.seleniumActions = scrapeDetailActions('selenium-actions-container', 'numeric');
             } else {
