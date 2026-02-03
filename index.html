@@ -913,7 +913,7 @@
                     filterPreviewHtml = `
                     <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
-                            <strong>spam :</strong> in:spam newer_than:1d <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
+                            <strong>spam :</strong> newer_than:1d <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
                         </div>
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200 mt-1">
                             <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${escapeHtml(data.filter || '')}</span>
