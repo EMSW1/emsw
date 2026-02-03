@@ -963,7 +963,7 @@
                                     <button onclick="openAllDeploys('${plat}')" class="viewer-only-btn hidden bg-emerald-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">OPEN ALL DEPLOYS</button>
                                     <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY ALL IDs</button>
                                 </div>
-                                <div id="preview-filter-${plat}" class="text-[9px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg leading-relaxed border border-slate-200 dark:border-slate-700 mt-2">
+                                <div id="preview-filter-${plat}" class="text-[9px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg leading-relaxed border border-slate-200 dark:border-slate-700 opacity-80">
                                     <!-- Filter Previews Injected here -->
                                 </div>
                             </div>
@@ -2345,27 +2345,23 @@
         function updateFilterPreviews(plat, val) {
             const previewEl = document.getElementById(`preview-filter-${plat}`);
             if(previewEl) {
-                if(plat === 'WEB') {
-                    previewEl.style.display = 'none'; // Explicit hide for WEB as requested
-                    return;
-                }
-                previewEl.style.display = 'block';
-
                 if(!val) {
                     previewEl.innerHTML = '<span class="italic opacity-50">No keyword...</span>';
                 } else {
-                    const safeVal = escapeHtml(val);
-                    const spamQuery = `newer_than:1d ${safeVal}`;
-                    const inboxQuery = `is:unread newer_than:1d ${safeVal}`;
+                    // Custom logic requested by user
+                    // Spam : newer_than:1d KEYWORD
+                    // Inbox : is:unread newer_than:1d KEYWORD
+                    const spamQuery = `newer_than:1d ${val}`;
+                    const inboxQuery = `is:unread newer_than:1d ${val}`;
                     
                     previewEl.innerHTML = `
-                        <div class="flex justify-between items-center border-b border-slate-300 dark:border-slate-600 pb-1 mb-1 gap-2">
-                            <span class="font-bold text-[8px] uppercase text-slate-400">SPAM</span>
-                            <span class="text-[10px] font-bold select-all text-slate-800 dark:text-slate-200 font-mono">${spamQuery}</span>
+                        <div class="flex justify-between border-b border-slate-300 dark:border-slate-600 pb-1 mb-1">
+                            <span class="font-bold text-[8px] uppercase">SPAM</span>
+                            <span class="text-[9px] select-all">${spamQuery}</span>
                         </div>
-                        <div class="flex justify-between items-center gap-2">
-                            <span class="font-bold text-[8px] uppercase text-slate-400">INBOX</span>
-                            <span class="text-[10px] font-bold select-all text-slate-800 dark:text-slate-200 font-mono">${inboxQuery}</span>
+                        <div class="flex justify-between">
+                            <span class="font-bold text-[8px] uppercase">INBOX</span>
+                            <span class="text-[9px] select-all">${inboxQuery}</span>
                         </div>
                     `;
                 }
