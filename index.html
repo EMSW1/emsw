@@ -92,10 +92,6 @@
         .deploy-card:hover { transform: translateY(-5px) scale(1.005); border-left-color: #2563eb; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         .dark .deploy-card { border-left-color: #334155; }
         .dark .deploy-card:hover { border-left-color: #3b82f6; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        
-        /* Safety: Hide horizontal cards and controls in viewer mode */
-        .viewer-mode .deploy-card { display: none !important; }
-        .viewer-mode .controls-card { display: none !important; }
 
         #loginOverlay { background: rgba(241, 245, 249, 0.9); backdrop-filter: blur(12px); position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; display: flex; flex-direction: column; }
         .dark #loginOverlay { background: rgba(2, 6, 23, 0.9); }
@@ -226,35 +222,18 @@
         </div>
     </div>
 
-    <!-- Platform Details Modal (Config Switcher) -->
+    <!-- Platform Details Modal -->
     <div id="platformDetailModal" class="glass-card p-8 rounded-[2rem] border-t-8 border-blue-600 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] w-[95%] max-w-4xl hidden shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-black uppercase italic text-slate-800 dark:text-white" id="detailModalTitle">DETAILS</h3>
             <button onclick="closeDetails()" class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full hover:bg-red-500 hover:text-white transition-all text-slate-600 dark:text-slate-300">✕</button>
         </div>
 
-        <!-- Mode Selector (Super Admin Only) -->
-        <div class="flex gap-4 mb-6 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">
-            <label class="flex-1 cursor-pointer">
-                <input type="radio" name="configMode" value="scenario" onchange="renderConfigForm('scenario')" class="peer sr-only super-locked">
-                <div class="text-center py-2 rounded-lg font-black text-xs uppercase text-slate-500 peer-checked:bg-emerald-500 peer-checked:text-white transition-all">
-                    📜 Scénarios
-                </div>
-            </label>
-            <label class="flex-1 cursor-pointer">
-                <input type="radio" name="configMode" value="script" onchange="renderConfigForm('script')" class="peer sr-only super-locked">
-                <div class="text-center py-2 rounded-lg font-black text-xs uppercase text-slate-500 peer-checked:bg-blue-500 peer-checked:text-white transition-all">
-                    💻 Script.js
-                </div>
-            </label>
-        </div>
-
-        <!-- Dynamic Platform Specific Details -->
+        <!-- Dynamic Platform Specific Details (WEB / SELENIUM) -->
         <div id="dynamicPlatformDetails" class="mb-6">
             <!-- Injected via JS -->
         </div>
 
-        <!-- Standard Stats (Visible for Both) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
              <div class="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
                  <h4 class="font-bold text-xs uppercase text-slate-500 mb-2">Performance Stats</h4>
@@ -457,100 +436,60 @@
             </div>
 
             <!-- RIGHT: BULK MANAGERS (2/3 Width) -->
-            <div class="w-full xl:w-2/3 flex flex-col gap-4">
+            <div class="w-full xl:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- ID MANAGER -->
-                    <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
-                        <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
-                            <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID
-                        </h3>
-                        <input type="text" id="bulkIdInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-blue-500 outline-none text-xs" placeholder="NEW ID">
-                        <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer">
-                             <!-- Dynamic Platforms -->
-                        </div>
-                        <button onclick="applyBulkId()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY ID</button>
+                <!-- ID MANAGER -->
+                <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-blue-500 relative flex flex-col">
+                    <h3 class="text-sm font-black uppercase italic text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
+                        <span class="bg-blue-500 text-white rounded p-0.5 text-[10px]"></span> ID
+                    </h3>
+                    <input type="text" id="bulkIdInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-blue-500 outline-none text-xs" placeholder="NEW ID">
+                    <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="idManagerContainer">
+                         <!-- Dynamic Platforms -->
                     </div>
-
-                    <!-- BATCH MANAGER -->
-                    <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-orange-500 relative flex flex-col">
-                        <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
-                            <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> Batch
-                        </h3>
-                        <select id="bulkBatchInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-orange-500 outline-none text-xs">
-                             <option value="0/0 P">0/0 P</option>
-                             <option value="3/3000 P">3/3000 P</option>
-                             <option value="5/3000 P">5/3000 P</option>
-                             <option value="10/3000 P">10/3000 P</option>
-    						 <option value="20/3000 P">20/3000 P</option>
-                        </select>
-                         <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="batchManagerContainer">
-                             <!-- Dynamic Platforms -->
-                        </div>
-                        <button onclick="applyBulkBatch()" class="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY BATCH</button>
-                    </div>
-
-                    <!-- RULES MANAGER -->
-                    <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-pink-500 relative flex flex-col">
-                        <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">
-                            <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> Rules
-                        </h3>
-                        <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
-                            <option value="SELECT ALL IPS">SELECT ALL IPS</option>
-                            <option value="SELECT 30 IPS RANDOM MAX">SELECT 30 IPS RANDOM MAX</option>
-    						<option value="SELECT 40 IPS RANDOM MAX">SELECT 40 IPS RANDOM MAX</option>
-                            <option value="SELECT 50 IPS RANDOM MAX">SELECT 50 IPS RANDOM MAX</option>
-                            <option value="RANDOM ON SELECTED">RANDOM ON SELECTED</option>
-                            <option value="RANDOM ON SERVER SELECTED">RANDOM ON SERVER SELECTED</option>
-                            <option value="RANDOM ON CLASS">RANDOM ON CLASS</option>
-    						<option value="1 IP RANDOM ON SERVER SELECTED">1 IP RANDOM ON SERVER SELECTED</option>
-                            <option value="2 IPS RANDOM ON SERVER SELECTED">2 IPS RANDOM ON SERVER SELECTED</option>
-    						<option value="3 IPS RANDOM ON SERVER SELECTED">3 IPS RANDOM ON SERVER SELECTED</option>
-                        </select>
-                         <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="rulesManagerContainer">
-                             <!-- Dynamic Platforms -->
-                        </div>
-                        <button onclick="applyBulkRules()" class="w-full py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY RULES</button>
-                    </div>
-
-                    <!-- EMPTY TOOL (UPDATED: Compact & Grouped) -->
-                    <div class="glass-card p-3 rounded-[2rem] shadow-lg border-t-4 border-red-500 relative flex flex-col">
-                        <h3 class="text-xs font-black uppercase italic text-red-700 dark:text-red-400 mb-2">
-                           🗑️ EMPTY TOOL
-                        </h3>
-                        
-                        <!-- Platform Radios -->
-                        <div id="emptyPlatformRadios" class="flex flex-wrap gap-1 mb-2">
-                            <!-- JS injected -->
-                        </div>
-
-                        <!-- Fields Checkboxes (Hidden by default) -->
-                        <div id="emptyFieldsContainer" class="hidden mb-2 bg-red-50 dark:bg-red-900/10 p-2 rounded-xl border border-red-200 dark:border-red-900/30">
-                            <label class="block text-[9px] font-black text-slate-500 mb-1 uppercase tracking-widest">Clear:</label>
-                            <div class="grid grid-cols-2 gap-1">
-                                <label class="flex items-center gap-1 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
-                                    <input type="checkbox" class="empty-field-chk w-3 h-3 text-red-600 rounded focus:ring-red-500" value="id"> 
-                                    <span class="text-[9px] font-bold">IDs</span>
-                                </label>
-                                <label class="flex items-center gap-1 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
-                                    <input type="checkbox" class="empty-field-chk w-3 h-3 text-red-600 rounded focus:ring-red-500" value="batch"> 
-                                    <span class="text-[9px] font-bold">BATCH</span>
-                                </label>
-                                <label class="flex items-center gap-1 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
-                                    <input type="checkbox" class="empty-field-chk w-3 h-3 text-red-600 rounded focus:ring-red-500" value="rules"> 
-                                    <span class="text-[9px] font-bold">RULES</span>
-                                </label>
-                                <label class="flex items-center gap-1 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
-                                    <input type="checkbox" class="empty-field-chk w-3 h-3 text-red-600 rounded focus:ring-red-500" value="ips"> 
-                                    <span class="text-[9px] font-bold">IPS</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <button onclick="executeEmpty()" class="w-full py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-black uppercase shadow-md text-[10px] active:scale-95 transition-all mt-auto">EMPTY SELECTED</button>
-                    </div>
+                    <button onclick="applyBulkId()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY ID</button>
                 </div>
 
+                <!-- BATCH MANAGER -->
+                <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-orange-500 relative flex flex-col">
+                    <h3 class="text-sm font-black uppercase italic text-orange-700 dark:text-orange-400 mb-3 flex items-center gap-2">
+                        <span class="bg-orange-500 text-white rounded p-0.5 text-[10px]"></span> Batch
+                    </h3>
+                    <select id="bulkBatchInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-orange-500 outline-none text-xs">
+                         <option value="0/0 P">0/0 P</option>
+                         <option value="3/3000 P">3/3000 P</option>
+                         <option value="5/3000 P">5/3000 P</option>
+                         <option value="10/3000 P">10/3000 P</option>
+						 <option value="20/3000 P">20/3000 P</option>
+                    </select>
+                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="batchManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
+                    <button onclick="applyBulkBatch()" class="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY BATCH</button>
+                </div>
+
+                <!-- RULES MANAGER -->
+                <div class="glass-card p-4 rounded-[2rem] shadow-lg border-t-4 border-pink-500 relative flex flex-col">
+                    <h3 class="text-sm font-black uppercase italic text-pink-700 dark:text-pink-400 mb-3 flex items-center gap-2">
+                        <span class="bg-pink-500 text-white rounded p-0.5 text-[10px]"></span> Rules
+                    </h3>
+                    <select id="bulkRulesInput" class="w-full p-2 mb-3 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 font-bold text-center uppercase focus:border-pink-500 outline-none text-[9px]">
+                        <option value="SELECT ALL IPS">SELECT ALL IPS</option>
+                        <option value="SELECT 30 IPS RANDOM MAX">SELECT 30 IPS RANDOM MAX</option>
+						<option value="SELECT 40 IPS RANDOM MAX">SELECT 40 IPS RANDOM MAX</option>
+                        <option value="SELECT 50 IPS RANDOM MAX">SELECT 50 IPS RANDOM MAX</option>
+                        <option value="RANDOM ON SELECTED">RANDOM ON SELECTED</option>
+                        <option value="RANDOM ON SERVER SELECTED">RANDOM ON SERVER SELECTED</option>
+                        <option value="RANDOM ON CLASS">RANDOM ON CLASS</option>
+						<option value="1 IP RANDOM ON SERVER SELECTED">1 IP RANDOM ON SERVER SELECTED</option>
+                        <option value="2 IPS RANDOM ON SERVER SELECTED">2 IPS RANDOM ON SERVER SELECTED</option>
+						<option value="3 IPS RANDOM ON SERVER SELECTED">3 IPS RANDOM ON SERVER SELECTED</option>
+                    </select>
+                     <div class="flex-1 space-y-2 mb-3 overflow-y-auto max-h-64" id="rulesManagerContainer">
+                         <!-- Dynamic Platforms -->
+                    </div>
+                    <button onclick="applyBulkRules()" class="w-full py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-black uppercase shadow-md text-[10px]">APPLY RULES</button>
+                </div>
             </div>
 
         </div>
@@ -558,6 +497,11 @@
         <!-- PLATFORMS CONTAINER -->
         <div id="platformsContainer" class="space-y-12">
             <!-- Content Injected via JS -->
+        </div>
+
+        <!-- NEW: VIEWER TABLE CONTAINER -->
+        <div id="viewerTableContainer" class="viewer-only-box mt-12 mb-24 hidden space-y-12">
+             <!-- Dynamic Table Content -->
         </div>
 
         <!-- Sticky Action Bar -->
@@ -600,7 +544,6 @@
         let activeDetailsPlat = null;
         let currentPlatform = null; // Defined explicitly for logic
         let IS_HISTORY_VIEW = false; // Strict history mode flag
-        let selectedEmptyPlatform = null; // Track selected platform for empty tool
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -842,9 +785,6 @@
                     container.insertAdjacentHTML('beforeend', html);
                 });
             });
-
-            // 3. Init Empty Tool Radios
-            renderEmptyTool();
         }
 
         async function renderAllPlatforms() {
@@ -937,6 +877,20 @@
 
                 const lastUpdate = data.updatedAt || '';
 
+                // NEW: Viewer Only Filter Preview Logic
+                let filterPreviewHtml = '';
+                if (['AUTOMAT', 'SELENIUM'].includes(plat)) {
+                    filterPreviewHtml = `
+                    <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
+                        <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
+                            <strong>spam :</strong> <span id="preview-spam-${plat}">${escapeHtml(data.filter || '')}</span>
+                        </div>
+                        <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200 mt-1">
+                            <strong>inbox :</strong> is:unread newer_than:1d <span id="preview-inbox-${plat}">${escapeHtml(data.filter || '')}</span>
+                        </div>
+                    </div>`;
+                }
+
                 const html = `
                 <div id="wrapper-${plat}" class="platform-section relative ${opacityClass} transition-all duration-300">
                     ${visibilityToggle}
@@ -948,7 +902,7 @@
                     </div>
 
                     <!-- Controls Card -->
-                    <div class="controls-card glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg mb-6 border-l-8 border-l-blue-500">
+                    <div class="glass-card p-6 rounded-[2rem] grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-lg mb-6 border-l-8 border-l-blue-500">
                         <div class="flex gap-4 items-center">
                             
                             <div class="admin-only w-1/4">
@@ -957,18 +911,22 @@
                             </div>
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase mb-1 italic">KEYWORD FILTER</label>
-                                <div class="flex gap-2 mb-2">
+                                <div class="flex gap-2">
                                     <input type="text" id="filter-${plat}" value="${escapeHtml(data.filter || '')}" oninput="checkChanges(); updateFilterPreviews('${plat}', this.value)" class="w-full p-2 border-2 border-blue-500/20 rounded-xl font-black text-blue-600 bg-blue-500/5 text-center uppercase focus:border-blue-500 outline-none" placeholder="SEARCH...">
                                     <button onclick="downloadAllIPs('${plat}', this)" class="viewer-only-btn hidden bg-purple-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL IPS</button>
                                     <button onclick="openAllDeploys('${plat}')" class="viewer-only-btn hidden bg-emerald-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">OPEN ALL DEPLOYS</button>
-                                    <button onclick="copyAllIDs('${plat}', this)" class="viewer-only-btn hidden bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY ALL IDs</button>
+                                    <div class="flex items-center gap-1 viewer-only-btn hidden">
+                                        <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 text-white px-3 rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all h-full">COPY ALL IDs</button>
+                                        <div class="flex flex-col gap-0.5 ml-1">
+                                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="copy_fmt_${plat}" value="vertical" checked class="w-2 h-2 text-blue-600"><span class="text-[8px] font-bold text-blue-600">VERT</span></label>
+                                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="copy_fmt_${plat}" value="horizontal" class="w-2 h-2 text-blue-600"><span class="text-[8px] font-bold text-blue-600">HORI</span></label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div id="preview-filter-${plat}" class="text-[9px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg leading-relaxed border border-slate-200 dark:border-slate-700 opacity-80">
-                                    <!-- Filter Previews Injected here -->
-                                </div>
+                                ${filterPreviewHtml}
                             </div>
                         </div>
-                        <div class="admin-only text-center bg-slate-500/5 p-3 rounded-[1.5rem] border border-dashed border-slate-500/30">
+                        <div class="text-center bg-slate-500/5 p-3 rounded-[1.5rem] border border-dashed border-slate-500/30">
                             <p class="text-[10px] font-black uppercase mb-1 text-slate-500">DIVISION SEEDS</p>
                             <div id="dist-${plat}" class="font-black text-xs italic tracking-tighter text-slate-700 dark:text-slate-300">---</div>
                         </div>
@@ -979,9 +937,6 @@
                 </div>`;
                 
                 container.insertAdjacentHTML('beforeend', html);
-                
-                // Initialize preview
-                updateFilterPreviews(plat, data.filter || '');
                 
                 // Set Editor value
                 if(data.editor) document.getElementById('globalEditor').value = data.editor;
@@ -1008,6 +963,9 @@
             renderAllSelectors();
             renderDistSelectors(); // Added call for new distributor selectors
 
+            // NEW: Render the Viewer Table at bottom
+            if(userRole === 'viewer') renderViewerTable();
+
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
@@ -1017,59 +975,6 @@
             
             // Safety check for missing data in History Mode
             if (!platformsData[plat] || platformsData[plat].isMissing) return;
-
-            // --- STRICT VIEWER MODE LOGIC (VERTICAL LIST ONLY) ---
-            if (userRole === 'viewer' || document.body.classList.contains('viewer-mode')) {
-                container.innerHTML = "";
-                if(distDisplay) distDisplay.innerText = "";
-
-                const savedDeploys = platformsData[plat].deploys || [];
-                
-                // Build Vertical List with Integrated Tools
-                let listHtml = `
-                <div class="col-span-1 md:col-span-2 xl:col-span-4 glass-card p-6 rounded-[2rem] border border-blue-500/20">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b border-dashed border-blue-500/20 pb-4 gap-4">
-                        <h3 class="text-sm font-black uppercase text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                            <span>📋</span> VERTICAL LIST
-                        </h3>
-                        <div class="flex gap-2">
-                             <button onclick="downloadAllIPs('${plat}', this)" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">DOWNLOAD ALL</button>
-                             <button onclick="openAllDeploys('${plat}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">OPEN ALL</button>
-                             <button onclick="copyAllIDs('${plat}', this)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all">COPY IDs</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Search within list (Client Side) -->
-                    <input type="text" oninput="filterVerticalList('${plat}', this.value)" class="w-full p-2 mb-4 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="SEARCH ID...">
-
-                    <div id="v-list-${plat}" class="space-y-2 font-mono text-sm max-h-[600px] overflow-y-auto custom-scrollbar">`;
-
-                let hasData = false;
-                savedDeploys.forEach((d, i) => {
-                    const val = d.id ? d.id.trim() : "";
-                    if(val) {
-                        hasData = true;
-                        listHtml += `
-                        <div class="v-item flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors group">
-                            <span class="text-[10px] font-black text-slate-400 w-8">D${i+1}</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-200 select-all v-val">${val}</span>
-                            <input type="hidden" class="inp-id" value="${val}">
-                        </div>`;
-                    }
-                });
-
-                if(!hasData) {
-                    listHtml += `<div class="text-center text-slate-400 italic text-xs py-4">No IDs Available</div>`;
-                }
-
-                listHtml += `</div></div>`;
-                
-                // Inject Result
-                container.innerHTML = listHtml;
-                // CRITICAL RETURN: Stops horizontal cards from rendering
-                return;
-            }
-            // -------------------------------------------------------------
 
             const savedDeploys = platformsData[plat].deploys || [];
             const num = savedDeploys.length;
@@ -1118,14 +1023,12 @@
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Batch</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'batch', this.value)" class="inp-batch w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                <option value=""></option>
                                 ${['0/0 P','3/3000 P','5/3000 P','10/3000 P','20/3000 P'].map(o => `<option value="${o}" ${d.batch===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-slate-500">Rules</label>
                             <select ${isReadonly} onchange="updateDeployData('${plat}', ${i}, 'rules', this.value)" class="inp-rules w-full p-2 border-none rounded-xl text-[9px] font-bold uppercase outline-none cursor-pointer">
-                                <option value=""></option>
                                 ${['SELECT ALL IPS','SELECT 30 IPS RANDOM MAX','SELECT 40 IPS RANDOM MAX','SELECT 50 IPS RANDOM MAX','RANDOM ON SELECTED','RANDOM ON SERVER SELECTED','RANDOM ON CLASS','1 IP RANDOM ON SERVER SELECTED','2 IPS RANDOM ON SERVER SELECTED','3 IPS RANDOM ON SERVER SELECTED'].map(o => `<option value="${o}" ${d.rules===o?'selected':''}>${o}</option>`).join('')}
                             </select>
                         </div>
@@ -1138,19 +1041,93 @@
             }
             distDisplay.innerText = dist.join(' | ');
         }
-
-        function filterVerticalList(plat, query) {
-            const list = document.getElementById(`v-list-${plat}`);
-            if(!list) return;
-            const items = list.querySelectorAll('.v-item');
-            const q = query.toUpperCase();
-            items.forEach(item => {
-                const val = item.querySelector('.v-val').innerText.toUpperCase();
-                if(val.includes(q)) item.classList.remove('hidden');
-                else item.classList.add('hidden');
-            });
-        }
         
+        function renderViewerTable() {
+            const container = document.getElementById('viewerTableContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const params = new URLSearchParams(window.location.search);
+            const targetPlat = params.get('plat');
+            
+            let html = '';
+            
+            PLATFORMS.forEach(plat => {
+                 if (platVisibility[plat] === false) return;
+                 if (targetPlat && plat !== targetPlat) return;
+                 
+                 // Skip missing data in history mode
+                 if (platformsData[plat] && platformsData[plat].isMissing) return;
+
+                 const deploys = platformsData[plat].deploys || [];
+                 if(deploys.length === 0) return;
+                 
+                 const total = boitesConfig[plat] || 100;
+                 const num = deploys.length;
+                 const base = Math.floor(total / num);
+                 const rem = total % num;
+
+                 html += `
+                 <div class="glass-card p-6 rounded-[2rem] border-t-8 border-blue-500 relative overflow-hidden">
+                     <h3 class="text-2xl font-black uppercase italic text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
+                        ${plat} DEPLOYS
+                     </h3>
+                     <div class="flex overflow-x-auto gap-4 pb-4">`;
+                 
+                 deploys.forEach((d, i) => {
+                     const bCount = base + (i < rem ? 1 : 0);
+                     const ips = d.ips || "";
+                     const ipCount = ips.split(/\r\n|\r|\n/).filter(x => x.trim()).length;
+                     const deployUrl = getDeployUrl(plat, d.id);
+
+                     html += `
+                     <div class="min-w-[300px] w-[300px] bg-white/50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600 opacity-50"></div>
+                         
+                         <div class="flex justify-between items-center mb-4 border-b border-slate-300/50 dark:border-slate-700/50 pb-3">
+                            <span class="text-xl font-black text-slate-700 dark:text-slate-200 italic">D${i+1}</span>
+                            <span class="text-[10px] font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg uppercase tracking-wider">${bCount} BOITES</span>
+                         </div>
+                         
+                         <div class="space-y-3 text-xs mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-400 text-[10px]">ID</span>
+                                <span class="font-black text-blue-600 dark:text-blue-400 text-sm select-all">${d.id || '-'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-400 text-[10px]">BATCH</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300 select-all">${d.batch}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-400 text-[10px]">RULES</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300 text-[9px] uppercase tracking-tight select-all text-right w-2/3">${d.rules}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-400 text-[10px]">NBR IPs</span>
+                                <span class="font-black text-slate-800 dark:text-white">${ipCount}</span>
+                            </div>
+                         </div>
+                         
+                         <div class="bg-slate-100 dark:bg-black/20 rounded-xl p-3 border border-slate-200 dark:border-slate-800/50 flex-1 flex flex-col mb-3">
+                            <span class="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">LES IPS</span>
+                            <div class="font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre select-all overflow-x-auto max-h-48 overflow-y-auto">${ips.trim() || '<span class="italic opacity-50">No IPs</span>'}</div>
+                         </div>
+                         
+                         ${deployUrl ? `<a href="${deployUrl}" target="_blank" class="block w-full text-center py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[10px] uppercase shadow-lg transform active:scale-95 transition-all">OPEN DEPLOY</a>` : ''}
+
+                     </div>`;
+                 });
+                 
+                 html += `
+                        </div>
+                     </div>`;
+            });
+            
+            if(html) container.innerHTML = html;
+            else container.innerHTML = '<div class="text-center text-slate-400 font-bold italic p-10">No Deploys to display</div>';
+        }
+
         async function addNewPlatform() {
             const name = document.getElementById('newPlatName').value.trim().toUpperCase();
             if(!name || PLATFORMS.includes(name)) return alert("Invalid or existing name");
@@ -1192,7 +1169,7 @@
         }
 
         function addDeploy(plat) {
-            platformsData[plat].deploys.push({ id: '', batch: '', rules: '', ips: '' });
+            platformsData[plat].deploys.push({ id: '', batch: '10/3000P', rules: 'SELECT ALL IPS', ips: '' });
             renderPlatformDeploys(plat);
             updateDistributorCounts();
             renderAllSelectors();
@@ -1399,57 +1376,6 @@
             }
         }
 
-        // --- EMPTY TOOL LOGIC (NEW) ---
-        function renderEmptyTool() {
-            const container = document.getElementById('emptyPlatformRadios');
-            if(!container) return;
-            container.innerHTML = '';
-
-            PLATFORMS.forEach(plat => {
-                 if (platVisibility[plat] === false) return; // Respect visibility
-                 const html = `
-                 <label class="cursor-pointer">
-                    <input type="radio" name="emptyPlatRadio" value="${plat}" onchange="selectEmptyPlatform('${plat}')" class="peer sr-only">
-                    <div class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[9px] font-bold peer-checked:bg-red-500 peer-checked:text-white transition-all uppercase">
-                        ${plat}
-                    </div>
-                 </label>`;
-                 container.insertAdjacentHTML('beforeend', html);
-            });
-        }
-
-        function selectEmptyPlatform(plat) {
-            selectedEmptyPlatform = plat;
-            document.getElementById('emptyFieldsContainer').classList.remove('hidden');
-        }
-
-        function executeEmpty() {
-            if(!selectedEmptyPlatform) return alert("Select a platform");
-            const fields = [];
-            document.querySelectorAll('.empty-field-chk:checked').forEach(c => fields.push(c.value));
-            
-            if(fields.length === 0) return alert("Select at least one field (IDs, BATCH, RULES, IPS)");
-            
-            if(!confirm(`Empty ${fields.join(', ')} for ALL deploys in ${selectedEmptyPlatform}?`)) return;
-
-            const deploys = platformsData[selectedEmptyPlatform].deploys;
-            if(!deploys || deploys.length === 0) return alert("No deploys to empty.");
-            
-            let count = 0;
-            deploys.forEach(d => {
-                if(fields.includes('id')) d.id = '';
-                if(fields.includes('ips')) d.ips = '';
-                // For dropdowns, set to empty string instead of default
-                if(fields.includes('batch')) d.batch = '';
-                if(fields.includes('rules')) d.rules = '';
-                count++;
-            });
-            
-            renderPlatformDeploys(selectedEmptyPlatform);
-            checkChanges();
-            alert(`Cleared data for ${count} deploys!`);
-        }
-
         // --- DISTRIBUTOR LOGIC ---
         function distributeMasterIPs() {
             const text = document.getElementById('masterIpList').value;
@@ -1593,18 +1519,6 @@
         }
 
         async function saveAll(sendNotif = true) {
-            // VALIDATION ADDITION
-            const activePlats = PLATFORMS.filter(p => userRole === 'super' || platVisibility[p]);
-            for (const plat of activePlats) {
-                const deploys = platformsData[plat]?.deploys || [];
-                for (let i = 0; i < deploys.length; i++) {
-                    const d = deploys[i];
-                    if(!d.id || !d.id.trim()) { alert(`⚠️ ACTION BLOCKED\n\nPLATFORM: ${plat}\nLINE: D${i+1}\n\n❌ ID IS EMPTY!`); return; }
-                    if(!d.batch) { alert(`⚠️ ACTION BLOCKED\n\nPLATFORM: ${plat}\nLINE: D${i+1}\n\n❌ BATCH IS EMPTY!`); return; }
-                    if(!d.rules) { alert(`⚠️ ACTION BLOCKED\n\nPLATFORM: ${plat}\nLINE: D${i+1}\n\n❌ RULES IS EMPTY!`); return; }
-                }
-            }
-
             document.getElementById('loadingOverlay').style.display = 'flex';
             
             // Save Global Stats first
@@ -1955,13 +1869,11 @@
         }
 
         function downloadAllIPs(plat, btn) {
-            // New logic: Read from data directly, not DOM (since vertical list doesn't have textareas)
-            const deploys = platformsData[plat]?.deploys || [];
-            if(deploys.length === 0) return alert("No IPs found.");
-            
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            const textareas = wrapper.querySelectorAll('.inp-ips');
             let count = 0;
-            deploys.forEach((d, i) => {
-                const txt = (d.ips || "").trim();
+            textareas.forEach((ta, i) => {
+                const txt = ta.value.trim();
                 if(txt) {
                     setTimeout(() => downloadFile(txt, `ips${i+1}${plat.toLowerCase()}emsw.txt`), count*300);
                     count++;
@@ -2022,11 +1934,20 @@
         }
         
         function copyAllIDs(plat, btn) {
-            const deploys = platformsData[plat]?.deploys || [];
-            const ids = deploys.map(d => (d.id || "").trim()).filter(id => id !== "");
+            const wrapper = document.getElementById(`wrapper-${plat}`);
+            const inputs = wrapper.querySelectorAll('.inp-id');
             
-            // Default to vertical format copy as requested by "Vertical List" context
-            const result = ids.map((v, i) => `D${i+1} : ${v}`).join('\n');
+            // Get format (horizontal or vertical) from radio buttons
+            const fmt = document.querySelector(`input[name="copy_fmt_${plat}"]:checked`)?.value || 'vertical';
+            
+            const ids = Array.from(inputs).map((inp) => inp.value.trim());
+            
+            let result = "";
+            if (fmt === 'horizontal') {
+                result = ids.filter(v => v).join(',');
+            } else {
+                result = ids.map((v, i) => v ? `D${i+1} : ${v}` : null).filter(v => v).join('\n');
+            }
             
             if(result) navigator.clipboard.writeText(result).then(() => {
                 const old = btn.innerText; btn.innerText = "COPIED!"; setTimeout(()=>btn.innerText=old, 1500);
@@ -2067,57 +1988,32 @@
             document.getElementById('modal-rotMax').value = stats.rotMax || '';
             document.getElementById('rotDetailText').value = stats.rotDetails || '';
 
+            // --- DATA MIGRATION LOGIC (Preserve Old Data) ---
             const conf = platformsData[plat].detailsConfig || {};
-
-            // Determine current mode (Default logic for backward compatibility)
-            let currentMode = conf.configType;
-            if (!currentMode) {
-                // If no saved type, guess based on platform name
-                currentMode = (plat === 'SELENIUM') ? 'scenario' : 'script';
-            }
-
-            // Set Radio Button
-            const radios = document.getElementsByName('configMode');
-            radios.forEach(r => {
-                r.checked = (r.value === currentMode);
-                // Disable if not super admin
-                if (userRole !== 'super') r.disabled = true;
-                else r.disabled = false;
-            });
-
-            // Initialize migration if needed for both modes
-            ensureMigration(plat, conf);
             
-            // Render specific form
-            renderConfigForm(currentMode);
-        }
-
-        function ensureMigration(plat, conf) {
-            // Migration for Script Mode (Type A)
-            if (!conf.spamActions) {
+            // Migration for WEB/Type A
+            if (!conf.spamActions && (conf.spamReport !== undefined || !conf.lastMigration)) {
                 conf.spamActions = [];
                 if(conf.spamReport) conf.spamActions.push({name: 'REPORT NOT SPAM', active: true});
-                // Defaults
-                if(conf.spamActions.length === 0 && !conf.spamVal) conf.spamActions = [{name: 'REPORT NOT SPAM', active: true}];
-            }
-            if (!conf.inboxActions) {
+                
                 conf.inboxActions = [];
-                // Map old boolean fields
                 if(conf.inboxRead) conf.inboxActions.push({name: 'READ', active: true});
                 if(conf.inboxClick) conf.inboxActions.push({name: 'CLICK', active: true});
                 if(conf.inboxImportant) conf.inboxActions.push({name: 'IMPORTANT', active: true});
                 if(conf.inboxStarred) conf.inboxActions.push({name: 'STARRED', active: true});
                 if(conf.inboxArchive) conf.inboxActions.push({name: 'ARCHIVE', active: true});
-
-                 if(conf.inboxActions.length === 0 && !conf.inboxVal) conf.inboxActions = [
+                
+                // Defaults if completely empty
+                if(conf.spamActions.length === 0 && !conf.spamVal) conf.spamActions = [{name: 'REPORT NOT SPAM', active: true}];
+                if(conf.inboxActions.length === 0 && !conf.inboxVal) conf.inboxActions = [
                     {name: 'READ', active: true}, {name: 'CLICK', active: true}, 
                     {name: 'IMPORTANT', active: true}, {name: 'STARRED', active: true}, 
                     {name: 'ARCHIVE', active: true}
                 ];
             }
 
-            // Migration for Scenario Mode (Type B)
-            if (!conf.seleniumActions && plat === 'SELENIUM') {
+            // Migration for SELENIUM
+            if (!conf.seleniumActions && plat === 'SELENIUM' && !conf.lastMigration) {
                  conf.seleniumActions = [];
                  const map = {
                      'Report not spam': conf.notSpam,
@@ -2141,27 +2037,23 @@
                      ];
                  }
             }
+            conf.lastMigration = true; 
             platformsData[plat].detailsConfig = conf;
-        }
+            // ------------------------------------------------
 
-        function renderConfigForm(mode) {
-            if (!activeDetailsPlat) return;
-            const conf = platformsData[activeDetailsPlat].detailsConfig;
             const dynamicContainer = document.getElementById('dynamicPlatformDetails');
-            dynamicContainer.innerHTML = '';
-            
+            dynamicContainer.innerHTML = ''; 
+
             const isSuper = (userRole === 'super');
 
-            if (mode === 'scenario') {
-                // SCENARIO MODE (Previously Selenium Style)
-                // - Scenario Name
-                // - Actions with Numeric Values
+            if (plat === 'SELENIUM') {
+                // --- SELENIUM (Type B: Scenario + Numeric Actions) ---
                 const html = `
-                <div class="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-700 animate-fadeIn">
-                    <h4 class="font-black text-xs uppercase text-emerald-600 dark:text-emerald-400 mb-3 border-b border-emerald-200 dark:border-emerald-700 pb-2">SCÉNARIO CONFIG</h4>
+                <div class="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-700">
+                    <h4 class="font-black text-xs uppercase text-emerald-600 dark:text-emerald-400 mb-3 border-b border-emerald-200 dark:border-emerald-700 pb-2">SELENIUM CONFIG</h4>
                     
                     <div class="mb-4">
-                        <label class="text-[10px] block mb-1">SCÉNARIO NAME</label>
+                        <label class="text-[10px] block mb-1">SCÉNARIO</label>
                         <input type="text" id="sel-scenario" class="w-full p-2 rounded-lg text-xs font-bold border super-locked" value="${conf.scenario || 'EMSW_V1'}">
                     </div>
 
@@ -2178,19 +2070,17 @@
                 dynamicContainer.innerHTML = html;
 
             } else {
-                // SCRIPT.JS MODE (Previously Web Style)
-                // - Global SPAM / INBOX Count
-                // - Checkbox only actions (Boolean)
+                // --- WEB/AUTOMAT/DEFAULT (Type A: SPAM/INBOX + Boolean Actions) ---
                 const html = `
-                <div class="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-200 dark:border-blue-700 animate-fadeIn">
-                    <h4 class="font-black text-xs uppercase text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-700 pb-2">SCRIPT.JS CONFIG</h4>
+                <div class="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-200 dark:border-blue-700">
+                    <h4 class="font-black text-xs uppercase text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-700 pb-2">ACTIONS</h4>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- SPAM -->
                         <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
                             <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px]">SPAM (Total)</label>
+                                    <label class="text-[10px]">SPAM</label>
                                     <input type="text" id="web-spam-val" class="w-16 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.spamVal || '7'}">
                                 </div>
                                 <button onclick="addDetailAction('spam-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
@@ -2204,7 +2094,7 @@
                         <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
                             <div class="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-slate-300 dark:border-slate-700">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px]">INBOX (Total)</label>
+                                    <label class="text-[10px]">INBOX</label>
                                     <input type="text" id="web-inbox-val" class="w-24 p-1 rounded-lg text-xs font-bold text-center border super-locked" value="${conf.inboxVal || '50 RANDOM'}">
                                 </div>
                                 <button onclick="addDetailAction('inbox-actions-container', 'bool')" class="super-only ${isSuper?'':'hidden'} text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded font-black">+ ADD</button>
@@ -2296,11 +2186,7 @@
             const newConf = platformsData[p].detailsConfig || {};
             newConf.lastMigration = true;
 
-            // Determine selected mode
-            const mode = document.querySelector('input[name="configMode"]:checked').value;
-            newConf.configType = mode;
-
-            if (mode === 'scenario') {
+            if (p === 'SELENIUM') {
                 newConf.scenario = document.getElementById('sel-scenario').value;
                 newConf.seleniumActions = scrapeDetailActions('selenium-actions-container', 'numeric');
             } else {
@@ -2343,29 +2229,10 @@
         }
 
         function updateFilterPreviews(plat, val) {
-            const previewEl = document.getElementById(`preview-filter-${plat}`);
-            if(previewEl) {
-                if(!val) {
-                    previewEl.innerHTML = '<span class="italic opacity-50">No keyword...</span>';
-                } else {
-                    // Custom logic requested by user
-                    // Spam : newer_than:1d KEYWORD
-                    // Inbox : is:unread newer_than:1d KEYWORD
-                    const spamQuery = `newer_than:1d ${val}`;
-                    const inboxQuery = `is:unread newer_than:1d ${val}`;
-                    
-                    previewEl.innerHTML = `
-                        <div class="flex justify-between border-b border-slate-300 dark:border-slate-600 pb-1 mb-1">
-                            <span class="font-bold text-[8px] uppercase">SPAM</span>
-                            <span class="text-[9px] select-all">${spamQuery}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-bold text-[8px] uppercase">INBOX</span>
-                            <span class="text-[9px] select-all">${inboxQuery}</span>
-                        </div>
-                    `;
-                }
-            }
+            const spamEl = document.getElementById(`preview-spam-${plat}`);
+            const inboxEl = document.getElementById(`preview-inbox-${plat}`);
+            if(spamEl) spamEl.innerText = val;
+            if(inboxEl) inboxEl.innerText = val;
         }
 
         // --- NEW: Global Seeds Breakdown Logic ---
