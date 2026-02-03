@@ -909,7 +909,7 @@
 
                 // NEW: Viewer Only Filter Preview Logic (UPDATED IN:SPAM)
                 let filterPreviewHtml = '';
-                if (['AUTOMAT', 'SELENIUM'].includes(plat)) {
+                if (plat !== 'WEB') {
                     filterPreviewHtml = `
                     <div class="viewer-only-box mt-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-xl border border-dashed border-slate-400 dark:border-slate-600 select-all">
                         <div class="font-mono text-[10px] text-slate-800 dark:text-slate-200">
